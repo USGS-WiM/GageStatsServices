@@ -20,6 +20,7 @@
 
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace GageStatsDB.Resources
 {
@@ -34,7 +35,7 @@ namespace GageStatsDB.Resources
         [Required]
         public string Code { get; set; }
 
-        public List<Station> Station { get; set; }
+        public List<Station> Stations { get; set; }
 
     }
 }

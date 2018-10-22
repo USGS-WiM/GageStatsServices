@@ -21,6 +21,7 @@
 using NpgsqlTypes;
 using NetTopologySuite.Geometries;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Collections.Generic;
 
 namespace GageStatsDB.Resources
@@ -32,7 +33,7 @@ namespace GageStatsDB.Resources
         [Required]
         public string Code { get; set; }
         [Required]
-        public string AgencyID { get; set; }
+        public int AgencyID { get; set; }
         [Required]
         public string Name { get; set; }
         [Required]
@@ -44,7 +45,7 @@ namespace GageStatsDB.Resources
         [Required]
         public Point Location { get; set; }
 
-        public List<Statistic> Statistic { get; set; }
+        public List<Statistic> Statistics { get; set; }
 
         public Agency Agency { get; set; }
 

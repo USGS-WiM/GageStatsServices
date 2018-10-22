@@ -65,7 +65,7 @@ namespace GageStatsDB
             modelBuilder.Entity<Statistic>().ToTable("Statistic", "gagestats");
             modelBuilder.Entity<StatisticErrors>().ToTable("StatisticErrors", "gagestats");
             modelBuilder.Entity<StatisticUnitTypes>().ToTable("StatisticUnitTypes", "gagestats");
-            modelBuilder.Query<ErrorType>().ToView("ErrorType_view", "gagestats");
+            modelBuilder.Entity<ErrorType>().ToTable("ErrorType", "shared");
                 
             //unique key based on region and manager keys
             modelBuilder.Entity<StatisticUnitTypes>().HasKey(k => new { k.StatisticID, k.UnitTypeID });
@@ -87,7 +87,11 @@ namespace GageStatsDB
             modelBuilder.Entity("GageStatsDB.Resources.Statistic", b =>
             {
                 b.HasOne("GageStatsDB.Resources.Station", "Station")
-                    .WithMany()
+                    .WithMany("Statistics")
+                    .HasForeignKey("StationID")
+                    .OnDelete(DeleteBehavior.Restrict);
+                b.HasOne("GageStatsDB.Resources.Citation", "Citation")
+                    .WithMany("Statistics")
                     .HasForeignKey("StationID")
                     .OnDelete(DeleteBehavior.Restrict);
             });
@@ -95,20 +99,12 @@ namespace GageStatsDB
             modelBuilder.Entity("GageStatsDB.Resources.Station", b =>
             {
                 b.HasOne("GageStatsDB.Resources.StationType", "StationType")
-                    .WithMany()
+                    .WithMany("Stations")
                     .HasForeignKey("StationTypeID")
                     .OnDelete(DeleteBehavior.Restrict);
                 b.HasOne("GageStatsDB.Resources.Agency", "Agency")
-                    .WithMany()
+                    .WithMany("Stations")
                     .HasForeignKey("AgencyID")
-                    .OnDelete(DeleteBehavior.Restrict);
-            });
-
-            modelBuilder.Entity("GageStatsDB.Resources.Statistic", b =>
-            {
-                b.HasOne("GageStatsDB.Resources.Citation", "Citation")
-                    .WithMany()
-                    .HasForeignKey("StationID")
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
@@ -117,7 +113,7 @@ namespace GageStatsDB
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
 #warning Add connectionstring for migrations
-            var connectionstring = "User ID=;Password=;Host=;Port=;Database=;Pooling=true;";
+            var connectionstring = "User ID=;Password=;Host=test.c69uuui2tzs0.us-east-1.rds.amazonaws.com;Port=5432;Database=StatsDB;Pooling=true;";
             optionsBuilder.UseNpgsql(connectionstring, x => { x.MigrationsHistoryTable("_EFMigrationsHistory", "gagestats"); x.UseNetTopologySuite(); });
         }
     }

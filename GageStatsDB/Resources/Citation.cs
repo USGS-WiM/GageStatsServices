@@ -34,7 +34,7 @@ namespace GageStatsDB.Resources
         [Required]
         public string CitationURL { get; set; }
 
-        public List<Statistic> Statistic { get; set; }
+        public List<Statistic> Statistics { get; set; }
 
     }
 }
