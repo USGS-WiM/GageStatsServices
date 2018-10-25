@@ -25,6 +25,10 @@ using Microsoft.EntityFrameworkCore;
 using GageStatsDB.Resources;
 using Microsoft.EntityFrameworkCore.Metadata;
 using NetTopologySuite;
+using SharedDB.Resources;
+using System.Collections.Generic;
+using System;
+
 //specifying the data provider and connection string
 namespace GageStatsDB
 {
@@ -35,17 +39,18 @@ namespace GageStatsDB
         public DbSet<Station> Stations { get; set; }
         public DbSet<StationType> StationTypes { get; set; }
         public DbSet<Statistic> Statistics { get; set; }
-        public DbSet<StatisticUnitTypes> StatisticUnitTypes { get; set; }
         public DbSet<StatisticErrors> StatisticErrors { get; set; }
+        public DbSet<StatisticUnitTypes> StatisticUnitTypes { get; set; }
 
-        //DbQuery from here:
-        //https://docs.microsoft.com/en-us/ef/core/modeling/query-types
-        public DbQuery<RegressionType> RegressionTypes { get; set; }
-        public DbQuery<StatisticGroupType> StatisticGroupType { get; set; }
-        public DbQuery<UnitConversions> UnitConversions { get; set; }
-        public DbQuery<UnitsType> UnitsTypes { get; set; }
-        public DbQuery<UnitSystemType> UnitSystemTypes { get; set; }
-        public DbQuery<ErrorType> ErrorTypes { get; set; }
+        //from shared schema
+        public DbSet<ErrorType> ErrorTypes { get; set; }
+        public DbSet<UnitType> UnitTypes { get; set; }
+        public DbSet<RegressionType> RegressionTypes { get; set; }
+        public DbSet<StatisticGroupType> StatisticGroupTypes { get; set; }
+        public DbSet<UnitConversionFactor> UnitConversionFactors { get; set; }
+        public DbSet<UnitSystemType> UnitSystemTypes { get; set; }
+        public DbSet<VariableType> VariableTypes { get; set; }
+
         public GageStatsDBContext() : base()
         {
         }
@@ -58,15 +63,14 @@ namespace GageStatsDB
 
             //specify DB schema
             modelBuilder.HasDefaultSchema("gagestats");
-            modelBuilder.Entity<Agency>().ToTable("Agency", "gagestats");
-            modelBuilder.Entity<Citation>().ToTable("Citation", "gagestats");
-            modelBuilder.Entity<Station>().ToTable("Station", "gagestats");
-            modelBuilder.Entity<StationType>().ToTable("StationType", "gagestats");
-            modelBuilder.Entity<Statistic>().ToTable("Statistic", "gagestats");
-            modelBuilder.Entity<StatisticErrors>().ToTable("StatisticErrors", "gagestats");
-            modelBuilder.Entity<StatisticUnitTypes>().ToTable("StatisticUnitTypes", "gagestats");
-            modelBuilder.Entity<ErrorType>().ToTable("ErrorType", "shared");
-                
+            modelBuilder.Entity<ErrorType>().ToTable("ErrorType_view");
+            modelBuilder.Entity<RegressionType>().ToTable("RegressionType_view");
+            modelBuilder.Entity<StatisticGroupType>().ToTable("StatisticGroupType_view");
+            modelBuilder.Entity<UnitConversionFactor>().ToTable("UnitConversionFactor_view");
+            modelBuilder.Entity<UnitSystemType>().ToTable("UnitSystemType_view");
+            modelBuilder.Entity<UnitType>().ToTable("UnitType_view");
+            modelBuilder.Entity<VariableType>().ToTable("VariableType_view");
+
             //unique key based on region and manager keys
             modelBuilder.Entity<StatisticUnitTypes>().HasKey(k => new { k.StatisticID, k.UnitTypeID });
 
@@ -80,7 +84,13 @@ namespace GageStatsDB
             //add shadowstate for when models change
             foreach (var entitytype in modelBuilder.Model.GetEntityTypes())
             {
-                //modelBuilder.Entity(entitytype.Name).Property<DateTime>("LastModified");
+                if (new List<string>() { typeof(StatisticErrors).FullName,typeof(ErrorType).FullName,typeof(RegressionType).FullName,
+                                         typeof(StatisticGroupType).FullName,typeof(UnitConversionFactor).FullName,typeof(UnitSystemType).FullName,
+                                         typeof(UnitType).FullName,typeof(VariableType).FullName }
+                .Contains(entitytype.Name))
+                { continue; }
+
+                modelBuilder.Entity(entitytype.Name).Property<DateTime>("LastModified");
             }//next entitytype
 
             //cascade delete is default, rewrite behavior
@@ -108,13 +118,22 @@ namespace GageStatsDB
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
-            base.OnModelCreating(modelBuilder);             
+            base.OnModelCreating(modelBuilder);
+
+            //Must Comment out after migration
+            //modelBuilder.Ignore(typeof(ErrorType));
+            //modelBuilder.Ignore(typeof(RegressionType));
+            //modelBuilder.Ignore(typeof(StatisticGroupType));
+            //modelBuilder.Ignore(typeof(UnitConversionFactor));
+            //modelBuilder.Ignore(typeof(UnitSystemType));
+            //modelBuilder.Ignore(typeof(UnitType));
+            //modelBuilder.Ignore(typeof(VariableType));
         }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
 #warning Add connectionstring for migrations
-            var connectionstring = "User ID=;Password=;Host=test.c69uuui2tzs0.us-east-1.rds.amazonaws.com;Port=5432;Database=StatsDB;Pooling=true;";
-            optionsBuilder.UseNpgsql(connectionstring, x => { x.MigrationsHistoryTable("_EFMigrationsHistory", "gagestats"); x.UseNetTopologySuite(); });
+            //var connectionstring = "User ID=;Password=;Host=test.c69uuui2tzs0.us-east-1.rds.amazonaws.com;Port=5432;Database=StatsDB;Pooling=true;";
+            //optionsBuilder.UseNpgsql(connectionstring, x => { x.MigrationsHistoryTable("_EFMigrationsHistory", "gagestats"); x.UseNetTopologySuite(); });
         }
     }
 }

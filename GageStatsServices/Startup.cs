@@ -10,6 +10,15 @@ using WiM.Services.Analytics;
 using WiM.Utilities.ServiceAgent;
 using WiM.Services.Resources;
 using GageStatsServices.Filters;
+using GageStatsDB;
+
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
+using System;
+using WiM.Security.Authentication.Basic;
+using Microsoft.AspNetCore.Routing;
+using Microsoft.Net.Http.Headers;
+
 
 namespace GageStatsServices
 {
@@ -43,10 +52,8 @@ namespace GageStatsServices
                                                         options.UseNpgsql(String.Format(Configuration
                                                             .GetConnectionString("GageStatsConnection"), Configuration["dbuser"], Configuration["dbpassword"], Configuration["dbHost"]),
                                                             //default is 1000, if > maxbatch, then EF will group requests in maxbatch size
-                                                            opt => opt.MaxBatchSize(1000))
+                                                            opt => { opt.MaxBatchSize(1000); opt.UseNetTopologySuite(); })
                                                             .EnableSensitiveDataLogging());
-
-            services.AddScoped<IGageStatsAgent, GageStatsServiceAgent>();
 
             services.AddScoped<IGageStatsAgent, GageStatsAgent.GageStatsAgent>();
             services.AddScoped<IAnalyticsAgent, GoogleAnalyticsAgent>((gaa)=> new GoogleAnalyticsAgent(Configuration["AnalyticsKey"]));

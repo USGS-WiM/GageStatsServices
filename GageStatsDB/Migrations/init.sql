@@ -9,31 +9,34 @@ CREATE SCHEMA IF NOT EXISTS gagestats;
 
 CREATE EXTENSION IF NOT EXISTS postgis;
 
-CREATE TABLE gagestats."Agency" (
+CREATE TABLE gagestats."Agencies" (
     "ID" serial NOT NULL,
     "Name" text NOT NULL,
     "Description" text NULL,
     "Code" text NOT NULL,
-    CONSTRAINT "PK_Agency" PRIMARY KEY ("ID")
+    "LastModified" timestamp without time zone NOT NULL,
+    CONSTRAINT "PK_Agencies" PRIMARY KEY ("ID")
 );
 
-CREATE TABLE gagestats."Citation" (
+CREATE TABLE gagestats."Citations" (
     "ID" serial NOT NULL,
     "Title" text NOT NULL,
     "Author" text NOT NULL,
     "CitationURL" text NOT NULL,
-    CONSTRAINT "PK_Citation" PRIMARY KEY ("ID")
+    "LastModified" timestamp without time zone NOT NULL,
+    CONSTRAINT "PK_Citations" PRIMARY KEY ("ID")
 );
 
-CREATE TABLE gagestats."StationType" (
+CREATE TABLE gagestats."StationTypes" (
     "ID" serial NOT NULL,
     "Name" text NOT NULL,
     "Description" text NULL,
     "Code" text NOT NULL,
-    CONSTRAINT "PK_StationType" PRIMARY KEY ("ID")
+    "LastModified" timestamp without time zone NOT NULL,
+    CONSTRAINT "PK_StationTypes" PRIMARY KEY ("ID")
 );
 
-CREATE TABLE gagestats."Station" (
+CREATE TABLE gagestats."Stations" (
     "ID" serial NOT NULL,
     "Code" text NOT NULL,
     "AgencyID" integer NOT NULL,
@@ -42,12 +45,13 @@ CREATE TABLE gagestats."Station" (
     "IsRegulated" boolean NOT NULL,
     "StationTypeID" integer NOT NULL,
     "Location" geometry NOT NULL,
-    CONSTRAINT "PK_Station" PRIMARY KEY ("ID"),
-    CONSTRAINT "FK_Station_Agency_AgencyID" FOREIGN KEY ("AgencyID") REFERENCES gagestats."Agency" ("ID") ON DELETE RESTRICT,
-    CONSTRAINT "FK_Station_StationType_StationTypeID" FOREIGN KEY ("StationTypeID") REFERENCES gagestats."StationType" ("ID") ON DELETE RESTRICT
+    "LastModified" timestamp without time zone NOT NULL,
+    CONSTRAINT "PK_Stations" PRIMARY KEY ("ID"),
+    CONSTRAINT "FK_Stations_Agencies_AgencyID" FOREIGN KEY ("AgencyID") REFERENCES gagestats."Agencies" ("ID") ON DELETE RESTRICT,
+    CONSTRAINT "FK_Stations_StationTypes_StationTypeID" FOREIGN KEY ("StationTypeID") REFERENCES gagestats."StationTypes" ("ID") ON DELETE RESTRICT
 );
 
-CREATE TABLE gagestats."Statistic" (
+CREATE TABLE gagestats."Statistics" (
     "ID" serial NOT NULL,
     "StatisticGroupID" integer NOT NULL,
     "RegressionTypeID" integer NOT NULL,
@@ -57,9 +61,10 @@ CREATE TABLE gagestats."Statistic" (
     "Comments" text NULL,
     "YearsofRecord" integer NOT NULL,
     "CitationID" integer NOT NULL,
-    CONSTRAINT "PK_Statistic" PRIMARY KEY ("ID"),
-    CONSTRAINT "FK_Statistic_Citation_StationID" FOREIGN KEY ("StationID") REFERENCES gagestats."Citation" ("ID") ON DELETE RESTRICT,
-    CONSTRAINT "FK_Statistic_Station_StationID" FOREIGN KEY ("StationID") REFERENCES gagestats."Station" ("ID") ON DELETE RESTRICT
+    "LastModified" timestamp without time zone NOT NULL,
+    CONSTRAINT "PK_Statistics" PRIMARY KEY ("ID"),
+    CONSTRAINT "FK_Statistics_Citations_StationID" FOREIGN KEY ("StationID") REFERENCES gagestats."Citations" ("ID") ON DELETE RESTRICT,
+    CONSTRAINT "FK_Statistics_Stations_StationID" FOREIGN KEY ("StationID") REFERENCES gagestats."Stations" ("ID") ON DELETE RESTRICT
 );
 
 CREATE TABLE gagestats."StatisticErrors" (
@@ -69,30 +74,31 @@ CREATE TABLE gagestats."StatisticErrors" (
     "Value" double precision NOT NULL,
     "StatisticID" integer NULL,
     CONSTRAINT "PK_StatisticErrors" PRIMARY KEY ("ID"),
-    CONSTRAINT "FK_StatisticErrors_Statistic_StatisticID" FOREIGN KEY ("StatisticID") REFERENCES gagestats."Statistic" ("ID") ON DELETE RESTRICT
+    CONSTRAINT "FK_StatisticErrors_Statistics_StatisticID" FOREIGN KEY ("StatisticID") REFERENCES gagestats."Statistics" ("ID") ON DELETE RESTRICT
 );
 
 CREATE TABLE gagestats."StatisticUnitTypes" (
     "StatisticID" integer NOT NULL,
     "UnitTypeID" text NOT NULL,
+    "LastModified" timestamp without time zone NOT NULL,
     CONSTRAINT "PK_StatisticUnitTypes" PRIMARY KEY ("StatisticID", "UnitTypeID"),
-    CONSTRAINT "FK_StatisticUnitTypes_Statistic_StatisticID" FOREIGN KEY ("StatisticID") REFERENCES gagestats."Statistic" ("ID") ON DELETE CASCADE
+    CONSTRAINT "FK_StatisticUnitTypes_Statistics_StatisticID" FOREIGN KEY ("StatisticID") REFERENCES gagestats."Statistics" ("ID") ON DELETE CASCADE
 );
 
-CREATE UNIQUE INDEX "IX_Agency_Code" ON gagestats."Agency" ("Code");
+CREATE UNIQUE INDEX "IX_Agencies_Code" ON gagestats."Agencies" ("Code");
 
-CREATE INDEX "IX_Station_AgencyID" ON gagestats."Station" ("AgencyID");
+CREATE INDEX "IX_Stations_AgencyID" ON gagestats."Stations" ("AgencyID");
 
-CREATE UNIQUE INDEX "IX_Station_Code" ON gagestats."Station" ("Code");
+CREATE UNIQUE INDEX "IX_Stations_Code" ON gagestats."Stations" ("Code");
 
-CREATE INDEX "IX_Station_StationTypeID" ON gagestats."Station" ("StationTypeID");
+CREATE INDEX "IX_Stations_StationTypeID" ON gagestats."Stations" ("StationTypeID");
 
-CREATE UNIQUE INDEX "IX_StationType_Code" ON gagestats."StationType" ("Code");
-
-CREATE INDEX "IX_Statistic_StationID" ON gagestats."Statistic" ("StationID");
+CREATE UNIQUE INDEX "IX_StationTypes_Code" ON gagestats."StationTypes" ("Code");
 
 CREATE INDEX "IX_StatisticErrors_StatisticID" ON gagestats."StatisticErrors" ("StatisticID");
 
+CREATE INDEX "IX_Statistics_StationID" ON gagestats."Statistics" ("StationID");
+
 INSERT INTO gagestats."_EFMigrationsHistory" ("MigrationId", "ProductVersion")
-VALUES ('20181022152626_init', '2.1.3-rtm-32065');
+VALUES ('20181025200232_init', '2.1.3-rtm-32065');
 

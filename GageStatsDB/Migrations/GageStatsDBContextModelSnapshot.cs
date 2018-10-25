@@ -32,6 +32,8 @@ namespace GageStatsDB.Migrations
 
                     b.Property<string>("Description");
 
+                    b.Property<DateTime>("LastModified");
+
                     b.Property<string>("Name")
                         .IsRequired();
 
@@ -40,7 +42,7 @@ namespace GageStatsDB.Migrations
                     b.HasIndex("Code")
                         .IsUnique();
 
-                    b.ToTable("Agency","gagestats");
+                    b.ToTable("Agencies");
                 });
 
             modelBuilder.Entity("GageStatsDB.Resources.Citation", b =>
@@ -54,12 +56,14 @@ namespace GageStatsDB.Migrations
                     b.Property<string>("CitationURL")
                         .IsRequired();
 
+                    b.Property<DateTime>("LastModified");
+
                     b.Property<string>("Title")
                         .IsRequired();
 
                     b.HasKey("ID");
 
-                    b.ToTable("Citation","gagestats");
+                    b.ToTable("Citations");
                 });
 
             modelBuilder.Entity("GageStatsDB.Resources.Station", b =>
@@ -73,6 +77,8 @@ namespace GageStatsDB.Migrations
                         .IsRequired();
 
                     b.Property<bool>("IsRegulated");
+
+                    b.Property<DateTime>("LastModified");
 
                     b.Property<Point>("Location")
                         .IsRequired();
@@ -94,7 +100,7 @@ namespace GageStatsDB.Migrations
 
                     b.HasIndex("StationTypeID");
 
-                    b.ToTable("Station","gagestats");
+                    b.ToTable("Stations");
                 });
 
             modelBuilder.Entity("GageStatsDB.Resources.StationType", b =>
@@ -107,6 +113,8 @@ namespace GageStatsDB.Migrations
 
                     b.Property<string>("Description");
 
+                    b.Property<DateTime>("LastModified");
+
                     b.Property<string>("Name")
                         .IsRequired();
 
@@ -115,7 +123,7 @@ namespace GageStatsDB.Migrations
                     b.HasIndex("Code")
                         .IsUnique();
 
-                    b.ToTable("StationType","gagestats");
+                    b.ToTable("StationTypes");
                 });
 
             modelBuilder.Entity("GageStatsDB.Resources.Statistic", b =>
@@ -126,6 +134,8 @@ namespace GageStatsDB.Migrations
                     b.Property<int>("CitationID");
 
                     b.Property<string>("Comments");
+
+                    b.Property<DateTime>("LastModified");
 
                     b.Property<int>("RegressionTypeID");
 
@@ -143,7 +153,7 @@ namespace GageStatsDB.Migrations
 
                     b.HasIndex("StationID");
 
-                    b.ToTable("Statistic","gagestats");
+                    b.ToTable("Statistics");
                 });
 
             modelBuilder.Entity("GageStatsDB.Resources.StatisticErrors", b =>
@@ -163,7 +173,7 @@ namespace GageStatsDB.Migrations
 
                     b.HasIndex("StatisticID");
 
-                    b.ToTable("StatisticErrors","gagestats");
+                    b.ToTable("StatisticErrors");
                 });
 
             modelBuilder.Entity("GageStatsDB.Resources.StatisticUnitTypes", b =>
@@ -172,9 +182,11 @@ namespace GageStatsDB.Migrations
 
                     b.Property<string>("UnitTypeID");
 
+                    b.Property<DateTime>("LastModified");
+
                     b.HasKey("StatisticID", "UnitTypeID");
 
-                    b.ToTable("StatisticUnitTypes","gagestats");
+                    b.ToTable("StatisticUnitTypes");
                 });
 
             modelBuilder.Entity("GageStatsDB.Resources.Station", b =>

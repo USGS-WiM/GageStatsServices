@@ -22,4 +22,9 @@
     <Folder Include="Logger\" />
     <Folder Include="Migrations\" />
   </ItemGroup>
+  <ItemGroup>
+    <Reference Include="SharedDB">
+      <HintPath>..\lib\SharedDB.dll</HintPath>
+    </Reference>
+  </ItemGroup>
 </Project>

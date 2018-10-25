@@ -3,10 +3,15 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp2.1</TargetFramework>
     <DockerComposeProjectPath>..\docker-compose.dcproj</DockerComposeProjectPath>
+    <UserSecretsId>0e8d7aac-3c6c-4a10-b8eb-7468b1c7303b</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
     <Compile Remove="Controllers\Configuration2Controller.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="C:\NYBackup\GitHub\GageStatsServices\GageStatsDB.Test\bin\Debug\appsettings.json" Link="appsettings.json" />
   </ItemGroup>
 
   <ItemGroup>
@@ -19,6 +24,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\GageStatsAgent\GageStatsAgent.csproj" />
+    <ProjectReference Include="..\GageStatsDB\GageStatsDB.csproj" />
   </ItemGroup>
   
   <ItemGroup>

@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -15,7 +16,7 @@ namespace GageStatsDB.Migrations
                 .Annotation("Npgsql:PostgresExtension:postgis", "'postgis', '', ''");
 
             migrationBuilder.CreateTable(
-                name: "Agency",
+                name: "Agencies",
                 schema: "gagestats",
                 columns: table => new
                 {
@@ -23,15 +24,16 @@ namespace GageStatsDB.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn),
                     Name = table.Column<string>(nullable: false),
                     Description = table.Column<string>(nullable: true),
-                    Code = table.Column<string>(nullable: false)
+                    Code = table.Column<string>(nullable: false),
+                    LastModified = table.Column<DateTime>(nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Agency", x => x.ID);
+                    table.PrimaryKey("PK_Agencies", x => x.ID);
                 });
 
             migrationBuilder.CreateTable(
-                name: "Citation",
+                name: "Citations",
                 schema: "gagestats",
                 columns: table => new
                 {
@@ -39,15 +41,16 @@ namespace GageStatsDB.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn),
                     Title = table.Column<string>(nullable: false),
                     Author = table.Column<string>(nullable: false),
-                    CitationURL = table.Column<string>(nullable: false)
+                    CitationURL = table.Column<string>(nullable: false),
+                    LastModified = table.Column<DateTime>(nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Citation", x => x.ID);
+                    table.PrimaryKey("PK_Citations", x => x.ID);
                 });
 
             migrationBuilder.CreateTable(
-                name: "StationType",
+                name: "StationTypes",
                 schema: "gagestats",
                 columns: table => new
                 {
@@ -55,15 +58,16 @@ namespace GageStatsDB.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn),
                     Name = table.Column<string>(nullable: false),
                     Description = table.Column<string>(nullable: true),
-                    Code = table.Column<string>(nullable: false)
+                    Code = table.Column<string>(nullable: false),
+                    LastModified = table.Column<DateTime>(nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_StationType", x => x.ID);
+                    table.PrimaryKey("PK_StationTypes", x => x.ID);
                 });
 
             migrationBuilder.CreateTable(
-                name: "Station",
+                name: "Stations",
                 schema: "gagestats",
                 columns: table => new
                 {
@@ -75,29 +79,30 @@ namespace GageStatsDB.Migrations
                     Type = table.Column<string>(nullable: false),
                     IsRegulated = table.Column<bool>(nullable: false),
                     StationTypeID = table.Column<int>(nullable: false),
-                    Location = table.Column<Point>(nullable: false)
+                    Location = table.Column<Point>(nullable: false),
+                    LastModified = table.Column<DateTime>(nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Station", x => x.ID);
+                    table.PrimaryKey("PK_Stations", x => x.ID);
                     table.ForeignKey(
-                        name: "FK_Station_Agency_AgencyID",
+                        name: "FK_Stations_Agencies_AgencyID",
                         column: x => x.AgencyID,
                         principalSchema: "gagestats",
-                        principalTable: "Agency",
+                        principalTable: "Agencies",
                         principalColumn: "ID",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_Station_StationType_StationTypeID",
+                        name: "FK_Stations_StationTypes_StationTypeID",
                         column: x => x.StationTypeID,
                         principalSchema: "gagestats",
-                        principalTable: "StationType",
+                        principalTable: "StationTypes",
                         principalColumn: "ID",
                         onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
-                name: "Statistic",
+                name: "Statistics",
                 schema: "gagestats",
                 columns: table => new
                 {
@@ -110,23 +115,24 @@ namespace GageStatsDB.Migrations
                     UnitTypeID = table.Column<int>(nullable: false),
                     Comments = table.Column<string>(nullable: true),
                     YearsofRecord = table.Column<int>(nullable: false),
-                    CitationID = table.Column<int>(nullable: false)
+                    CitationID = table.Column<int>(nullable: false),
+                    LastModified = table.Column<DateTime>(nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Statistic", x => x.ID);
+                    table.PrimaryKey("PK_Statistics", x => x.ID);
                     table.ForeignKey(
-                        name: "FK_Statistic_Citation_StationID",
+                        name: "FK_Statistics_Citations_StationID",
                         column: x => x.StationID,
                         principalSchema: "gagestats",
-                        principalTable: "Citation",
+                        principalTable: "Citations",
                         principalColumn: "ID",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_Statistic_Station_StationID",
+                        name: "FK_Statistics_Stations_StationID",
                         column: x => x.StationID,
                         principalSchema: "gagestats",
-                        principalTable: "Station",
+                        principalTable: "Stations",
                         principalColumn: "ID",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -147,10 +153,10 @@ namespace GageStatsDB.Migrations
                 {
                     table.PrimaryKey("PK_StatisticErrors", x => x.ID);
                     table.ForeignKey(
-                        name: "FK_StatisticErrors_Statistic_StatisticID",
+                        name: "FK_StatisticErrors_Statistics_StatisticID",
                         column: x => x.StatisticID,
                         principalSchema: "gagestats",
-                        principalTable: "Statistic",
+                        principalTable: "Statistics",
                         principalColumn: "ID",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -161,64 +167,84 @@ namespace GageStatsDB.Migrations
                 columns: table => new
                 {
                     StatisticID = table.Column<int>(nullable: false),
-                    UnitTypeID = table.Column<string>(nullable: false)
+                    UnitTypeID = table.Column<string>(nullable: false),
+                    LastModified = table.Column<DateTime>(nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_StatisticUnitTypes", x => new { x.StatisticID, x.UnitTypeID });
                     table.ForeignKey(
-                        name: "FK_StatisticUnitTypes_Statistic_StatisticID",
+                        name: "FK_StatisticUnitTypes_Statistics_StatisticID",
                         column: x => x.StatisticID,
                         principalSchema: "gagestats",
-                        principalTable: "Statistic",
+                        principalTable: "Statistics",
                         principalColumn: "ID",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Agency_Code",
+                name: "IX_Agencies_Code",
                 schema: "gagestats",
-                table: "Agency",
+                table: "Agencies",
                 column: "Code",
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Station_AgencyID",
+                name: "IX_Stations_AgencyID",
                 schema: "gagestats",
-                table: "Station",
+                table: "Stations",
                 column: "AgencyID");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Station_Code",
+                name: "IX_Stations_Code",
                 schema: "gagestats",
-                table: "Station",
+                table: "Stations",
                 column: "Code",
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Station_StationTypeID",
+                name: "IX_Stations_StationTypeID",
                 schema: "gagestats",
-                table: "Station",
+                table: "Stations",
                 column: "StationTypeID");
 
             migrationBuilder.CreateIndex(
-                name: "IX_StationType_Code",
+                name: "IX_StationTypes_Code",
                 schema: "gagestats",
-                table: "StationType",
+                table: "StationTypes",
                 column: "Code",
                 unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Statistic_StationID",
-                schema: "gagestats",
-                table: "Statistic",
-                column: "StationID");
 
             migrationBuilder.CreateIndex(
                 name: "IX_StatisticErrors_StatisticID",
                 schema: "gagestats",
                 table: "StatisticErrors",
                 column: "StatisticID");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Statistics_StationID",
+                schema: "gagestats",
+                table: "Statistics",
+                column: "StationID");
+
+            //custom sql
+            migrationBuilder.Sql(@"
+                CREATE OR REPLACE FUNCTION ""gagestats"".""trigger_set_lastmodified""()
+                    RETURNS TRIGGER AS $$
+                    BEGIN
+                      NEW.""LastModified"" = NOW();
+                      RETURN NEW;
+                    END;
+                    $$ LANGUAGE plpgsql;
+                ");
+            migrationBuilder.Sql(@"
+                CREATE TRIGGER lastupdate BEFORE INSERT OR UPDATE ON ""gagestats"".""Agencies""  FOR EACH ROW EXECUTE PROCEDURE ""gagestats"".""trigger_set_lastmodified""();
+                CREATE TRIGGER lastupdate BEFORE INSERT OR UPDATE ON ""gagestats"".""Citations""  FOR EACH ROW EXECUTE PROCEDURE ""gagestats"".""trigger_set_lastmodified""();
+                CREATE TRIGGER lastupdate BEFORE INSERT OR UPDATE ON ""gagestats"".""Stations"" FOR EACH ROW EXECUTE PROCEDURE  ""gagestats"".""trigger_set_lastmodified""();
+                CREATE TRIGGER lastupdate BEFORE INSERT OR UPDATE ON ""gagestats"".""StationTypes""  FOR EACH ROW EXECUTE PROCEDURE ""gagestats"".""trigger_set_lastmodified""();
+                CREATE TRIGGER lastupdate BEFORE INSERT OR UPDATE ON ""gagestats"".""Statistics"" FOR EACH ROW EXECUTE PROCEDURE  ""gagestats"".""trigger_set_lastmodified""();
+                CREATE TRIGGER lastupdate BEFORE INSERT OR UPDATE ON ""gagestats"".""StatisticUnitTypes""  FOR EACH ROW EXECUTE PROCEDURE ""gagestats"".""trigger_set_lastmodified""();
+                ");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
@@ -232,23 +258,23 @@ namespace GageStatsDB.Migrations
                 schema: "gagestats");
 
             migrationBuilder.DropTable(
-                name: "Statistic",
+                name: "Statistics",
                 schema: "gagestats");
 
             migrationBuilder.DropTable(
-                name: "Citation",
+                name: "Citations",
                 schema: "gagestats");
 
             migrationBuilder.DropTable(
-                name: "Station",
+                name: "Stations",
                 schema: "gagestats");
 
             migrationBuilder.DropTable(
-                name: "Agency",
+                name: "Agencies",
                 schema: "gagestats");
 
             migrationBuilder.DropTable(
-                name: "StationType",
+                name: "StationTypes",
                 schema: "gagestats");
         }
     }

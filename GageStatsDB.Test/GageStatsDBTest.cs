@@ -13,12 +13,12 @@ namespace GageStatsDB.Test
     {
         private string connectionstring = new ConfigurationBuilder()
                     .AddJsonFile("appsettings.json")
-                    .Build().GetConnectionString("wateruseConnection");
+                    .Build().GetConnectionString("Connection");
 
         [TestMethod]
         public void ConnectionTest()
         {
-            using (GageStatsDBContext context = new GageStatsDBContext(new DbContextOptionsBuilder<GageStatsDBContext>().UseNpgsql(this.connectionstring).Options))
+            using (GageStatsDBContext context = new GageStatsDBContext(new DbContextOptionsBuilder<GageStatsDBContext>().UseNpgsql(this.connectionstring, x => x.UseNetTopologySuite()).Options))
             {
                 try
                 {
@@ -33,11 +33,11 @@ namespace GageStatsDB.Test
         [TestMethod]
         public void QueryTest()
         {
-            using (GageStatsDBContext context = new GageStatsDBContext(new DbContextOptionsBuilder<GageStatsDBContext>().UseNpgsql(this.connectionstring).Options))
+            using (GageStatsDBContext context = new GageStatsDBContext(new DbContextOptionsBuilder<GageStatsDBContext>().UseNpgsql(this.connectionstring, x => x.UseNetTopologySuite()).Options))
             {
                 try
                 {
-                    var testQuery = context.GageStats.ToList();
+                    var testQuery = context.ErrorTypes.ToList();
                     Assert.IsNotNull(testQuery, testQuery.Count.ToString());
                 }
                 catch (Exception ex)
