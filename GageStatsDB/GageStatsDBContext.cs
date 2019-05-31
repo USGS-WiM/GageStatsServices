@@ -6,7 +6,7 @@
 //       01234567890123456789012345678901234567890123456789012345678901234567890
 //-------+---------+---------+---------+---------+---------+---------+---------+
 
-// copyright:   2017 WiM - USGS
+// copyright:   2017 WIM - USGS
 
 //    authors:  Jeremy K. Newson USGS Web Informatics and Mapping
 //              
@@ -28,6 +28,7 @@ using NetTopologySuite;
 using SharedDB.Resources;
 using System.Collections.Generic;
 using System;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 //specifying the data provider and connection string
 namespace GageStatsDB
@@ -35,14 +36,14 @@ namespace GageStatsDB
     public class GageStatsDBContext:DbContext
     {
         public DbSet<Agency> Agencies { get; set; }
+        public DbSet<Characteristic> Characteristics { get; set; }
         public DbSet<Citation> Citations { get; set; }
         public DbSet<Station> Stations { get; set; }
         public DbSet<StationType> StationTypes { get; set; }
         public DbSet<Statistic> Statistics { get; set; }
-        public DbSet<StatisticErrors> StatisticErrors { get; set; }
-        public DbSet<StatisticUnitTypes> StatisticUnitTypes { get; set; }
+        public DbSet<User> User { get; set; }
 
-        //from shared schema
+        //Shared views
         public DbSet<ErrorType> ErrorTypes { get; set; }
         public DbSet<UnitType> UnitTypes { get; set; }
         public DbSet<RegressionType> RegressionTypes { get; set; }
@@ -71,9 +72,6 @@ namespace GageStatsDB
             modelBuilder.Entity<UnitType>().ToTable("UnitType_view");
             modelBuilder.Entity<VariableType>().ToTable("VariableType_view");
 
-            //unique key based on region and manager keys
-            modelBuilder.Entity<StatisticUnitTypes>().HasKey(k => new { k.StatisticID, k.UnitTypeID });
-
             //Specify other unique constraints
             //EF Core currently does not support changing the value of alternate keys. We do have #4073 tracking removing this restriction though.
             //BTW it only needs to be an alternate key if you want it to be used as the target key of a relationship.If you just want a unique index, then use the HasIndex() method, rather than AlternateKey().Unique index values can be changed.
@@ -81,10 +79,12 @@ namespace GageStatsDB
             modelBuilder.Entity<Agency>().HasIndex(k => k.Code).IsUnique();
             modelBuilder.Entity<StationType>().HasIndex(k => k.Code).IsUnique();
 
+            modelBuilder.Entity<User>().Property(e => e.Role).HasConversion<string>();
+
             //add shadowstate for when models change
             foreach (var entitytype in modelBuilder.Model.GetEntityTypes())
             {
-                if (new List<string>() { typeof(StatisticErrors).FullName,typeof(ErrorType).FullName,typeof(RegressionType).FullName,
+                if (new List<string>() { typeof(StatisticError).FullName,typeof(ErrorType).FullName,typeof(RegressionType).FullName,
                                          typeof(StatisticGroupType).FullName,typeof(UnitConversionFactor).FullName,typeof(UnitSystemType).FullName,
                                          typeof(UnitType).FullName,typeof(VariableType).FullName }
                 .Contains(entitytype.Name))
@@ -93,26 +93,36 @@ namespace GageStatsDB
                 modelBuilder.Entity(entitytype.Name).Property<DateTime>("LastModified");
             }//next entitytype
 
-            //cascade delete is default, rewrite behavior
-            modelBuilder.Entity("GageStatsDB.Resources.Statistic", b =>
-            {
-                b.HasOne("GageStatsDB.Resources.Station", "Station")
-                    .WithMany("Statistics")
-                    .HasForeignKey("StationID")
-                    .OnDelete(DeleteBehavior.Restrict);
-                b.HasOne("GageStatsDB.Resources.Citation", "Citation")
-                    .WithMany("Statistics")
-                    .HasForeignKey("StationID")
-                    .OnDelete(DeleteBehavior.Restrict);
-            });
 
-            modelBuilder.Entity("GageStatsDB.Resources.Station", b =>
+
+            //cascade delete is default, rewrite behavior
+            modelBuilder.Entity(typeof(Statistic).ToString(), b =>
             {
-                b.HasOne("GageStatsDB.Resources.StationType", "StationType")
+                b.HasOne(typeof(Station).ToString(), "Station")
+                    .WithMany("Statistics")
+                    .HasForeignKey("StationID")
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                b.HasOne(typeof(Citation).ToString(), "Citation")
+                    .WithMany("Statistics")
+                    .HasForeignKey("CitationID")
+                    .OnDelete(DeleteBehavior.Restrict);
+               
+            });
+            modelBuilder.Entity<Statistic>()
+                .HasOne(p => p.PredictionInterval)
+                .WithOne(s => s.Statistic)
+                .HasForeignKey<Statistic>(p => p.PredictionIntervalID)
+                .OnDelete(DeleteBehavior.Cascade);
+                
+
+            modelBuilder.Entity(typeof(Station).ToString(), b =>
+            {
+                b.HasOne(typeof(StationType).ToString(), "StationType")
                     .WithMany("Stations")
                     .HasForeignKey("StationTypeID")
                     .OnDelete(DeleteBehavior.Restrict);
-                b.HasOne("GageStatsDB.Resources.Agency", "Agency")
+                b.HasOne(typeof(Agency).ToString(), "Agency")
                     .WithMany("Stations")
                     .HasForeignKey("AgencyID")
                     .OnDelete(DeleteBehavior.Restrict);
@@ -129,11 +139,14 @@ namespace GageStatsDB
             //modelBuilder.Ignore(typeof(UnitType));
             //modelBuilder.Ignore(typeof(VariableType));
         }
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
 #warning Add connectionstring for migrations
-            //var connectionstring = "User ID=;Password=;Host=test.c69uuui2tzs0.us-east-1.rds.amazonaws.com;Port=5432;Database=StatsDB;Pooling=true;";
+            //var connectionstring = "User ID=;Password=;Host=;Port=5432;Database=StatsDB;Pooling=true;";
             //optionsBuilder.UseNpgsql(connectionstring, x => { x.MigrationsHistoryTable("_EFMigrationsHistory", "gagestats"); x.UseNetTopologySuite(); });
         }
+
+       
     }
 }

@@ -6,7 +6,7 @@
 //       01234567890123456789012345678901234567890123456789012345678901234567890
 //-------+---------+---------+---------+---------+---------+---------+---------+
 
-// copyright:   2017 WIM - USGS
+// copyright:   2019 WIM - USGS
 
 //    authors:  Jeremy K. Newson USGS Web Informatics and Mapping
 //              
@@ -16,7 +16,7 @@
 //discussion:   POCO's arn't derived from special base classed nor do they return any special types for their properties.
 //              
 //
-//     
+//   
 
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -24,17 +24,15 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace GageStatsDB.Resources
 {
-    public partial class StationType
+    public partial class PredictionInterval
     {
         [Required][DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int ID { get; set; }
-        [Required]
-        public string Name { get; set; }
-        public string Description { get; set; }
-        [Required]
-        public string Code { get; set; }
+        public double? Variance { get; set; }
+        public double? LowerConfidenceInterval { get; set; }
+        public double? UpperConfidenceInterval { get; set; }
 
-        public ICollection<Station> Stations { get; set; }
+        public virtual Statistic Statistic { get; set; }
 
     }
 }

@@ -6,7 +6,7 @@
 //       01234567890123456789012345678901234567890123456789012345678901234567890
 //-------+---------+---------+---------+---------+---------+---------+---------+
 
-// copyright:   2017 WiM - USGS
+// copyright:   2019 WIM - USGS
 
 //    authors:  Jeremy K. Newson USGS Web Informatics and Mapping
 //              
@@ -16,20 +16,32 @@
 //discussion:   POCO's arn't derived from special base classed nor do they return any special types for their properties.
 //              
 //
-//     
+//   
 
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using SharedDB.Resources;
 
 namespace GageStatsDB.Resources
 {
-    public partial class StatisticUnitTypes
+    public partial class Characteristic
     {
+        [Required][DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int ID { get; set; }
         [Required]
-        public int StatisticID { get; set; }
+        public int StationID { get; set; }
         [Required]
-        public string UnitTypeID { get; set; }
+        public int VariableTypeID { get; set; }
+        [Required]
+        public int UnitTypeID { get; set; }
+        public int? CitationID { get; set; }
+        [Required]
+        public double Value { get; set; }
+        public string Comments { get; set; }
 
-        public Statistic Statistic { get; set; }            
-
+        public virtual VariableType VariableType { get; set; }
+        public virtual UnitType UnitType { get; set; }
+        public virtual Citation Citation { get; set; }
     }
 }

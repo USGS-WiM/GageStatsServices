@@ -6,7 +6,7 @@
 //       01234567890123456789012345678901234567890123456789012345678901234567890
 //-------+---------+---------+---------+---------+---------+---------+---------+
 
-// copyright:   2017 WiM - USGS
+// copyright:   2017 WIM - USGS
 
 //    authors:  Jeremy K. Newson USGS Web Informatics and Mapping
 //              
@@ -28,27 +28,23 @@ namespace GageStatsDB.Resources
 {
     public partial class Station
     {
-        [Required]
+        [Required][DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int ID { get; set; }
         [Required]
         public string Code { get; set; }
         [Required]
         public int AgencyID { get; set; }
         [Required]
-        public string Name { get; set; }
-        [Required]
-        public string Type { get; set; }
-        [Required]
-        public bool IsRegulated { get; set; }
+        public string Name { get; set; }     
+        public bool? IsRegulated { get; set; }
         [Required]
         public int StationTypeID { get; set; }
         [Required]
-        public Point Location { get; set; }
+        public Geometry Location { get; set; }
 
-        public List<Statistic> Statistics { get; set; }
-
+        public ICollection<Statistic> Statistics { get; set; }
+        public ICollection<Characteristic> Characteristics { get; set; }
         public Agency Agency { get; set; }
-
         public StationType StationType { get; set; }
     }
 }

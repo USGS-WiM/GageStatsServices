@@ -6,7 +6,7 @@
 //       01234567890123456789012345678901234567890123456789012345678901234567890
 //-------+---------+---------+---------+---------+---------+---------+---------+
 
-// copyright:   2017 WiM - USGS
+// copyright:   2017 WIM - USGS
 
 //    authors:  Jeremy K. Newson USGS Web Informatics and Mapping
 //              
@@ -18,17 +18,19 @@
 //
 //     
 
+using SharedDB.Resources;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace GageStatsDB.Resources
 {
     public partial class Statistic
     {
-        [Required]
+        [Required][DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int ID { get; set; }
         [Required]
-        public int StatisticGroupID  { get; set; }
+        public int StatisticGroupTypeID  { get; set; }
         [Required]
         public int RegressionTypeID { get; set; }
         [Required]
@@ -37,20 +39,17 @@ namespace GageStatsDB.Resources
         public double Value { get; set; }
         [Required]
         public int UnitTypeID { get; set; }
-
         public string Comments { get; set; }
+        public double? YearsofRecord { get; set; }
+        public int? CitationID { get; set; }
+        public int? PredictionIntervalID { get; set; }
 
-        public int YearsofRecord { get; set; }
-        [Required]
-        public int CitationID { get; set; }
-
-        public List<StatisticUnitTypes> StatisticUnitTypes { get; set; }
-
-        public List<StatisticErrors> StatisticErrors { get; set; }
-
-        public Citation Citation { get; set; }
-
-        public Station Station { get; set; }
-
+        public ICollection<StatisticError> StatisticErrors { get; set; }
+        public virtual Citation Citation { get; set; }
+        public virtual UnitType UnitType { get; set; }
+        public virtual StatisticGroupType StatisticGroupType { get; set; }
+        public virtual RegressionType RegressionType { get; set; }
+        public virtual Station Station { get; set; }
+        public virtual PredictionInterval PredictionInterval { get; set; }
     }
 }

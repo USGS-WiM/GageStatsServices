@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26730.16
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28729.10
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GageStatsServices", "GageStatsServices\GageStatsServices.csproj", "{EA7C0EBD-A975-4999-A7C3-7FDBC03985F7}"
 EndProject
@@ -12,6 +12,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GageStatsDB", "GageStatsDB\GageStatsDB.csproj", "{849C452B-6622-4B37-8EE7-A4516AE30D54}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GageStatsDB.Test", "GageStatsDB.Test\GageStatsDB.Test.csproj", "{AEDA0ACB-7C1E-4D32-8A3F-9950F2ED66DB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FU_GageStatsDB", "FU_GageStatsDB\FU_GageStatsDB.csproj", "{8B87035F-F3A0-4E63-95A2-EB7E6BAA2824}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +41,10 @@ Global
 		{AEDA0ACB-7C1E-4D32-8A3F-9950F2ED66DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AEDA0ACB-7C1E-4D32-8A3F-9950F2ED66DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AEDA0ACB-7C1E-4D32-8A3F-9950F2ED66DB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8B87035F-F3A0-4E63-95A2-EB7E6BAA2824}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8B87035F-F3A0-4E63-95A2-EB7E6BAA2824}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8B87035F-F3A0-4E63-95A2-EB7E6BAA2824}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8B87035F-F3A0-4E63-95A2-EB7E6BAA2824}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

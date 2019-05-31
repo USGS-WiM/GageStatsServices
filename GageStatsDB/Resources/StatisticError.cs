@@ -6,7 +6,7 @@
 //       01234567890123456789012345678901234567890123456789012345678901234567890
 //-------+---------+---------+---------+---------+---------+---------+---------+
 
-// copyright:   2017 WiM - USGS
+// copyright:   2017 WIM - USGS
 
 //    authors:  Jeremy K. Newson USGS Web Informatics and Mapping
 //              
@@ -20,22 +20,22 @@
 
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using SharedDB.Resources;
 
 namespace GageStatsDB.Resources
 {
-    public partial class StatisticErrors
+    public partial class StatisticError
     {
-        [Required]
+        [Required][DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int ID { get; set; }
         [Required]
-        public int UnitTypeID { get; set; }
+        public int StatisticID { get; set; }
         [Required]
         public int ErrorTypeID { get; set; }
         [Required]
         public double Value { get; set; }
 
-        public Statistic Statistic { get; set; }
-
-
+        public virtual Statistic Statistic { get; set; }
+        public virtual ErrorType ErrorType { get; set; }
     }
 }

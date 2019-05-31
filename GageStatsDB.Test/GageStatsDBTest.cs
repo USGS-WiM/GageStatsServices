@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Configuration;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+
 using System;
 using System.Linq;
 
@@ -37,7 +38,7 @@ namespace GageStatsDB.Test
             {
                 try
                 {
-                    var testQuery = context.ErrorTypes.ToList();
+                    var testQuery = context.Agencies.ToList();
                     Assert.IsNotNull(testQuery, testQuery.Count.ToString());
                 }
                 catch (Exception ex)
