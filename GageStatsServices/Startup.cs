@@ -21,6 +21,7 @@ using Microsoft.Net.Http.Headers;
 using WIM.Services.Messaging;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using NetTopologySuite.Geometries;
+using NetTopologySuite.IO;
 using GageStatsDB.Resources;
 using System.Threading.Tasks;
 using System.Text;
@@ -28,7 +29,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using WIM.Services.Security.Authentication.JWTBearer;
 using WIM.Security.Authorization;
-using GageStatsServices.Resources;
+using WIM.Resources;
+using SharedDB;
+using SharedAgent;
 
 namespace GageStatsServices
 {
@@ -69,6 +72,7 @@ namespace GageStatsServices
             services.AddScoped<GageStatsAgent.GageStatsAgent>();
             services.AddScoped<IGageStatsAgent>(x => x.GetRequiredService<GageStatsAgent.GageStatsAgent>());
             services.AddScoped<IAuthenticationAgent>(x => x.GetRequiredService<GageStatsAgent.GageStatsAgent>());
+            services.AddScoped<ISharedAgent, SharedAgent.SharedAgent>();
 
             // Add framework services
             services.AddDbContext<GageStatsDBContext>(options =>
@@ -78,6 +82,14 @@ namespace GageStatsServices
                                                             opt => { opt.MaxBatchSize(1000); opt.UseNetTopologySuite(); })
                                                             .EnableSensitiveDataLogging());
 
+            services.AddDbContext<SharedDBContext>(options =>
+                                            options.UseNpgsql(String.Format(Configuration
+                                                .GetConnectionString("Connection"), Configuration["dbuser"], Configuration["dbpassword"], Configuration["dbHost"]),
+                                                //default is 1000, if > maxbatch, then EF will group requests in maxbatch size
+                                                opt => opt.MaxBatchSize(1000))
+                                                //.EnableSensitiveDataLogging()
+                                                );
+
             //Authentication
             services.AddAuthentication(x =>
             {
@@ -86,8 +98,7 @@ namespace GageStatsServices
             }).AddBasicAuthentication()
            .AddJwtBearer(options =>
            {
-               //options.Events = new JWTBearerAuthenticationEvents();
-               options.Events = new testClass();
+               options.Events = new JWTBearerAuthenticationEvents();
                options.RequireHttpsMetadata = false;
                options.SaveToken = true;
                
@@ -141,12 +152,12 @@ namespace GageStatsServices
             options.SerializerSettings.TypeNameHandling = Newtonsoft.Json.TypeNameHandling.None;
             options.SerializerSettings.TypeNameAssemblyFormatHandling = Newtonsoft.Json.TypeNameAssemblyFormatHandling.Simple;
             options.SerializerSettings.Formatting = Newtonsoft.Json.Formatting.None;
+            //needed for geojson serializer
+            foreach (var converter in GeoJsonSerializer.Create(new GeometryFactory(new PrecisionModel(), 4326)).Converters)
+            { options.SerializerSettings.Converters.Add(converter); }
         }
         private void loadAutorizationPolicies(AuthorizationOptions options)
-        {
-            //https://www.thereformedprogrammer.net/a-better-way-to-handle-authorization-in-asp-net-core/
-            //https://jasonwatmore.com/post/2019/01/08/aspnet-core-22-role-based-authorization-tutorial-with-example-api
-     
+        {     
             options.AddPolicy(
                 Policy.Managed,
                 policy => policy.RequireRole(Role.Admin, Role.Manager));

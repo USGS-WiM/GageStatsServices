@@ -32,11 +32,5 @@ namespace GageStatsDB.Resources
         public bool ShouldSerializeSalt()
         { return false; }
     }
-
-    public class Role
-    {
-        public const string Admin = "Administrator";
-        public const string Manager = "Manager";
-        public const string Anonymous = "Anonymous";
-    }
+    
 }

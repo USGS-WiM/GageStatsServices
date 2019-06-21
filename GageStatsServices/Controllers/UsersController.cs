@@ -28,10 +28,13 @@ using WIM.Services.Attributes;
 using Microsoft.AspNetCore.Authorization;
 using WIM.Security.Authentication;
 using GageStatsDB.Resources;
-using GageStatsServices.Resources;
 using WIM.Security.Authorization;
 using WIM.Services.Security.Authentication.JWTBearer;
 using Microsoft.Extensions.Options;
+using System.Linq;
+using System.Security.Claims;
+using WIM.Security;
+using User = GageStatsDB.Resources.User;
 
 namespace GageStatsServices.Controllers
 {
@@ -55,7 +58,15 @@ namespace GageStatsServices.Controllers
         {
             try
             {                
-                return Ok(agent.GetUsers());
+                return Ok(agent.GetUsers().Select(u => new User() {
+                    ID = u.ID,
+                    Email = u.Email,
+                    FirstName=u.FirstName,
+                    LastName = u.LastName,
+                    Username = u.Username,
+                    PrimaryPhone = u.PrimaryPhone,
+                    Role = u.Role
+                }));
             }
             catch (Exception ex)
             {
@@ -71,7 +82,14 @@ namespace GageStatsServices.Controllers
             try
             {
                 if (id < 0) return new BadRequestResult(); // This returns HTTP 404
-                return Ok(await agent.GetUser(id));
+                if (!User.IsInRole(Role.Admin) || Convert.ToInt32(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.PrimarySid)?.Value) != id)
+                    return new UnauthorizedResult();// return HTTP 401
+
+                var x = await agent.GetUser(id);
+                x.Salt = null;
+                x.Password = null;
+
+                return Ok(x);
             }
             catch (Exception ex)
             {
@@ -86,26 +104,23 @@ namespace GageStatsServices.Controllers
         {
             try
             {
+                if (string.IsNullOrEmpty(entity.FirstName) || string.IsNullOrEmpty(entity.LastName) ||
+                    string.IsNullOrEmpty(entity.Username) || string.IsNullOrEmpty(entity.Email) ||
+                    string.IsNullOrEmpty(entity.Role)) return new BadRequestObjectResult(new Error(errorEnum.e_badRequest, "You are missing one or more required parameter.")); // This returns HTTP 404
+
+                if (string.IsNullOrEmpty(entity.Password))
+                    entity.Password = generateDefaultPassword(entity);
+
+                entity.Salt = Cryptography.CreateSalt();
+                entity.Password = Cryptography.GenerateSHA256Hash(entity.Password, entity.Salt);
+
                 if (!isValid(entity)) return new BadRequestResult(); // This returns HTTP 404
-                return Ok(await agent.Add(entity));
-            }
-            catch (Exception ex)
-            {
-                return await HandleExceptionAsync(ex);
-            }
-        }
+                var x = await agent.Add(entity);
+                //remove info not relevant
+                x.Salt = null;
+                x.Password = null;
 
-        [HttpPost("[action]", Name = "User Batch Upload")]
-        [Authorize(Policy = Policy.AdminOnly)]
-        [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Users/Batch.md")]
-        public async Task<IActionResult> Batch([FromBody]List<User> entities)
-        {
-            try
-            {
-
-                entities.ForEach(e => e.ID = 0);
-                if (!isValid(entities)) return new BadRequestObjectResult("Object is invalid");
-                return Ok(await agent.Add(entities));
+                return Ok(await agent.Add(x));
             }
             catch (Exception ex)
             {
@@ -118,11 +133,43 @@ namespace GageStatsServices.Controllers
         [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Users/Edit.md")]
         public async Task<IActionResult> Put(int id, [FromBody]User entity)
         {
+            User ObjectToBeUpdated = null;
             try
             {
-                if (id < 0 || !isValid(entity)) return new BadRequestResult(); // This returns HTTP 404
-                return Ok(await agent.Update(id, entity));
+                if (string.IsNullOrEmpty(entity.FirstName) || string.IsNullOrEmpty(entity.LastName) ||
+                    string.IsNullOrEmpty(entity.Email)) return new BadRequestObjectResult(new Error(errorEnum.e_badRequest)); // This returns HTTP 404
 
+                //fetch object, assuming it exists
+                ObjectToBeUpdated = await agent.GetUser(id);
+                if (ObjectToBeUpdated == null) return new NotFoundObjectResult(entity);
+
+                if (!User.IsInRole(Role.Admin) || Convert.ToInt32(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.PrimarySid)?.Value) != id)
+                    return new UnauthorizedResult();// return HTTP 401
+
+                ObjectToBeUpdated.FirstName = entity.FirstName;
+                ObjectToBeUpdated.LastName = entity.LastName;
+                ObjectToBeUpdated.PrimaryPhone = entity.PrimaryPhone ?? entity.PrimaryPhone;
+                ObjectToBeUpdated.Email = entity.Email;
+
+                //admin can only change role
+                if (User.IsInRole(Role.Admin) && !string.IsNullOrEmpty(entity.Role))
+                    ObjectToBeUpdated.Role = entity.Role;
+
+                //change password if needed
+                if (!string.IsNullOrEmpty(entity.Password) && !Cryptography
+                            .VerifyPassword(entity.Password, ObjectToBeUpdated.Salt, ObjectToBeUpdated.Password))
+                {
+                    ObjectToBeUpdated.Salt = Cryptography.CreateSalt();
+                    ObjectToBeUpdated.Password = Cryptography.GenerateSHA256Hash(entity.Password, ObjectToBeUpdated.Salt);
+                }//end if
+
+                var x = await agent.Update(id, ObjectToBeUpdated);
+
+                //remove info not relevant
+                x.Salt = null;
+                x.Password = null;
+
+                return Ok(x);
             }
             catch (Exception ex)
             {
@@ -147,7 +194,12 @@ namespace GageStatsServices.Controllers
         }
         #endregion
         #region HELPER METHODS
-
+        private string generateDefaultPassword(User entity)
+        {
+            //Gage5tatsDefau1t+numbercharInlastname+first2letterFirstName
+            string generatedPassword = "Gage5tatsDefau1t" + entity.LastName.Length + entity.FirstName.Substring(0, 2);
+            return generatedPassword;
+        }
         #endregion
     }
 }
