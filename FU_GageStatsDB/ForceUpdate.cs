@@ -1,10 +1,276 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿//------------------------------------------------------------------------------
+//----- ForceUpdate -------------------------------------------------------------
+//------------------------------------------------------------------------------
 
+//-------1---------2---------3---------4---------5---------6---------7---------8
+//       01234567890123456789012345678901234567890123456789012345678901234567890
+//-------+---------+---------+---------+---------+---------+---------+---------+
+
+// copyright:   2019 WiM - USGS
+
+//    authors:  Jeremy K. Newson USGS Web Informatics and Mapping
+//             
+// 
+//   purpose: Forces and update to Streamstats from an access SSDB
+//          
+//discussion: 
+//Access connection using odbc https://mrojas.ghost.io/msaccess-in-dotnetcore/
+// must download and install https://www.microsoft.com/en-us/download/details.aspx?id=13255 for some reason, even if you have access installed.
+
+#region "Comments"
+//10.31.2016 jkn - Created
+#endregion
+
+#region "Imports"
+using FU_GageStatsDB.Resources;
+using GageStatsDB.Resources;
+using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
+using SharedDB.Resources;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+#endregion
 namespace FU_GageStatsDB
 {
-    class ForceUpdate
+    public class ForceUpdate
     {
+        #region properties
+        private List<string> _message = new List<string>();
+        public List<string> Messages
+        {
+            get { return _message; }
+        }
+        public List<StatisticGroupType> statisticGroupTypeList { get; private set; }
+        public List<VariableType> variableTypeList { get; private set; }
+        public List<UnitType> unittypeList { get; private set; }
+        public List<RegressionType> regressionTypeList { get; private set; }
+        public List<StationType> stationTypeList { get; private set; }
+        public List<Agency> agencies { get; private set; }
+
+        private string SSDBConnectionstring;
+        private string GagesStatsDBConnectionstring;
+        
+        #endregion
+        #region Constructors
+        public ForceUpdate(string dbusername, string dbpassword, string accessdb)
+        {
+            SSDBConnectionstring = string.Format(@"Driver={{Microsoft Access Driver (*.mdb, *.accdb)}};dbq={0}", accessdb);
+            GagesStatsDBConnectionstring = string.Format("Server=test.c69uuui2tzs0.us-east-1.rds.amazonaws.com; database={0}; UID={1}; password={2}", "StatsDB", dbusername, dbpassword);
+
+            init();
+        }
+        #endregion
+
+        #region Methods
+        public bool VerifyLists()
+        {
+            List<string> DBUnitAbbr = this.unittypeList.Select(k => k.Abbreviation.Trim()).ToList();
+            List<string> DBVariableList = this.variableTypeList.Select(vt => vt.Code.Trim().ToUpper()).ToList();
+            List<string> DBStatisticGroupList = this.statisticGroupTypeList.Select(vt => vt.Code.Trim().ToUpper()).ToList();
+            List<string> DBregressionList = this.regressionTypeList.Select(vt => vt.Code.Trim().ToUpper()).ToList();
+            List<string> DBstationTypeList = this.stationTypeList.Select(vt => vt.Code.Trim().ToUpper()).ToList();
+            List<string> DBAgencyList = this.agencies.Select(a => a.Code.Trim().ToUpper()).ToList();
+           
+
+            List<string> ssdbUnitAbbr = null;
+            List<GageStatsVariableType> ssdbDBVariableList = null;
+            List<GageStatsStatisticGroupType> ssdbStatisticGroupList = null;
+            List<GageStatsRegressionType> ssdbRegressionList = null;
+            List<GageStatsStationType> ssdbStationTypeList = null;
+            List<string> ssAgencyList = null;
+
+            using (var ssdb = new GageStatsDbOps(SSDBConnectionstring, GageStatsDbOps.ConnectionType.e_access))
+            {
+                ssdbUnitAbbr = ssdb.GetItems<FUString>(GageStatsDbOps.SQLType.e_unittype).Select(f => f.Value.Trim()).ToList();
+                ssdbDBVariableList = ssdb.GetItems<GageStatsVariableType>(GageStatsDbOps.SQLType.e_variabletype).ToList();
+                ssdbStatisticGroupList = ssdb.GetItems<GageStatsStatisticGroupType>(GageStatsDbOps.SQLType.e_statisticgrouptype).ToList();
+                ssdbRegressionList = ssdb.GetItems<GageStatsRegressionType>(GageStatsDbOps.SQLType.e_regressiontype).ToList();
+                ssdbStationTypeList = ssdb.GetItems<GageStatsStationType>(GageStatsDbOps.SQLType.e_stationtype).ToList();
+                ssAgencyList = ssdb.GetItems<FUString>(GageStatsDbOps.SQLType.e_agency).Select(e=>e.Value).ToList();
+            }//end using
+
+            var diffUnits = ssdbUnitAbbr.Except(DBUnitAbbr).ToList();
+            var diffVariable = ssdbDBVariableList.Where(v=>!DBVariableList.Contains(v.Code.Trim().ToUpper())).ToList();
+            var diffSG = ssdbStatisticGroupList.Where(sg=>!DBStatisticGroupList.Contains(sg.Code.Trim().ToUpper())).ToList();
+            var diffRegList = ssdbRegressionList.Where(r => !DBregressionList.Contains(r.Code.Trim().ToUpper())).ToList();
+            var diffStationtypeList = ssdbStationTypeList.Where(r => !DBstationTypeList.Contains(r.Code.Trim().ToUpper())).ToList();
+            var diffAgencies = ssAgencyList.Where(r => !DBAgencyList.Contains(r.Trim().ToUpper())).ToList();
+
+            if (diffVariable.Count > 0) createUpdateList(diffVariable);
+            if (diffRegList.Count > 0) createUpdateList(diffRegList);
+            if (diffSG.Count > 0) createUpdateList(diffSG);
+            if (diffStationtypeList.Count > 0) createUpdateList(diffStationtypeList);
+            //if (diffAgencies.Count > 0) createUpdateList(diffAgencies);
+
+            return diffUnits.Count < 2 && diffVariable.Count < 1 && diffSG.Count < 1 && diffRegList.Count < 1 && diffStationtypeList.Count <1;
+        }
+        public void Load() {
+            try
+            {
+                sm("Starting migration " + DateTime.Today.ToShortDateString());
+                using (var ssdb = new GageStatsDbOps(SSDBConnectionstring, GageStatsDbOps.ConnectionType.e_access))
+                {
+                    using (var gsDBOps = new GageStatsDbOps(GagesStatsDBConnectionstring, GageStatsDbOps.ConnectionType.e_postgresql))
+                    {
+                        gsDBOps.ResetTables();
+                
+                        bool DBcontainsMoreRecords = true;
+                        var stationcount = ssdb.GetItems<FUInt>(GageStatsDbOps.SQLType.e_stationCount).FirstOrDefault().Value;
+
+                        sm("Uploading Citations");
+                        //citations
+                        gsDBOps.AddItems(GageStatsDbOps.SQLType.e_postcitation, ssdb.GetItems<FU_Citation>(GageStatsDbOps.SQLType.e_citation).Select(c=> new object[] { c.Title, c.Author, c.CitationURL }),new object[] { });
+                        List<GageStatsCitations> citationlist = gsDBOps.GetItems<GageStatsCitations>(GageStatsDbOps.SQLType.e_citation, new object[] { }).ToList();
+
+
+
+                        Int32 limit = 1000;
+                        Int32 offset = 0;
+                        Int32 currentcount = 0;
+                        sm("Uploading Stations");
+                        while (DBcontainsMoreRecords)
+                        {
+                            sm($"LIMIT: {limit} Offset: {offset} ");
+                            if ((stationcount - offset) < limit)
+                            {
+                                limit = (stationcount - offset);
+                                DBcontainsMoreRecords = false;
+                            }//endif
+                        
+                            foreach (var item in ssdb.GetItems<FU_Station>(GageStatsDbOps.SQLType.e_station, limit, limit + offset))
+                            {
+                                currentcount++;
+                                sm($"Processing Station {item.Code} {currentcount}/{stationcount}");
+                                //POST Station
+                                var agency = this.agencies.FirstOrDefault(e => String.Equals(e.Code, item.Agency_cd, StringComparison.OrdinalIgnoreCase))?? this.agencies.FirstOrDefault(e=>string.Equals(e.Name, "Undefined"));
+                                var stationType = this.stationTypeList.FirstOrDefault(e => String.Equals(e.Code, item.StationTypeCode))?? this.stationTypeList.FirstOrDefault(st=>string.Equals(st.Name, "Undefined"));
+                                item.ID = gsDBOps.AddItem(GageStatsDbOps.SQLType.e_station,new object[] {item.Code, agency.ID, item.Name,item.IsRegulated, stationType.ID, item.Location.AsText() });
+
+                                //get stats and characteristics to push
+                                List<FU_Statistics> statistics = ssdb.GetItems<FU_Statistics>(GageStatsDbOps.SQLType.e_statistic_data, item.Code).ToList();
+
+
+                                //charactersitics
+                                gsDBOps.AddItems(GageStatsDbOps.SQLType.e_characteristics, statistics.Where(s => String.Equals(s.StatisticDefType, "BC", StringComparison.OrdinalIgnoreCase))
+                                                                        .Select(c => new object[] {
+                                                                            this.variableTypeList.FirstOrDefault(v=>String.Equals(v.Code,c.StatisticCode)).ID,
+                                                                            this.unittypeList.FirstOrDefault(u=> string.Equals(u.Abbreviation, c.StatisticUnitAbbr)).ID,
+                                                                            citationlist.FirstOrDefault(s=>string.Equals(s.Title,c.Citation.Title,StringComparison.OrdinalIgnoreCase)&& string.Equals(s.Author,c.Citation.Author, StringComparison.OrdinalIgnoreCase) && string.Equals(s.CitationURL,c.Citation.CitationURL, StringComparison.OrdinalIgnoreCase))?.ID,
+                                                                            c.StatisticValue,
+                                                                            c.StatisticRemarks
+                                                                        }).ToList(), new object[] {item.ID });
+
+
+                                //Statistics
+
+                                gsDBOps.AddItems(statistics.Where(s => String.Equals(s.StatisticDefType, "FS", StringComparison.OrdinalIgnoreCase))
+                                                                        .Select(c => new Statistic
+                                                                        {
+                                                                            StationID = item.ID,
+                                                                            CitationID = citationlist.FirstOrDefault(s => string.Equals(s.Title, c.Citation.Title, StringComparison.OrdinalIgnoreCase) && string.Equals(s.Author, c.Citation.Author, StringComparison.OrdinalIgnoreCase) && string.Equals(s.CitationURL, c.Citation.CitationURL, StringComparison.OrdinalIgnoreCase))?.ID,
+                                                                            Comments = createComment(c.StatisticStartDate, c.StatisticEndDate, c.StatisticRemarks),
+                                                                            RegressionTypeID = this.regressionTypeList.FirstOrDefault(v => String.Equals(v.Code, c.StatisticCode)).ID,
+                                                                            StatisticGroupTypeID = this.statisticGroupTypeList.FirstOrDefault(v => String.Equals(v.Code, c.StatisticTypeCode)).ID,
+                                                                            UnitTypeID = this.unittypeList.FirstOrDefault(u => string.Equals(u.Abbreviation, c.StatisticUnitAbbr)).ID,
+                                                                            Value = c.StatisticValue,
+                                                                            YearsofRecord = c.StatisticYears,
+                                                                            PredictionInterval = (c.StatisticLowerCI.HasValue || c.StatisticUpperCI.HasValue||c.StatisticVariance.HasValue) ? new PredictionInterval()
+                                                                            {
+                                                                                LowerConfidenceInterval = c.StatisticLowerCI,
+                                                                                UpperConfidenceInterval = c.StatisticUpperCI,
+                                                                                Variance = c.StatisticVariance
+                                                                            } : null,
+                                                                            StatisticErrors = c.StatisticError.HasValue ? new List<StatisticError>(){ new StatisticError() {
+                                                                                ErrorTypeID = 1,
+                                                                                Value = c.StatisticError.Value
+                                                                            } } : null
+                                                                        }).ToList());
+                            }//next station
+                            //increment
+                            offset = offset + 1000;
+                        }//DO
+                     }//end using
+                }//end using
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+        }
+        #endregion
+        #region Helper Methods
+        private string createComment(DateTime? startDate, DateTime? endDate, String Comments)
+        {
+            List<string> stringBuilder = new List<string>();
+            if(startDate.HasValue && endDate.HasValue) stringBuilder.Add($"Statistic Date Range {startDate.Value.ToShortDateString()} - {endDate.Value.ToShortDateString()} ");
+            if (!string.IsNullOrEmpty(Comments)) stringBuilder.Add($"Other Remarks {Comments} ");
+
+            return string.Join("\n", stringBuilder);
+        }
+        private void createUpdateList<T>(List<T> diffList)
+        {
+            string tableName = "";
+            List<string> updateList = new List<string>();
+            string insertStmnt = @"INSERT INTO {0} VALUES ({1});";
+
+            switch (typeof(T).Name)
+            {
+                case "GageStatsVariableType":
+                    tableName = @"""shared"".""VariableType""(""Name"",""Code"",""Description"")";
+                    updateList = diffList.Cast<GageStatsVariableType>()
+                        .Select(t => 
+                            String.Format(insertStmnt, tableName, String.Join(',', new List<string>() {$"'{t.Name}'", $"'{t.Code}'", $"'{t.Description}'" }))).ToList();
+                    break;
+                case "GageStatsStatisticGroupType":
+                    tableName = @"""shared"".""StatisticGroupType""(""Name"",""Code"")";
+                    updateList = diffList.Cast<GageStatsStatisticGroupType>()
+                        .Select(t =>
+                            String.Format(insertStmnt, tableName, String.Join(',', new List<string>() { $"'{t.Name}'", $"'{t.Code}'" }))).ToList();
+                    break;
+                case "GageStatsRegressionType":
+                    tableName = @"""shared"".""RegressionType""(""Name"",""Code"",""Description"")";
+                    updateList = diffList.Cast<GageStatsRegressionType>()
+                        .Select(t =>
+                            String.Format(insertStmnt, tableName, String.Join(',', new List<string>() { $"'{t.Name}'", $"'{t.Code}'",$"'{t.Description}'" }))).ToList();
+                    break;
+
+                default:
+                    return;
+            }
+           
+
+            using (TextWriter tw = new StreamWriter(typeof(T).Name+".sql"))
+            {
+                foreach (var s in updateList)
+                    tw.WriteLine(s);
+            }
+
+           
+        }
+        
+        private void init()
+        {
+            using (var GageStatsDBOps = new GageStatsDbOps(GagesStatsDBConnectionstring, GageStatsDbOps.ConnectionType.e_postgresql))
+            {
+                statisticGroupTypeList = GageStatsDBOps.GetItems<GageStatsStatisticGroupType>(GageStatsDbOps.SQLType.e_getstatisticgroups).ToList<StatisticGroupType>();
+                variableTypeList = GageStatsDBOps.GetItems<GageStatsVariableType>(GageStatsDbOps.SQLType.e_getvariabletypes).ToList<VariableType>();
+                unittypeList = GageStatsDBOps.GetItems<GagesStatsUnitType>(GageStatsDbOps.SQLType.e_getunittypes).ToList<UnitType>();
+                regressionTypeList = GageStatsDBOps.GetItems<GageStatsRegressionType>(GageStatsDbOps.SQLType.e_getregressiontypes).ToList<RegressionType>();
+                stationTypeList = GageStatsDBOps.GetItems<GageStatsStationType>(GageStatsDbOps.SQLType.e_stationtype).ToList<StationType>();
+                agencies = GageStatsDBOps.GetItems<GageStatsAgency>(GageStatsDbOps.SQLType.e_agency).ToList<Agency>();
+            }//end using
+        }
+
+        private void sm(string msg)
+        {
+            System.Diagnostics.Debug.WriteLine(msg);
+            Console.WriteLine(msg);
+            this._message.Add(msg);
+        }
+        #endregion
+
+
     }
 }

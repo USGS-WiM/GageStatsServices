@@ -60,6 +60,9 @@ namespace GageStatsAgent
         Task<Citation> Update(Int32 pkId, Citation item);
         Task DeleteCitation(Int32 id);
 
+        //Roles
+        IQueryable<string> GetRoles();
+
         //Station
         IQueryable<Station> GetStations();
         Task<Station> GetStation(Int32 ID);
@@ -197,10 +200,17 @@ namespace GageStatsAgent
             return Delete<Citation>(id);
         }
         #endregion
+        #region Roles
+        public IQueryable<String> GetRoles()
+        {
+            return Role.ToList().AsQueryable();
+        }
+
+        #endregion 
         #region Station
         public IQueryable<Station> GetStations()
         {
-            return Select<Station>().Include(s=>s.StationType);
+            return Select<Station>().Include(s=>s.StationType).Include(s=>s.Agency);
         }
         public Task<Station> GetStation(int ID)
         {
@@ -287,7 +297,7 @@ namespace GageStatsAgent
         }
         public IUser GetUserByUsername(string username)
         {
-            //return Select<User>().FirstOrDefault(r => string.Equals(r.Username.ToLower(), username.ToLower()));
+            return Select<User>().FirstOrDefault(r => string.Equals(r.Username.ToLower(), username.ToLower()));
             throw new NotImplementedException();
         }
         public IUser GetUserByID(int id)
