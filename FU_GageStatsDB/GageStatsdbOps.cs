@@ -31,8 +31,8 @@ using System.Data.Odbc;
 using Npgsql;
 using WIM.Utilities;
 using WIM.Utilities.Extensions;
-
-
+using FU_GageStatsDB.Resources;
+using GageStatsDB.Resources;
 #endregion
 
 namespace FU_GageStatsDB
@@ -100,23 +100,80 @@ namespace FU_GageStatsDB
                 this.CloseConnection();
             }
         }
-        
+        public void AddItems(SQLType type, IEnumerable<object[]> items, object[] args)
+        {
+            List<string> sql = new List<string>();
+            try
+            {
+                args = args.Select(a => a == null ? "null" : a).ToArray();
+                foreach (var item in items)
+                {
+                    sql.Add(String.Format(getSQL(type), item.Concat(args).ToArray()));
+                }
+
+
+                var sqltopush = string.Join("\n", sql);
+                ExecuteSql(sqltopush);
+
+            }
+            catch (Exception ex)
+            {
+                this.sm(ex.Message);
+                throw ex;
+            }
+        }
+        public void AddItems(IEnumerable<Statistic> items)
+        {
+            List<string> sql = new List<string>();
+            try
+            {
+                /*
+                 WITH predictioninterval as (Select Null as "ID"),
+                    stats as (INSERT INTO "gagestats"."Statistics"("StatisticGroupTypeID","RegressionTypeID","StationID","Value","UnitTypeID","Comments","YearsofRecord","CitationID","PredictionIntervalID") 
+                                                    SELECT 21,503,1,0,44,'',Null,122,CAST(p."ID" as INT) FROM predictioninterval as p RETURNING "ID")
+                    INSERT INTO "gagestats"."StatisticError"("StatisticID","ErrorTypeID","Value") SELECT stats."ID", 1,123.5 FROM stats;
+																	 
+                 */
+                foreach (var item in items)
+                {
+                    
+                    string predIntervalsql = item.PredictionInterval != null? 
+                        String.Format(getSQL(SQLType.e_predictioninterval), new object[] { item.PredictionInterval.LowerConfidenceInterval.HasValue? item.PredictionInterval.LowerConfidenceInterval.Value.ToString():"Null",
+                                                                                           item.PredictionInterval.UpperConfidenceInterval.HasValue? item.PredictionInterval.UpperConfidenceInterval.Value.ToString():"Null",
+                                                                                           item.PredictionInterval.Variance.HasValue? item.PredictionInterval.Variance.Value.ToString():"Null" }) : @"Select Null as ""ID""";
+                    //""StatisticGroupTypeID"",""RegressionTypeID"",""StationID"",""Value"",""UnitTypeID"",""Comments"",""YearsOfRecord"",""CitationID"",""PredictionIntervalID""
+                    string stats = String.Format(getSQL(SQLType.e_statistics), new object[]{ item.StatisticGroupTypeID, item.RegressionTypeID, item.StationID, item.Value, item.UnitTypeID, item.Comments, item.YearsofRecord.HasValue? item.YearsofRecord.Value.ToString() :"Null", item.CitationID.HasValue? item.CitationID.Value.ToString():"Null" });
+                    //""StatisticID"",""ErrorTypeID"",""Value""
+
+                    sql.Add($"WITH predictioninterval as ({predIntervalsql})");
+
+                    if (item.StatisticErrors == null)
+                        sql.Add(stats);
+                    else
+                        sql.Add(String.Format(getSQL(SQLType.e_statisticnerror), new object[] {stats, item.StatisticErrors.FirstOrDefault().ErrorTypeID, item.StatisticErrors.FirstOrDefault().Value }));
+
+                    
+                    sql.Add(";");
+                    
+                }
+
+                var sqltopush = string.Join("\n", sql);
+                ExecuteSql(sqltopush);
+
+            }
+            catch (Exception ex)
+            {
+                this.sm(ex.Message);
+                throw ex;
+            }
+        }
         public bool ResetTables()
         {
-            throw new NotImplementedException();
             string sql = string.Empty;
             try
             {
-                sql += @"TRUNCATE TABLE ""Regions"" RESTART IDENTITY CASCADE;
-                         TRUNCATE TABLE ""RegionRegressionRegions"" RESTART IDENTITY CASCADE;";
-                sql += @"TRUNCATE TABLE ""RegressionRegions"" RESTART IDENTITY CASCADE;
-                         TRUNCATE TABLE ""Citations"" RESTART IDENTITY CASCADE;";
-                sql += @"TRUNCATE TABLE ""Equations"" RESTART IDENTITY CASCADE;
-                         TRUNCATE TABLE ""EquationUnitTypes"" RESTART IDENTITY CASCADE;
-                         TRUNCATE TABLE ""PredictionIntervals"" RESTART IDENTITY CASCADE;
-                         TRUNCATE TABLE ""EquationErrors"" RESTART IDENTITY CASCADE;";
-                sql += @"TRUNCATE TABLE ""Variables"" RESTART IDENTITY CASCADE;
-                         TRUNCATE TABLE ""VariableUnitTypes"" RESTART IDENTITY CASCADE;";
+                sql += @"TRUNCATE TABLE ""gagestats"".""Stations"" RESTART IDENTITY CASCADE;
+                         TRUNCATE TABLE ""gagestats"".""Citations"" RESTART IDENTITY CASCADE;";
 
                 ExecuteSql(sql);
 
@@ -182,7 +239,8 @@ namespace FU_GageStatsDB
                     //            ;     ";
                     results = @"SELECT s.StationName as Name, s.StaID as Code, s.Latitude, s.Longitude, s.Agency_cd, s.StationTypeCode
                                 FROM Station s
-                                WHERE s.StaID In 
+                                WHERE s.Latitude Is Not Null AND s.Longitude Is Not Null AND
+                                    s.StaID In 
                                       (
                                         SELECT TOP {0} A.StaID
                                         FROM [
@@ -191,7 +249,7 @@ namespace FU_GageStatsDB
                                                ORDER BY Station.StaID DESC
                                              ]. AS A
                                         ORDER BY A.StaID ASC
-                                      )
+                                      )                                      
                                 ORDER BY s.StaID DESC;    ";
                     break;
 
@@ -199,21 +257,33 @@ namespace FU_GageStatsDB
                 case SQLType.e_stationCount:
                     results = @"SELECT COUNT(*) AS Expr1 FROM Station s";
                     break;
-                case SQLType.e_statistic_characteristic:
-                    results = @"SELECT s.StatisticValue, s.YearsRec, s.StdErr, s.Variance, s.LowerCI, s.UpperCI, s.StatStartDate, s.StatEndDate, s.StatisticRemarks,
-                                ds.DataSourceID, ds.Citation, ds.CitationURL,
-                                sl.StatisticTypeCode, sl.StatisticTypeID, st.DefType, sl.StatLabel,
-                                u.English, u.EnglishAbbrev, u.UnitID, u.MetricAbbrev
-
-                                FROM ((((Statistic s
-                                INNER JOIN StatLabel sl on (s.StatisticLabelID = sl.StatisticLabelID))
-                                INNER JOIN Units u on (sl.UnitID = u.UnitID))
-                                INNER JOIN DataSource ds on (s.DataSourceID = ds.DataSourceID))
-                                INNER JOIN StatType st on (sl.statisticTypeID = st.StatisticTypeID))
-                            
-                                WHERE s.StaID = '{0}';";
+                case SQLType.e_agency:
+                    results = @"SELECT DISTINCT s.Agency_cd FROM Station s
+                                    WHERE s.Latitude Is Not Null AND s.Longitude Is Not Null; ";
                     break;
 
+                case SQLType.e_statistic_data:
+                    results = @"SELECT s.StatisticValue, s.YearsRec, s.StdError, s.Variance, s.LowerCI, s.UpperCI, s.StatStartDate, s.StatEndDate, s.StatisticRemarks,
+                                ds.Citation, ds.CitationURL,
+                                st.DefType as StatisticDefType, 
+                                st.StatisticTypeCode,
+                                sl.StatLabel as StatLabelCode,
+                                u.EnglishAbbrev as UnitAbbr
+                                FROM ((((Statistic s
+                                LEFT JOIN StatLabel sl ON (s.StatisticLabelID = sl.StatisticLabelID))
+                                LEFT JOIN DataSource ds ON (ds.DataSourceID = s.DataSourceID))
+                                LEFT JOIN Units u ON (sl.UnitID = u.UnitID))
+                                LEFT JOIN StatType st ON (sl.statisticTypeID = st.StatisticTypeID))                         
+                                WHERE s.StaID = '{0}' AND IsNumeric(s.StatisticValue) AND sl.StatisticTypeCode <> 'D' ;";
+                    break;
+
+                case SQLType.e_citation:
+                    results = @"SELECT DISTINCT ds.Citation, ds.CitationURL
+                                FROM ((Statistic s
+                                LEFT JOIN StatLabel sl ON (s.StatisticLabelID = sl.StatisticLabelID))
+                                LEFT JOIN DataSource ds ON (ds.DataSourceID = s.DataSourceID))                        
+                                WHERE IsNumeric(s.StatisticValue) AND sl.StatisticTypeCode <> 'D' ;";
+                    break;
                 case SQLType.e_regressiontype:
                     results = @"SELECT DISTINCT (0-1) as ID, sl.StatLabel as Code, sl.Definition as Description, sl.StatisticLabel as Name
                                 FROM (Statistic s
@@ -252,22 +322,34 @@ namespace FU_GageStatsDB
             string results = string.Empty;
             switch (type)
             {
+                case SQLType.e_station:
+                    //item.Code, agencyID, item.Name,item.IsRegulated, stationType, item.Location }
+                    results = @"INSERT INTO ""gagestats"".""Stations""(""Code"",""AgencyID"",""Name"", ""IsRegulated"", ""StationTypeID"", ""Location"") 
+                                    VALUES('{0}',{1},'{2}',{3},{4}, ST_SetSRID(ST_GeomFromText('{5}'),4236));";
+                    break;
                 case SQLType.e_postcitation:
-                    results = @"INSERT INTO ""gagestats"".""Citations""(""Title"",""Author"",""CitationURL"") VALUES('{0}','{1}','{2}')";
-                    break;
-                case SQLType.e_getcitation:
-                    results = @"SELECT * FROM ""gagestats"".""Citations""";
-                    break;
+                    results = @"INSERT INTO ""gagestats"".""Citations""(""Title"",""Author"",""CitationURL"") VALUES('{0}','{1}','{2}');";
+                    break;                
                
                 case SQLType.e_predictioninterval:
-                    results = @"INSERT INTO ""gagestats"".""PredictionIntervals""(""BiasCorrectionFactor"",""Student_T_Statistic"",""Variance"",""XIRowVector"",""CovarianceMatrix"") 
-                                VALUES({0},{1},{2},'{3}','{4}')";
-                    break;
+                    results = @"INSERT INTO ""gagestats"".""PredictionInterval""(""LowerConfidenceInterval"",""UpperConfidenceInterval"",""Variance"") 
+                                VALUES({0},{1},{2}) RETURNING ""ID""";
+                    break;               
                 
+                case SQLType.e_statistics:
+                    results = @"INSERT INTO ""gagestats"".""Statistics""(""StatisticGroupTypeID"",""RegressionTypeID"",""StationID"",""Value"",""UnitTypeID"",""Comments"",""YearsofRecord"",""CitationID"",""PredictionIntervalID"") 
+                                SELECT {0},{1},{2},{3},{4},'{5}',{6},{7},CAST(p.""ID"" as INT) FROM predictioninterval as p
+                                RETURNING ""ID""";
+
+                    break;
                 case SQLType.e_statisticnerror:
-                    results = @"INSERT INTO ""gagestats"".""EquationErrors""(""EquationID"",""ErrorTypeID"",""Value"") VALUES({0},{1},{2})";
+                    results = @",stats as ({0}) INSERT INTO ""gagestats"".""StatisticError""(""StatisticID"", ""ErrorTypeID"", ""Value"") 
+                                    SELECT stats.""ID"", {1},{2} FROM stats";
                     break;
 
+                case SQLType.e_characteristics:
+                    results = @"INSERT INTO ""gagestats"".""Characteristics""(""VariableTypeID"",""UnitTypeID"",""CitationID"",""Value"",""Comments"",""StationID"") VALUES({0},{1},{2},{3},'{4}',{5});";
+                    break;
 
                 case SQLType.e_getstatisticgroups:
                     results = @"SELECT * FROM ""gagestats"".""StatisticGroupType_view""";
@@ -283,6 +365,12 @@ namespace FU_GageStatsDB
                     break;
                 case SQLType.e_stationtype:
                     results = @"SELECT * FROM ""gagestats"".""StationTypes""";
+                    break;
+                case SQLType.e_agency:
+                    results = @"SELECT * FROM ""gagestats"".""Agencies""";
+                    break;
+                case SQLType.e_citation:
+                    results = @"SELECT * FROM ""gagestats"".""Citations""";
                     break;
                 default:
                     break;
@@ -315,13 +403,14 @@ namespace FU_GageStatsDB
             e_station,
             e_stationCount,
             e_agency,
-            e_statistic_characteristic,
+            e_statistic_data,
             e_predictioninterval,
             e_statisticnerror,
-            e_characteristic,
+            e_characteristics,
+            e_statistics,
             e_stationtype,
+            e_citation,
 
-            e_getcitation,
             e_postcitation,
 
             e_getstatisticgroups,

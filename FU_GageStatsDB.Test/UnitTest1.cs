@@ -25,12 +25,12 @@ namespace FU_GageStatsDB.Test
                 var username = Configuration["dbuser"];
                 var password = Configuration["dbpassword"];
 
-                var x = new ForceUpdate(username, password, @"D:\WiM\Projects\NSS\DB\StreamStatsDB_2019-04-19.mdb");
-                //if (x.VerifyLists())
-                //{
+                var x = new ForceUpdate(username, password, @"D:\WiM\Projects\NSS\DB\StreamStatsDB_2019-06-20.mdb");
+                if (x.VerifyLists())
+                {
                     x.Load();
                 //    x.LoadSqlFiles(@"D:\WiM\GitHub\NSSServices\FU_NSSDB\SQL_files");
-                //}
+                }
 
             }
             catch (Exception ex)
