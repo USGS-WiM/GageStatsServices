@@ -24,16 +24,30 @@ namespace FU_GageStatsDB.Resources
                 switch (Type.GetTypeCode(t))
                 {
                     case TypeCode.String:
-                        value = Convert.ToString(r[name]);
+                        value = Convert.ToString(r[name].ToString().Trim());
                         break;
                     case TypeCode.Int32:
-                        value = Convert.ToInt32(r[name]);
+                        value = Convert.ToInt32(r[name].ToString().Trim());
                         break;
                     case TypeCode.Double:
-                        value = Convert.ToDouble(r[name]);
+                        try
+                        {
+                            value = Convert.ToDouble(r[name].ToString().Replace(",", "")
+                                                                   .Replace("(33)", "")
+                                                                   .Replace("(30)", "")
+                                                                   .Replace("(121)", "")
+                                                                   .Replace("(123)", "")
+                                                                   .Replace("(55)", "")
+                                                                   .Replace("(54)", "").Trim());
+                        }
+                        catch (Exception)
+                        {
+                            value = null;
+                        }
+                        
                         break;
                     case TypeCode.DateTime:
-                        value = Convert.ToDateTime(r[name]);
+                        value = Convert.ToDateTime(r[name].ToString().Trim());
                         break;
                     case TypeCode.Boolean:
                         switch (r[name].ToString().Trim())
@@ -57,7 +71,7 @@ namespace FU_GageStatsDB.Resources
                         }
                         break;
                     default:
-                        value = (T)Convert.ChangeType(r[name], t);
+                        value = (T)Convert.ChangeType(r[name].ToString().Trim(), t);
                         break;
                 }
 
