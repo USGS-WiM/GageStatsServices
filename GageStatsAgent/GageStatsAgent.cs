@@ -64,7 +64,7 @@ namespace GageStatsAgent
         IQueryable<string> GetRoles();
 
         //Station
-        IQueryable<Station> GetStations();
+        IQueryable<Station> GetStations(List<string> stationTypeList = null, List<string> agencyList = null, int page = 1);
         Task<Station> GetStation(Int32 ID);
         Task<Station> Add(Station item);
         Task<IEnumerable<Station>> Add(List<Station> items);
@@ -208,9 +208,21 @@ namespace GageStatsAgent
 
         #endregion 
         #region Station
-        public IQueryable<Station> GetStations()
+        public IQueryable<Station> GetStations(List<string> stationTypeList = null, List<string> agencyList = null, int page = 1)
         {
-            return Select<Station>().Include(s=>s.StationType).Include(s=>s.Agency);
+            sm("Returning page " + page + ", 50 items.");
+            var skip = page > 1 ? (page - 1) * 50 : 0;
+            if (!stationTypeList.Any() && !agencyList.Any())
+                return this.Select<Station>().Include(s => s.StationType).Include(s => s.Agency).OrderBy(s => s.ID).Skip(skip).Take(50);
+
+            // if filters, apply filters before returning query
+            var query = this.Select<Station>();
+            query = query.Include(st => st.StationType).Include(st => st.Agency);
+            if (stationTypeList.Any() == true)
+                query = query.Where(st => stationTypeList.Contains(st.StationTypeID.ToString()) || stationTypeList.Contains(st.StationType.Code.ToLower()));
+            if (agencyList.Any() == true)
+                query = query.Where(st => agencyList.Contains(st.AgencyID.ToString()) || agencyList.Contains(st.Agency.Code.ToLower()));
+            return query.Skip(skip).Take(50);
         }
         public Task<Station> GetStation(int ID)
         {

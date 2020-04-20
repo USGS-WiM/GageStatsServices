@@ -34,7 +34,7 @@ namespace GageStatsDB.Resources
         [Required]
         public string Code { get; set; }
 
-        public ICollection<Station> Stations { get; set; }
+        // public ICollection<Station> Stations { get; set; }
 
     }
 }

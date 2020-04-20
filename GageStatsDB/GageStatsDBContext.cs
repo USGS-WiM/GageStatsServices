@@ -116,7 +116,7 @@ namespace GageStatsDB
                 .OnDelete(DeleteBehavior.Cascade);
                 
 
-            modelBuilder.Entity(typeof(Station).ToString(), b =>
+            /*modelBuilder.Entity(typeof(Station).ToString(), b =>
             {
                 b.HasOne(typeof(StationType).ToString(), "StationType")
                     .WithMany("Stations")
@@ -126,7 +126,7 @@ namespace GageStatsDB
                     .WithMany("Stations")
                     .HasForeignKey("AgencyID")
                     .OnDelete(DeleteBehavior.Restrict);
-            });
+            });*/
 
             base.OnModelCreating(modelBuilder);
 

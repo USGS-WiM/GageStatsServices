@@ -28,6 +28,7 @@ using WIM.Services.Attributes;
 using Microsoft.AspNetCore.Authorization;
 using WIM.Security.Authorization;
 using GageStatsDB.Resources;
+using WIM.Exceptions.Services;
 
 namespace GageStatsServices.Controllers
 {
@@ -43,12 +44,15 @@ namespace GageStatsServices.Controllers
         #region METHODS
         [HttpGet(Name = "Stations")]
         [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Stations/Get.md")]
-        public async Task<IActionResult> Get()
+        public async Task<IActionResult> Get([FromQuery] string stationTypes = "", [FromQuery] string agencies = "", [FromQuery] int page = 1)
         {
             try
             {
-                
-                return Ok(agent.GetStations());
+                // Do we want/need a region filter?
+                List<string> stationTypeList = parse(stationTypes);
+                List<string> agencyList = parse(agencies);
+
+                return Ok(agent.GetStations(stationTypeList, agencyList, page));
             }
             catch (Exception ex)
             {
