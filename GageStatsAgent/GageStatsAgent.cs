@@ -210,22 +210,20 @@ namespace GageStatsAgent
         #region Station
         public IQueryable<Station> GetStations(List<string> stationTypeList = null, List<string> agencyList = null, int page = 1)
         {
-            var query = this.Select<Station>();
+            // set number of items to skip/return for pagination
             var numItemsReturned = 50;
-            var skip = page > 1 ? (page - 1) * numItemsReturned : 0;
-            if (!stationTypeList.Any() && !agencyList.Any())
-            {
-                sm("Returning page " + page + " of " + (query.Count() / numItemsReturned) + ".");
-                return query.OrderBy(s => s.ID).Skip(skip).Take(numItemsReturned);
-            }
-            // if filters, apply filters before returning query
+            var skip = (page - 1) * numItemsReturned;
+
+            var query = this.Select<Station>();
+            // if filters, apply them before returning query
             if (stationTypeList.Any() == true)
                 query = query.Where(st => stationTypeList.Contains(st.StationTypeID.ToString()) || stationTypeList.Contains(st.StationType.Code.ToLower()));
             if (agencyList.Any() == true)
                 query = query.Where(st => agencyList.Contains(st.AgencyID.ToString()) || agencyList.Contains(st.Agency.Code.ToLower()));
+
             if (query.Count() > numItemsReturned)
-                sm("Returning page " + page + " of " + (query.Count() / numItemsReturned) + ".");
-            return query.Skip(skip).Take(numItemsReturned);
+                sm("Returning page " + page + " of " + (query.Count() / numItemsReturned + 1) + ".");
+            return query.OrderBy(s => s.ID).Skip(skip).Take(numItemsReturned);
         }
         public Task<Station> GetStation(int ID)
         {
