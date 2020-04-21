@@ -210,19 +210,22 @@ namespace GageStatsAgent
         #region Station
         public IQueryable<Station> GetStations(List<string> stationTypeList = null, List<string> agencyList = null, int page = 1)
         {
-            sm("Returning page " + page + ", 50 items.");
-            var skip = page > 1 ? (page - 1) * 50 : 0;
-            if (!stationTypeList.Any() && !agencyList.Any())
-                return this.Select<Station>().Include(s => s.StationType).Include(s => s.Agency).OrderBy(s => s.ID).Skip(skip).Take(50);
-
-            // if filters, apply filters before returning query
             var query = this.Select<Station>();
-            query = query.Include(st => st.StationType).Include(st => st.Agency);
+            var numItemsReturned = 50;
+            var skip = page > 1 ? (page - 1) * numItemsReturned : 0;
+            if (!stationTypeList.Any() && !agencyList.Any())
+            {
+                sm("Returning page " + page + " of " + (query.Count() / numItemsReturned) + ".");
+                return query.OrderBy(s => s.ID).Skip(skip).Take(numItemsReturned);
+            }
+            // if filters, apply filters before returning query
             if (stationTypeList.Any() == true)
                 query = query.Where(st => stationTypeList.Contains(st.StationTypeID.ToString()) || stationTypeList.Contains(st.StationType.Code.ToLower()));
             if (agencyList.Any() == true)
                 query = query.Where(st => agencyList.Contains(st.AgencyID.ToString()) || agencyList.Contains(st.Agency.Code.ToLower()));
-            return query.Skip(skip).Take(50);
+            if (query.Count() > numItemsReturned)
+                sm("Returning page " + page + " of " + (query.Count() / numItemsReturned) + ".");
+            return query.Skip(skip).Take(numItemsReturned);
         }
         public Task<Station> GetStation(int ID)
         {
