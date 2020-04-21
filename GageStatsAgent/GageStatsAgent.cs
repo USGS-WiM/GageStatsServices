@@ -227,7 +227,7 @@ namespace GageStatsAgent
         }
         public Task<Station> GetStation(int ID)
         {
-            return GetStations().FirstOrDefaultAsync(s => s.ID == ID);
+            return this.Select<Station>().FirstOrDefaultAsync(s => s.ID == ID);
         }
         public Task<Station> Add(Station item)
         {
