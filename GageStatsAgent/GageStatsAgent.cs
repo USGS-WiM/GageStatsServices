@@ -64,7 +64,7 @@ namespace GageStatsAgent
         IQueryable<string> GetRoles();
 
         //Station
-        IQueryable<Station> GetStations(List<string> stationTypeList = null, List<string> agencyList = null, int page = 1);
+        IQueryable<Station> GetStations(List<string> stationTypeList = null, List<string> agencyList = null);
         Task<Station> GetStation(Int32 ID);
         Task<Station> Add(Station item);
         Task<IEnumerable<Station>> Add(List<Station> items);
@@ -208,26 +208,19 @@ namespace GageStatsAgent
 
         #endregion 
         #region Station
-        public IQueryable<Station> GetStations(List<string> stationTypeList = null, List<string> agencyList = null, int page = 1)
+        public IQueryable<Station> GetStations(List<string> stationTypeList = null, List<string> agencyList = null)
         {
-            // set number of items to skip/return for pagination
-            var numItemsReturned = 50;
-            var skip = (page - 1) * numItemsReturned;
-
             var query = this.Select<Station>();
             // if filters, apply them before returning query
-            if (stationTypeList.Any() == true)
+            if (stationTypeList != null && stationTypeList.Any())
                 query = query.Where(st => stationTypeList.Contains(st.StationTypeID.ToString()) || stationTypeList.Contains(st.StationType.Code.ToLower()));
-            if (agencyList.Any() == true)
+            if (agencyList != null && agencyList.Any())
                 query = query.Where(st => agencyList.Contains(st.AgencyID.ToString()) || agencyList.Contains(st.Agency.Code.ToLower()));
-
-            if (query.Count() > numItemsReturned)
-                sm("Returning page " + page + " of " + (query.Count() / numItemsReturned + 1) + ".");
-            return query.OrderBy(s => s.ID).Skip(skip).Take(numItemsReturned);
+            return query;
         }
         public Task<Station> GetStation(int ID)
         {
-            return this.Select<Station>().FirstOrDefaultAsync(s => s.ID == ID);
+            return GetStations().FirstOrDefaultAsync(s => s.ID == ID);
         }
         public Task<Station> Add(Station item)
         {

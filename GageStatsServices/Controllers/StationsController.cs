@@ -29,6 +29,7 @@ using Microsoft.AspNetCore.Authorization;
 using WIM.Security.Authorization;
 using GageStatsDB.Resources;
 using WIM.Exceptions.Services;
+using System.Linq;
 
 namespace GageStatsServices.Controllers
 {
@@ -52,7 +53,14 @@ namespace GageStatsServices.Controllers
                 List<string> stationTypeList = parse(stationTypes);
                 List<string> agencyList = parse(agencies);
 
-                return Ok(agent.GetStations(stationTypeList, agencyList, page));
+                // get number of items to skip/return for pagination
+                var numItemsReturned = 50;
+                var skip = (page - 1) * numItemsReturned;
+
+                IQueryable<Station> entities = agent.GetStations(stationTypeList, agencyList).OrderBy(s => s.ID);
+
+                sm("Returning page " + page + " of " + (entities.Count() / numItemsReturned + 1) + ".");
+                return Ok(entities.Skip(skip).Take(numItemsReturned));
             }
             catch (Exception ex)
             {
