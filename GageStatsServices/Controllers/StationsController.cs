@@ -28,6 +28,8 @@ using WIM.Services.Attributes;
 using Microsoft.AspNetCore.Authorization;
 using WIM.Security.Authorization;
 using GageStatsDB.Resources;
+using WIM.Exceptions.Services;
+using System.Linq;
 
 namespace GageStatsServices.Controllers
 {
@@ -43,12 +45,20 @@ namespace GageStatsServices.Controllers
         #region METHODS
         [HttpGet(Name = "Stations")]
         [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Stations/Get.md")]
-        public async Task<IActionResult> Get()
+        public async Task<IActionResult> Get([FromQuery] string stationTypes = "", [FromQuery] string agencies = "", [FromQuery] int page = 1, [FromQuery] int pageCount = 50)
         {
             try
             {
-                
-                return Ok(agent.GetStations());
+                // Do we want/need a region filter?
+                List<string> stationTypeList = parse(stationTypes);
+                List<string> agencyList = parse(agencies);
+
+                IQueryable<Station> entities = agent.GetStations(stationTypeList, agencyList).OrderBy(s => s.ID);
+
+                // get number of items to skip for pagination
+                var skip = (page - 1) * pageCount;
+                sm("Returning page " + page + " of " + (entities.Count() / pageCount + 1) + ".");
+                return Ok(entities.Skip(skip).Take(pageCount));
             }
             catch (Exception ex)
             {

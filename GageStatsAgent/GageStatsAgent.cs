@@ -64,7 +64,7 @@ namespace GageStatsAgent
         IQueryable<string> GetRoles();
 
         //Station
-        IQueryable<Station> GetStations();
+        IQueryable<Station> GetStations(List<string> stationTypeList = null, List<string> agencyList = null);
         Task<Station> GetStation(Int32 ID);
         Task<Station> Add(Station item);
         Task<IEnumerable<Station>> Add(List<Station> items);
@@ -208,9 +208,15 @@ namespace GageStatsAgent
 
         #endregion 
         #region Station
-        public IQueryable<Station> GetStations()
+        public IQueryable<Station> GetStations(List<string> stationTypeList = null, List<string> agencyList = null)
         {
-            return Select<Station>().Include(s=>s.StationType).Include(s=>s.Agency);
+            var query = this.Select<Station>();
+            // if filters, apply them before returning query
+            if (stationTypeList != null && stationTypeList.Any())
+                query = query.Where(st => stationTypeList.Contains(st.StationTypeID.ToString()) || stationTypeList.Contains(st.StationType.Code.ToLower()));
+            if (agencyList != null && agencyList.Any())
+                query = query.Where(st => agencyList.Contains(st.AgencyID.ToString()) || agencyList.Contains(st.Agency.Code.ToLower()));
+            return query;
         }
         public Task<Station> GetStation(int ID)
         {
