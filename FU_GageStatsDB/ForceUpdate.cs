@@ -190,6 +190,7 @@ namespace FU_GageStatsDB
                                                                             UnitTypeID = this.unittypeList.FirstOrDefault(u => string.Equals(u.Abbreviation, c.StatisticUnitAbbr)).ID,
                                                                             Value = c.StatisticValue,
                                                                             YearsofRecord = c.StatisticYears,
+                                                                            IsPreferred = c.StatisticIsPreferred,
                                                                             PredictionInterval = (c.StatisticLowerCI.HasValue || c.StatisticUpperCI.HasValue||c.StatisticVariance.HasValue) ? new PredictionInterval()
                                                                             {
                                                                                 LowerConfidenceInterval = c.StatisticLowerCI,
