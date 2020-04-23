@@ -43,6 +43,7 @@ namespace GageStatsDB.Resources
         public double? YearsofRecord { get; set; }
         public int? CitationID { get; set; }
         public int? PredictionIntervalID { get; set; }
+        public bool isPreferred { get; set; }
 
         public ICollection<StatisticError> StatisticErrors { get; set; }
         public virtual Citation Citation { get; set; }
