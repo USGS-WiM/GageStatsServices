@@ -40,6 +40,7 @@ namespace GageStatsDB.Resources
         [Required]
         public int UnitTypeID { get; set; }
         public string Comments { get; set; }
+        [Required]
         public bool IsPreferred { get; set; }
         public double? YearsofRecord { get; set; }
         public int? CitationID { get; set; }
