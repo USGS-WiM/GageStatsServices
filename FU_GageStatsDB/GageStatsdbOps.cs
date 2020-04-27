@@ -106,6 +106,7 @@ namespace FU_GageStatsDB
             try
             {
                 args = args.Select(a => a == null ? "null" : a).ToArray();
+                items = items.Select(i => i.Select(a => a == null ? "null" : a).ToArray());
                 foreach (var item in items)
                 {
                     sql.Add(String.Format(getSQL(type), item.Concat(args).ToArray()));
@@ -264,7 +265,7 @@ namespace FU_GageStatsDB
 
                 case SQLType.e_statistic_data:
                     results = @"SELECT s.StatisticValue, s.YearsRec, s.StdError, s.Variance, s.LowerCI, s.UpperCI, s.StatStartDate, s.StatEndDate, s.StatisticRemarks,
-                                ds.Citation, ds.CitationURL,
+                                s.IsPreferred, ds.Citation, ds.CitationURL,
                                 st.DefType as StatisticDefType, 
                                 st.StatisticTypeCode,
                                 sl.StatLabel as StatLabelCode,

@@ -73,9 +73,9 @@ namespace FU_GageStatsDB.Resources
         public DateTime? StatisticEndDate { get; set; }
         public string StatisticRemarks { get; set; }
         public string StatisticUnitAbbr { get; set; }
+        public bool StatisticIsPreferred { get; set; }
         public FU_Citation Citation { get; set; }
 
-        public bool StatisticIsPreferred { get; set; }
 
         public static FU_Statistics FromDataReader(System.Data.IDataReader r)
         {
@@ -94,8 +94,8 @@ namespace FU_GageStatsDB.Resources
                 StatisticCode = r.GetDataType<string>("StatLabelCode"),
                 StatisticTypeCode = r.GetDataType<string>("StatisticTypeCode"),
                 StatisticUnitAbbr = r.GetDataType<string>("UnitAbbr"),
-                Citation = FU_Citation.FromDataReader(r),
-                StatisticIsPreferred = r.GetDataType<bool>("IsPreferred")
+                StatisticIsPreferred = r.GetDataType<bool>("IsPreferred"),
+                Citation = FU_Citation.FromDataReader(r)
             };
 
         }
