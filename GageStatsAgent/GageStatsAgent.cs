@@ -220,7 +220,8 @@ namespace GageStatsAgent
         }
         public Task<Station> GetStation(int ID)
         {
-            return GetStations().FirstOrDefaultAsync(s => s.ID == ID);
+            return GetStations().Include("Characteristics.Citation").Include("Statistics.PredictionInterval").Include("Statistics.StatisticErrors")
+                .Include("Statistics.Citation").FirstOrDefaultAsync(s => s.ID == ID);
         }
         public Task<Station> Add(Station item)
         {
