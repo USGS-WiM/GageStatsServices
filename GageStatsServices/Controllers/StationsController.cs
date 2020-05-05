@@ -68,12 +68,18 @@ namespace GageStatsServices.Controllers
 
         [HttpGet("{id}", Name = "Station")]
         [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Stations/GetDistinct.md")]
-        public async Task<IActionResult> Get(int id)
+        public async Task<IActionResult> Get(string id)
         {
             try
             {
-                if (id < 0) return new BadRequestResult(); // This returns HTTP 404
-                return Ok(await agent.GetStation(id));
+                var entity = await agent.GetStation(id);
+                if (entity != null)
+                {
+                    return Ok(entity);
+                } else
+                {
+                    throw new BadRequestException("Station not found");
+                }
             }
             catch (Exception ex)
             {
