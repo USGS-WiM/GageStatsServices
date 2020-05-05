@@ -2,10 +2,12 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.2</TargetFramework>
+    <UserSecretsId>2ee93532-2307-451b-9517-e07c2138ca64</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.Data.Odbc" Version="4.5.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="3.0.0" />
+    <PackageReference Include="System.Data.Odbc" Version="4.7.0" />
     <PackageReference Include="WIM.DBUtilities" Version="1.1.8" />
   </ItemGroup>
   

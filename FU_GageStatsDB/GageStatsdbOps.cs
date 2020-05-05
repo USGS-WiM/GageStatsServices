@@ -106,6 +106,7 @@ namespace FU_GageStatsDB
             try
             {
                 args = args.Select(a => a == null ? "null" : a).ToArray();
+                items = items.Select(i => i.Select(a => a == null ? "null" : a).ToArray());
                 foreach (var item in items)
                 {
                     sql.Add(String.Format(getSQL(type), item.Concat(args).ToArray()));
@@ -142,7 +143,7 @@ namespace FU_GageStatsDB
                                                                                            item.PredictionInterval.UpperConfidenceInterval.HasValue? item.PredictionInterval.UpperConfidenceInterval.Value.ToString():"Null",
                                                                                            item.PredictionInterval.Variance.HasValue? item.PredictionInterval.Variance.Value.ToString():"Null" }) : @"Select Null as ""ID""";
                     //""StatisticGroupTypeID"",""RegressionTypeID"",""StationID"",""Value"",""UnitTypeID"",""Comments"",""YearsOfRecord"",""CitationID"",""PredictionIntervalID""
-                    string stats = String.Format(getSQL(SQLType.e_statistics), new object[]{ item.StatisticGroupTypeID, item.RegressionTypeID, item.StationID, item.Value, item.UnitTypeID, item.Comments, item.YearsofRecord.HasValue? item.YearsofRecord.Value.ToString() :"Null", item.CitationID.HasValue? item.CitationID.Value.ToString():"Null" });
+                    string stats = String.Format(getSQL(SQLType.e_statistics), new object[]{ item.StatisticGroupTypeID, item.RegressionTypeID, item.StationID, item.Value, item.UnitTypeID, item.Comments, item.YearsofRecord.HasValue? item.YearsofRecord.Value.ToString() :"Null", item.CitationID.HasValue? item.CitationID.Value.ToString():"Null", item.IsPreferred });
                     //""StatisticID"",""ErrorTypeID"",""Value""
 
                     sql.Add($"WITH predictioninterval as ({predIntervalsql})");
@@ -264,7 +265,7 @@ namespace FU_GageStatsDB
 
                 case SQLType.e_statistic_data:
                     results = @"SELECT s.StatisticValue, s.YearsRec, s.StdError, s.Variance, s.LowerCI, s.UpperCI, s.StatStartDate, s.StatEndDate, s.StatisticRemarks,
-                                ds.Citation, ds.CitationURL,
+                                s.IsPreferred, ds.Citation, ds.CitationURL,
                                 st.DefType as StatisticDefType, 
                                 st.StatisticTypeCode,
                                 sl.StatLabel as StatLabelCode,
@@ -337,8 +338,8 @@ namespace FU_GageStatsDB
                     break;               
                 
                 case SQLType.e_statistics:
-                    results = @"INSERT INTO ""gagestats"".""Statistics""(""StatisticGroupTypeID"",""RegressionTypeID"",""StationID"",""Value"",""UnitTypeID"",""Comments"",""YearsofRecord"",""CitationID"",""PredictionIntervalID"") 
-                                SELECT {0},{1},{2},{3},{4},'{5}',{6},{7},CAST(p.""ID"" as INT) FROM predictioninterval as p
+                    results = @"INSERT INTO ""gagestats"".""Statistics""(""StatisticGroupTypeID"",""RegressionTypeID"",""StationID"",""Value"",""UnitTypeID"",""Comments"",""YearsofRecord"",""CitationID"",""IsPreferred"",""PredictionIntervalID"") 
+                                SELECT {0},{1},{2},{3},{4},'{5}',{6},{7},{8},CAST(p.""ID"" as INT) FROM predictioninterval as p
                                 RETURNING ""ID""";
 
                     break;
