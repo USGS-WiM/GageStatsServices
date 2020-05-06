@@ -65,7 +65,7 @@ namespace GageStatsAgent
 
         //Station
         IQueryable<Station> GetStations(List<string> stationTypeList = null, List<string> agencyList = null);
-        Task<Station> GetStation(Int32 ID);
+        Task<Station> GetStation(string identifier);
         Task<Station> Add(Station item);
         Task<IEnumerable<Station>> Add(List<Station> items);
         Task<Station> Update(Int32 pkId, Station item);
@@ -218,10 +218,10 @@ namespace GageStatsAgent
                 query = query.Where(st => agencyList.Contains(st.AgencyID.ToString()) || agencyList.Contains(st.Agency.Code.ToLower()));
             return query;
         }
-        public Task<Station> GetStation(int ID)
+        public Task<Station> GetStation(string identifier)
         {
-            return GetStations().Include("Characteristics.Citation").Include("Statistics.PredictionInterval").Include("Statistics.StatisticErrors")
-                .Include("Statistics.Citation").FirstOrDefaultAsync(s => s.ID == ID);
+             return GetStations().Include("Characteristics.Citation").Include("Statistics.PredictionInterval").Include("Statistics.StatisticErrors")
+                .Include("Statistics.Citation").FirstOrDefaultAsync(s => s.Code == identifier || s.ID.ToString() == identifier);
         }
         public Task<Station> Add(Station item)
         {
