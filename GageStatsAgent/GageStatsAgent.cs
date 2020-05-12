@@ -212,6 +212,10 @@ namespace GageStatsAgent
         {
             return Select<Station>().Include(s=>s.StationType).Include(s=>s.Agency);
         }
+        //public IQueryable<Station> GetStationsByRadius()
+        //{
+        //    return Select<Station>().Include(s => s.StationType).Include(s => s.Agency);
+        //}
         public Task<Station> GetStation(int ID)
         {
             return GetStations().FirstOrDefaultAsync(s => s.ID == ID);
@@ -232,6 +236,10 @@ namespace GageStatsAgent
         {
             return Delete<Station>(id);
         }
+        //public Task<Station> NearestGage(string code, double distance)
+        //{
+        //    return GetStationsByRadius().FirstOrDefaultAsync(s => s.ID == ID);
+        //}
         #endregion
         #region StationType
         public IQueryable<StationType> GetStationTypes()
