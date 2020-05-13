@@ -45,7 +45,7 @@ namespace GageStatsServices.Controllers
         #region METHODS
         [HttpGet(Name = "Stations")]
         [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Stations/Get.md")]
-        public async Task<IActionResult> Get([FromQuery] string stationTypes = "", [FromQuery] string agencies = "", [FromQuery] int page = 1, [FromQuery] int pageCount = 50)
+        public async Task<IActionResult> Get([FromQuery] string stationTypes = "", [FromQuery] string agencies = "", [FromQuery] string filterText = null, [FromQuery] int page = 1, [FromQuery] int pageCount = 50)
         {
             try
             {
@@ -53,7 +53,14 @@ namespace GageStatsServices.Controllers
                 List<string> stationTypeList = parse(stationTypes);
                 List<string> agencyList = parse(agencies);
 
-                IQueryable<Station> entities = agent.GetStations(stationTypeList, agencyList).OrderBy(s => s.ID);
+                IQueryable<Station> entities = agent.GetStations(stationTypeList, agencyList);
+
+                if (filterText != null)
+                {
+                    entities = entities.Where(s => s.Name.ToUpper().Contains(filterText.ToUpper()) || s.Code.ToUpper().Contains(filterText.ToUpper()));
+                }
+
+                entities = entities.OrderBy(s => s.ID);
 
                 // get number of items to skip for pagination
                 var skip = (page - 1) * pageCount;
