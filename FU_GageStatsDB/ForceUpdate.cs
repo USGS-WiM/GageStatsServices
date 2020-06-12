@@ -57,7 +57,7 @@ namespace FU_GageStatsDB
         #region Constructors
         public ForceUpdate(string dbusername, string dbpassword, string accessdb)
         {
-            SSDBConnectionstring = string.Format(@"Driver={{Microsoft Access Driver (*.mdb, *.accdb)}};dbq={0}", accessdb);
+            SSDBConnectionstring = string.Format(@"Driver={{Microsoft Access Driver (*.mdb)}};dbq={0}", accessdb);
             GagesStatsDBConnectionstring = string.Format("Server=test.c69uuui2tzs0.us-east-1.rds.amazonaws.com; database={0}; UID={1}; password={2}", "StatsDB", dbusername, dbpassword);
 
             init();
@@ -137,7 +137,7 @@ namespace FU_GageStatsDB
                                 limit = (stationcount - offset);
                                 DBcontainsMoreRecords = false;
                             }//endif
-#warning  TODO Impove method with threading and parallelizm
+                            //#warning  TODO Impove method with threading and parallelizm
                             // improvements https://docs.microsoft.com/en-us/dotnet/api/system.threading.tasks.parallel.foreach?view=netcore-2.2
                             //https://docs.microsoft.com/en-us/dotnet/api/system.threading.tasks.parallel.for?view=netcore-2.2
                             foreach (var item in ssdb.GetItems<FU_Station>(GageStatsDbOps.SQLType.e_station, limit, limit + offset))
