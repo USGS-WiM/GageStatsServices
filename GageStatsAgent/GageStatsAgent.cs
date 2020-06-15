@@ -119,7 +119,6 @@ namespace GageStatsAgent
         public GageStatsAgent(GageStatsDBContext context, IHttpContextAccessor httpContextAccessor) :base(context)
         {
             this._messages = httpContextAccessor.HttpContext.Items;
-            // not sure if we need this, NSSServices has it
             this.context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
         }
         #endregion
@@ -307,7 +306,6 @@ namespace GageStatsAgent
         public IUser GetUserByUsername(string username)
         {
             return Select<User>().FirstOrDefault(r => string.Equals(r.Username.ToLower(), username.ToLower()));
-            throw new NotImplementedException();
         }
         public IUser GetUserByID(int id)
         {

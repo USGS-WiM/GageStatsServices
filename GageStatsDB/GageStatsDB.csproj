@@ -8,12 +8,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="Logger\LoggerProvider.cs" />
-    <Compile Remove="Resources\RegressionType.cs" />
-    <Compile Remove="Resources\StatisticGroupType.cs" />
-    <Compile Remove="Resources\UnitConversionFactor.cs" />
-    <Compile Remove="Resources\UnitSystemType.cs" />
-    <Compile Remove="Resources\UnitType.cs" />
-    <Compile Remove="Resources\VariableType.cs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="3.1.4">
