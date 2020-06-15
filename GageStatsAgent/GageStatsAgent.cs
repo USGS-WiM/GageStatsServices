@@ -119,6 +119,7 @@ namespace GageStatsAgent
         public GageStatsAgent(GageStatsDBContext context, IHttpContextAccessor httpContextAccessor) :base(context)
         {
             this._messages = httpContextAccessor.HttpContext.Items;
+            this.context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
         }
         #endregion
         #region Methods    
@@ -305,7 +306,6 @@ namespace GageStatsAgent
         public IUser GetUserByUsername(string username)
         {
             return Select<User>().FirstOrDefault(r => string.Equals(r.Username.ToLower(), username.ToLower()));
-            throw new NotImplementedException();
         }
         public IUser GetUserByID(int id)
         {
@@ -315,12 +315,21 @@ namespace GageStatsAgent
         public IUser AuthenticateUser(string username, string password)
         {
             //this is where one authenticates the username/password before passing back user
-            var user = (User)GetUserByUsername(username);
-            if (user == null || !WIM.Security.Cryptography.VerifyPassword(password, user.Salt, user.Password))
+            try
             {
+                var user = (User)GetUserByUsername(username);
+                if (user == null || !WIM.Security.Cryptography.VerifyPassword(password, user.Salt, user.Password))
+                {
+                    return null;
+                }
+                return user;
+
+            }
+            catch (Exception ex)
+            {
+                sm("Error authenticaticating user ", MessageType.error);
                 return null;
             }
-            return new User() { FirstName = "Jeremy", Role = Role.Admin, Username = username, Password = password, ID = 1 };
         }
         public Task<User> Add(User item)
         {

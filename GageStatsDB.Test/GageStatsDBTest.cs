@@ -16,7 +16,7 @@ namespace GageStatsDB.Test
                     .AddJsonFile("appsettings.json")
                     .Build().GetConnectionString("Connection");
 
-        [TestMethod]
+        //[TestMethod]
         public void ConnectionTest()
         {
             using (GageStatsDBContext context = new GageStatsDBContext(new DbContextOptionsBuilder<GageStatsDBContext>().UseNpgsql(this.connectionstring, x => x.UseNetTopologySuite()).Options))
