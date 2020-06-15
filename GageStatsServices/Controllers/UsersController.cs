@@ -38,7 +38,7 @@ using User = GageStatsDB.Resources.User;
 
 namespace GageStatsServices.Controllers
 {
-    //[Authorize]
+    [Authorize]
     [Route("[controller]")]
     [APIDescription(type = DescriptionType.e_link, Description = "/Docs/GageStats/summary.md")]
     public class UsersController : JwtBearerAuthenticationBase
