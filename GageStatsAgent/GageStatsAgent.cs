@@ -31,6 +31,8 @@ using WIM.Utilities;
 using GageStatsDB;
 using SharedDB.Resources;
 using Microsoft.EntityFrameworkCore;
+using NetTopologySuite.Geometries;
+using NetTopologySuite;
 
 namespace GageStatsAgent
 {
@@ -64,8 +66,10 @@ namespace GageStatsAgent
         IQueryable<string> GetRoles();
 
         //Station
-        IQueryable<Station> GetStations();
-        Task<Station> GetStation(Int32 ID);
+        IQueryable<Station> GetStations(List<string> stationTypeList = null, List<string> agencyList = null);
+        Task<Station> GetStation(string identifier);
+        IQueryable<Station> GetNearest(string identifier, double radius);
+        //Task<Station> GetNearestStations(string identifier, double radius);
         Task<Station> Add(Station item);
         Task<IEnumerable<Station>> Add(List<Station> items);
         Task<Station> Update(Int32 pkId, Station item);
@@ -208,18 +212,31 @@ namespace GageStatsAgent
 
         #endregion 
         #region Station
-        public IQueryable<Station> GetStations()
+        public IQueryable<Station> GetStations(List<string> stationTypeList = null, List<string> agencyList = null)
         {
-            return Select<Station>().Include(s=>s.StationType).Include(s=>s.Agency);
+            var query = this.Select<Station>();
+            // if filters, apply them before returning query
+            if (stationTypeList != null && stationTypeList.Any())
+                query = query.Where(st => stationTypeList.Contains(st.StationTypeID.ToString()) || stationTypeList.Contains(st.StationType.Code.ToLower()));
+            if (agencyList != null && agencyList.Any())
+                query = query.Where(st => agencyList.Contains(st.AgencyID.ToString()) || agencyList.Contains(st.Agency.Code.ToLower()));
+            return query;
         }
-        //public IQueryable<Station> GetStationsByRadius()
+        public Task<Station> GetStation(string identifier)
+        {
+             return GetStations().Include("Characteristics.Citation").Include("Statistics.PredictionInterval").Include("Statistics.StatisticErrors")
+                .Include("Statistics.Citation").FirstOrDefaultAsync(s => s.Code == identifier || s.ID.ToString() == identifier);
+        }
+        public IQueryable<Station> GetNearest(string identifier, double radius)
+        {
+            var query = this.Select<Station>().Where(x => x.Location.Within(x.Location.Buffer(radius)));
+            return query; //.Select(
+        }
+        //public Task<Station> GetNearestStations(string identifier, double radius)
         //{
-        //    return Select<Station>().Include(s => s.StationType).Include(s => s.Agency);
+        //    return GetNearest(radius).Include("Characteristics.Citation").Include("Statistics.PredictionInterval").Include("Statistics.StatisticErrors")
+        //        .Include("Statistics.Citation").FirstOrDefaultAsync<Station>();
         //}
-        public Task<Station> GetStation(int ID)
-        {
-            return GetStations().FirstOrDefaultAsync(s => s.ID == ID);
-        }
         public Task<Station> Add(Station item)
         {
             return Add<Station>(item);
