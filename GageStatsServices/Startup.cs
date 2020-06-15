@@ -93,6 +93,7 @@ namespace GageStatsServices
                                                 //.EnableSensitiveDataLogging()
                                                 );
 
+            services.AddScoped<IAnalyticsAgent, GoogleAnalyticsAgent>((gaa) => new GoogleAnalyticsAgent(Configuration["AnalyticsKey"]));
             //Authentication
             services.AddAuthentication(x =>
             {
