@@ -1,0 +1,1 @@
+The statistic resource represents a specific statistic measured at a gaging station, with a value and associated descriptors such as regression type, statistic group type, etc.

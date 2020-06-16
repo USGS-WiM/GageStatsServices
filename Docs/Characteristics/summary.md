@@ -1,0 +1,1 @@
+The characteristic resource represents a characteristic value for a station. It defines the variable type, unit type, value and station ID.

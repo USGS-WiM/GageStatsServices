@@ -1,0 +1,1 @@
+A regression type represents the type of regression calculated for a statistic, such as "2 Year Peak Flood" and "7 Day 2 Year Low Flow".

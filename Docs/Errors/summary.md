@@ -1,0 +1,1 @@
+Error types represent the type of error known to affect a statistic or characteristic value.

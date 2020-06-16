@@ -1,0 +1,2 @@
+## Available Statistic Group Resources
+Returns an array of available statistic group resources currently provided by the services.

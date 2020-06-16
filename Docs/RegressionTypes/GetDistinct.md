@@ -1,0 +1,2 @@
+Returns a regression type based on a specified identifier..
+

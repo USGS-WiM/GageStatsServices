@@ -32,7 +32,7 @@ using GageStatsDB.Resources;
 namespace GageStatsServices.Controllers
 {
     [Route("[controller]")]
-    [APIDescription(type = DescriptionType.e_link, Description = "/Docs/GageStats/summary.md")]
+    [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Statistics/summary.md")]
     public class StatisticsController : WIM.Services.Controllers.ControllerBase
     {
         public IGageStatsAgent agent { get; set; }
