@@ -1,4 +1,4 @@
-## Login
+### Authenticate
 Hits authentication service to receive an authentication token.
 
 ### Example

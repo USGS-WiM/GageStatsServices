@@ -1,3 +1,2 @@
-<span style="color:red">Requires Authentication</span> 
-
+<span style="color:red">Requires Administrator Authentication</span><br>
 Returns an array of available role resources currently provided by the services.
