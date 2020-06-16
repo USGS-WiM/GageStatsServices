@@ -96,12 +96,12 @@ namespace GageStatsServices.Controllers
 
         [HttpGet("Nearest", Name = "Nearest Station")]
         [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Stations/GetDistinct.md")]
-        public async Task<IActionResult> Nearest([FromQuery]string idOrCode, [FromQuery]double radius)
+        public async Task<IActionResult> Nearest([FromQuery]double lat, [FromQuery]double lon, [FromQuery]double radius)
         {
             try
             {
-                //var entity = await agent.GetNearestStations(idOrCode, radius);
-                IQueryable<Station> entities = agent.GetNearest(idOrCode, radius).OrderBy(s => s.ID);
+                //var entity = await agent.GetNearestStations(lat, lon, radius);
+                IQueryable<Station> entities = agent.GetNearest(lat, lon, radius).OrderBy(s => s.ID);
 
                 return Ok(entities);
             }

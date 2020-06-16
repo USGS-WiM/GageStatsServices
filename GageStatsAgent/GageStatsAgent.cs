@@ -68,7 +68,7 @@ namespace GageStatsAgent
         //Station
         IQueryable<Station> GetStations(List<string> stationTypeList = null, List<string> agencyList = null);
         Task<Station> GetStation(string identifier);
-        IQueryable<Station> GetNearest(string identifier, double radius);
+        IQueryable<Station> GetNearest(double lat, double lon, double radius);
         //Task<Station> GetNearestStations(string identifier, double radius);
         Task<Station> Add(Station item);
         Task<IEnumerable<Station>> Add(List<Station> items);
@@ -227,16 +227,17 @@ namespace GageStatsAgent
              return GetStations().Include("Characteristics.Citation").Include("Statistics.PredictionInterval").Include("Statistics.StatisticErrors")
                 .Include("Statistics.Citation").FirstOrDefaultAsync(s => s.Code == identifier || s.ID.ToString() == identifier);
         }
-        public IQueryable<Station> GetNearest(string identifier, double radius)
+        public IQueryable<Station> GetNearest(double lat, double lon, double radius)
         {
-            var query = this.Select<Station>().Where(x => x.Location.Within(x.Location.Buffer(radius)));
+            GeometryFactory Geography = NtsGeometryServices.Instance.CreateGeometryFactory(4326);
+            var coordinate = new Coordinate();
+            coordinate.Y = lat;
+            coordinate.X = lon;
+            var point = Geography.CreatePoint(coordinate);
+            var query = this.Select<Station>().Where(x => x.Location.Within(point.Buffer(radius)));
             return query; //.Select(
         }
-        //public Task<Station> GetNearestStations(string identifier, double radius)
-        //{
-        //    return GetNearest(radius).Include("Characteristics.Citation").Include("Statistics.PredictionInterval").Include("Statistics.StatisticErrors")
-        //        .Include("Statistics.Citation").FirstOrDefaultAsync<Station>();
-        //}
+
         public Task<Station> Add(Station item)
         {
             return Add<Station>(item);
@@ -253,10 +254,6 @@ namespace GageStatsAgent
         {
             return Delete<Station>(id);
         }
-        //public Task<Station> NearestGage(string code, double distance)
-        //{
-        //    return GetStationsByRadius().FirstOrDefaultAsync(s => s.ID == ID);
-        //}
         #endregion
         #region StationType
         public IQueryable<StationType> GetStationTypes()
