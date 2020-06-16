@@ -1,4 +1,2 @@
-## Available Regression Type Resources
 <span style="color:red">Requires Authentication</span>  
 Returns an array of available regression type resources currently provided by the services.
-

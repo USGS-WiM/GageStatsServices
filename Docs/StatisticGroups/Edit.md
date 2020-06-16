@@ -1,3 +1,2 @@
-## Edits a Statistic Group Resource
 <span style="color:red">Requires Administrators Authentication</span>  
 Edits a statistic group.
