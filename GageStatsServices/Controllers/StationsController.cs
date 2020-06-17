@@ -94,6 +94,25 @@ namespace GageStatsServices.Controllers
             }
         }
 
+        [HttpGet("Count", Name = "Station Count")]
+        [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Stations/GetCount.md")]
+        public async Task<IActionResult> Get([FromQuery] string regressionTypes = "", [FromQuery] string variableTypes = "")
+        {
+            List<string> regressionTypeList = null;
+            List<string> variableTypeList = null;
+            try
+            {
+                regressionTypeList = parse(regressionTypes);
+                variableTypeList = parse(variableTypes);
+                if (!regressionTypeList.Any() && !variableTypeList.Any()) throw new BadRequestException("One or more required parameters is missing.");
+                return Ok(agent.GetStationCount(regressionTypeList, variableTypeList));
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
         [HttpPost(Name = "Add Station")]
         [Authorize(Policy = Policy.AdminOnly)]
         [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Stations/Add.md")]
