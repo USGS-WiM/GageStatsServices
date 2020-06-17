@@ -178,6 +178,8 @@ namespace GageStatsDB.Migrations
 
                     b.Property<string>("Comments");
 
+                    b.Property<bool>("IsPreferred");
+
                     b.Property<DateTime>("LastModified");
 
                     b.Property<int?>("PredictionIntervalID");

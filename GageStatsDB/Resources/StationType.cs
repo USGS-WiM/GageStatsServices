@@ -33,7 +33,6 @@ namespace GageStatsDB.Resources
         public string Description { get; set; }
         [Required]
         public string Code { get; set; }
-
         public ICollection<Station> Stations { get; set; }
 
     }

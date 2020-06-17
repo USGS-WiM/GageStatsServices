@@ -28,11 +28,13 @@ using WIM.Services.Attributes;
 using Microsoft.AspNetCore.Authorization;
 using WIM.Security.Authorization;
 using GageStatsDB.Resources;
+using WIM.Exceptions.Services;
+using System.Linq;
 
 namespace GageStatsServices.Controllers
 {
     [Route("[controller]")]
-    [APIDescription(type = DescriptionType.e_link, Description = "/Docs/GageStats/summary.md")]
+    [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Stations/summary.md")]
     public class StationsController : WIM.Services.Controllers.ControllerBase
     {
         public IGageStatsAgent agent { get; set; }
@@ -43,12 +45,27 @@ namespace GageStatsServices.Controllers
         #region METHODS
         [HttpGet(Name = "Stations")]
         [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Stations/Get.md")]
-        public async Task<IActionResult> Get()
+        public async Task<IActionResult> Get([FromQuery] string stationTypes = "", [FromQuery] string agencies = "", [FromQuery] string filterText = null, [FromQuery] int page = 1, [FromQuery] int pageCount = 50)
         {
             try
             {
-                
-                return Ok(agent.GetStations());
+                // Do we want/need a region filter?
+                List<string> stationTypeList = parse(stationTypes);
+                List<string> agencyList = parse(agencies);
+
+                IQueryable<Station> entities = agent.GetStations(stationTypeList, agencyList);
+
+                if (filterText != null)
+                {
+                    entities = entities.Where(s => s.Name.ToUpper().Contains(filterText.ToUpper()) || s.Code.ToUpper().Contains(filterText.ToUpper()));
+                }
+
+                entities = entities.OrderBy(s => s.ID);
+
+                // get number of items to skip for pagination
+                var skip = (page - 1) * pageCount;
+                sm("Returning page " + page + " of " + (entities.Count() / pageCount + 1) + ".");
+                return Ok(entities.Skip(skip).Take(pageCount));
             }
             catch (Exception ex)
             {
@@ -56,14 +73,20 @@ namespace GageStatsServices.Controllers
             }
         }
 
-        [HttpGet("{id}", Name = "Station")]
+        [HttpGet("{idOrCode}", Name = "Station")]
         [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Stations/GetDistinct.md")]
-        public async Task<IActionResult> Get(int id)
+        public async Task<IActionResult> Get(string idOrCode)
         {
             try
             {
-                if (id < 0) return new BadRequestResult(); // This returns HTTP 404
-                return Ok(await agent.GetStation(id));
+                var entity = await agent.GetStation(idOrCode);
+                if (entity != null)
+                {
+                    return Ok(entity);
+                } else
+                {
+                    throw new BadRequestException("Station not found");
+                }
             }
             catch (Exception ex)
             {

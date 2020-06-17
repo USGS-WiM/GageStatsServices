@@ -1,0 +1,1 @@
+The station resource represents a gaging station, with locations, identifying properties and associated characteristics and statistics for that station.

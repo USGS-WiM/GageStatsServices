@@ -64,8 +64,8 @@ namespace GageStatsAgent
         IQueryable<string> GetRoles();
 
         //Station
-        IQueryable<Station> GetStations();
-        Task<Station> GetStation(Int32 ID);
+        IQueryable<Station> GetStations(List<string> stationTypeList = null, List<string> agencyList = null);
+        Task<Station> GetStation(string identifier);
         Task<Station> Add(Station item);
         Task<IEnumerable<Station>> Add(List<Station> items);
         Task<Station> Update(Int32 pkId, Station item);
@@ -119,6 +119,7 @@ namespace GageStatsAgent
         public GageStatsAgent(GageStatsDBContext context, IHttpContextAccessor httpContextAccessor) :base(context)
         {
             this._messages = httpContextAccessor.HttpContext.Items;
+            this.context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
         }
         #endregion
         #region Methods    
@@ -208,13 +209,20 @@ namespace GageStatsAgent
 
         #endregion 
         #region Station
-        public IQueryable<Station> GetStations()
+        public IQueryable<Station> GetStations(List<string> stationTypeList = null, List<string> agencyList = null)
         {
-            return Select<Station>().Include(s=>s.StationType).Include(s=>s.Agency);
+            var query = this.Select<Station>();
+            // if filters, apply them before returning query
+            if (stationTypeList != null && stationTypeList.Any())
+                query = query.Where(st => stationTypeList.Contains(st.StationTypeID.ToString()) || stationTypeList.Contains(st.StationType.Code.ToLower()));
+            if (agencyList != null && agencyList.Any())
+                query = query.Where(st => agencyList.Contains(st.AgencyID.ToString()) || agencyList.Contains(st.Agency.Code.ToLower()));
+            return query;
         }
-        public Task<Station> GetStation(int ID)
+        public Task<Station> GetStation(string identifier)
         {
-            return GetStations().FirstOrDefaultAsync(s => s.ID == ID);
+             return GetStations().Include("Characteristics.Citation").Include("Statistics.PredictionInterval").Include("Statistics.StatisticErrors")
+                .Include("Statistics.Citation").FirstOrDefaultAsync(s => s.Code == identifier || s.ID.ToString() == identifier);
         }
         public Task<Station> Add(Station item)
         {
@@ -298,7 +306,6 @@ namespace GageStatsAgent
         public IUser GetUserByUsername(string username)
         {
             return Select<User>().FirstOrDefault(r => string.Equals(r.Username.ToLower(), username.ToLower()));
-            throw new NotImplementedException();
         }
         public IUser GetUserByID(int id)
         {
@@ -308,12 +315,21 @@ namespace GageStatsAgent
         public IUser AuthenticateUser(string username, string password)
         {
             //this is where one authenticates the username/password before passing back user
-            var user = (User)GetUserByUsername(username);
-            if (user == null || !WIM.Security.Cryptography.VerifyPassword(password, user.Salt, user.Password))
+            try
             {
+                var user = (User)GetUserByUsername(username);
+                if (user == null || !WIM.Security.Cryptography.VerifyPassword(password, user.Salt, user.Password))
+                {
+                    return null;
+                }
+                return user;
+
+            }
+            catch (Exception ex)
+            {
+                sm("Error authenticaticating user ", MessageType.error);
                 return null;
             }
-            return new User() { FirstName = "Jeremy", Role = Role.Admin, Username = username, Password = password, ID = 1 };
         }
         public Task<User> Add(User item)
         {

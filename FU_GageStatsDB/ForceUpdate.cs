@@ -31,6 +31,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 #endregion
 namespace FU_GageStatsDB
 {
@@ -56,7 +57,7 @@ namespace FU_GageStatsDB
         #region Constructors
         public ForceUpdate(string dbusername, string dbpassword, string accessdb)
         {
-            SSDBConnectionstring = string.Format(@"Driver={{Microsoft Access Driver (*.mdb, *.accdb)}};dbq={0}", accessdb);
+            SSDBConnectionstring = string.Format(@"Driver={{Microsoft Access Driver (*.mdb)}};dbq={0}", accessdb);
             GagesStatsDBConnectionstring = string.Format("Server=test.c69uuui2tzs0.us-east-1.rds.amazonaws.com; database={0}; UID={1}; password={2}", "StatsDB", dbusername, dbpassword);
 
             init();
@@ -114,7 +115,7 @@ namespace FU_GageStatsDB
                 {
                     using (var gsDBOps = new GageStatsDbOps(GagesStatsDBConnectionstring, GageStatsDbOps.ConnectionType.e_postgresql))
                     {
-                        //gsDBOps.ResetTables();
+                        gsDBOps.ResetTables();
                 
                         bool DBcontainsMoreRecords = true;
                         var stationcount = ssdb.GetItems<FUInt>(GageStatsDbOps.SQLType.e_stationCount).FirstOrDefault().Value;
@@ -136,7 +137,7 @@ namespace FU_GageStatsDB
                                 limit = (stationcount - offset);
                                 DBcontainsMoreRecords = false;
                             }//endif
-#warning  TODO Impove method with threading and parallelizm
+                            //#warning  TODO Impove method with threading and parallelizm
                             // improvements https://docs.microsoft.com/en-us/dotnet/api/system.threading.tasks.parallel.foreach?view=netcore-2.2
                             //https://docs.microsoft.com/en-us/dotnet/api/system.threading.tasks.parallel.for?view=netcore-2.2
                             foreach (var item in ssdb.GetItems<FU_Station>(GageStatsDbOps.SQLType.e_station, limit, limit + offset))
@@ -151,7 +152,7 @@ namespace FU_GageStatsDB
                                 //Processing Station 06445685 17456 / 36683 - TextReader in stats year (54)
 
                                 //Processing Station 01656600 32323/36683
-                                if (currentcount < 32323) continue;
+                                // if (currentcount < 32323) continue;
                                 sm($"Processing Station {item.Code} {currentcount}/{stationcount}");
                                 if (string.IsNullOrEmpty(item.Name)) item.Name = "Undefined in Database";
                                 //POST Station
@@ -190,6 +191,7 @@ namespace FU_GageStatsDB
                                                                             UnitTypeID = this.unittypeList.FirstOrDefault(u => string.Equals(u.Abbreviation, c.StatisticUnitAbbr)).ID,
                                                                             Value = c.StatisticValue,
                                                                             YearsofRecord = c.StatisticYears,
+                                                                            IsPreferred = c.StatisticIsPreferred,
                                                                             PredictionInterval = (c.StatisticLowerCI.HasValue || c.StatisticUpperCI.HasValue||c.StatisticVariance.HasValue) ? new PredictionInterval()
                                                                             {
                                                                                 LowerConfidenceInterval = c.StatisticLowerCI,
