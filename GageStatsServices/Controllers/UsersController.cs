@@ -40,7 +40,7 @@ namespace GageStatsServices.Controllers
 {
     [Authorize]
     [Route("[controller]")]
-    [APIDescription(type = DescriptionType.e_link, Description = "/Docs/GageStats/summary.md")]
+    [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Users/summary.md")]
     public class UsersController : JwtBearerAuthenticationBase
     {
         //Overrides base property

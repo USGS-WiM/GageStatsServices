@@ -34,7 +34,7 @@ using System.Linq;
 namespace GageStatsServices.Controllers
 {
     [Route("[controller]")]
-    [APIDescription(type = DescriptionType.e_link, Description = "/Docs/GageStats/summary.md")]
+    [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Stations/summary.md")]
     public class StationsController : WIM.Services.Controllers.ControllerBase
     {
         public IGageStatsAgent agent { get; set; }

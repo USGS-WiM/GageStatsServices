@@ -1,0 +1,1 @@
+Returns an array of all available statistic resources currently provided by the services.

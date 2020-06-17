@@ -32,7 +32,7 @@ using WIM.Security.Authorization;
 namespace GageStatsServices.Controllers
 {
     [Route("[controller]")]
-    [APIDescription(type = DescriptionType.e_link, Description = "/Docs/GageStats/summary.md")]
+    [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Agencies/summary.md")]
     public class AgenciesController : WIM.Services.Controllers.ControllerBase
     {
         public IGageStatsAgent agent { get; set; }
