@@ -377,7 +377,7 @@ namespace GageStatsAgent
         }
         public IQueryable<RegressionType> GetRegressions()
         {
-                return this.Select<RegressionType>();
+                return this.Select<RegressionType>().OrderBy(rt => rt.ID);
         }
         public Task<RegressionType> GetRegression(Int32 ID)
         {
@@ -389,7 +389,7 @@ namespace GageStatsAgent
         }
         public IQueryable<StatisticGroupType> GetStatisticGroups()
         {
-            return this.Select<StatisticGroupType>();
+            return this.Select<StatisticGroupType>().OrderBy(sg => sg.ID);
         }
        public Task<StatisticGroupType> GetStatisticGroup(Int32 ID)
         {
@@ -397,7 +397,7 @@ namespace GageStatsAgent
         }
         public IQueryable<UnitType> GetUnits()
         {
-            return this.Select<UnitType>();
+            return this.Select<UnitType>().OrderBy(ut => ut.ID);
         }
         public Task<UnitType> GetUnit(Int32 ID)
         {
@@ -417,7 +417,7 @@ namespace GageStatsAgent
         }
         public IQueryable<VariableType> GetVariables()
         {
-            return this.Select<VariableType>();
+            return this.Select<VariableType>().OrderBy(vt => vt.ID);
         }
         public Task<VariableType> GetVariable(Int32 ID)
         {
