@@ -1,2 +1,2 @@
 <span style="color:red">Requires Administrator Authentication</span>  
-Adds an agency resource to the repository.
+Adds a new agency resource to the repository if it doesn't already exist.

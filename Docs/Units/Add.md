@@ -1,2 +1,2 @@
 <span style="color:red">Requires Administrator Authentication</span>  
-Adds a unit resource to the repository.
+Adds a new unit resource to the repository if it doesn't already exist.

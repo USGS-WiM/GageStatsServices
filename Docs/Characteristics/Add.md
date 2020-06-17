@@ -1,2 +1,2 @@
 <span style="color:red">Requires Authentication</span>  
-Adds a characteristic resource to the repository.
+Adds a new characteristic resource to the repository.

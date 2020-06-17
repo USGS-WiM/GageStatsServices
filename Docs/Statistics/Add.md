@@ -1,2 +1,2 @@
 <span style="color:red">Requires Authentication</span>  
-Adds a statistic resource to the repository.
+Adds a new statistic resource to the repository.

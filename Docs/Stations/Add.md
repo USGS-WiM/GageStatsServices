@@ -1,2 +1,2 @@
 <span style="color:red">Requires Administrator Authentication</span>  
-Adds a station resource to the repository.
+Adds a new station resource to the repository.

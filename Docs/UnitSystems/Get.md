@@ -1,1 +1,1 @@
-Returns an array of available unit system resources currently provided by the services.
+Returns an array of all available unit system resources currently provided by the services.

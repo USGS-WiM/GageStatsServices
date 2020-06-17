@@ -1,1 +1,1 @@
-Returns an array of available variable type resources currently provided by the services.
+Returns an array of all available variable type resources currently provided by the services.

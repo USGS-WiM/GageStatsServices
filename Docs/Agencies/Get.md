@@ -1,1 +1,1 @@
-Returns an array of available agency resources currently provided by the services.
+Returns an array of all available agency resources currently provided by the services.

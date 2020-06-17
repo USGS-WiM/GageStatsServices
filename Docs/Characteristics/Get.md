@@ -1,1 +1,1 @@
-Returns a list of all available characteristics.
+Returns an array of all available characteristics currently provided by the services.

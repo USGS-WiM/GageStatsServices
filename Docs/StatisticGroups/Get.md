@@ -1,1 +1,1 @@
-Returns an array of available statistic group resources currently provided by the services.
+Returns an array of all available statistic group resources currently provided by the services.

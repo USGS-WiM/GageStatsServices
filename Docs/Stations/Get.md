@@ -1,1 +1,1 @@
-Returns an array of available station resources currently provided by the services.
+Returns a paginated array of available station resources currently provided by the services.
