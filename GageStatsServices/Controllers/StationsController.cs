@@ -94,6 +94,23 @@ namespace GageStatsServices.Controllers
             }
         }
 
+        [HttpGet("Nearest", Name = "Nearest Station")]
+        [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Stations/GetDistinct.md")]
+        public async Task<IActionResult> Nearest([FromQuery]double lat, [FromQuery]double lon, [FromQuery]double radius)
+        {
+            try
+            {
+                //var entity = await agent.GetNearestStations(lat, lon, radius);
+                IQueryable<Station> entities = agent.GetNearest(lat, lon, radius).OrderBy(s => s.ID);
+
+                return Ok(entities);
+            }
+            catch (Exception ex)
+            {
+                return await HandleExceptionAsync(ex);
+            }
+        }
+
         [HttpPost(Name = "Add Station")]
         [Authorize(Policy = Policy.AdminOnly)]
         [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Stations/Add.md")]
