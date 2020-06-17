@@ -45,7 +45,7 @@ namespace GageStatsAgent
         Task DeleteAgency(Int32 id);
 
         //Characteristic
-        IQueryable<Characteristic> GetCharacteristics();
+        IQueryable<Characteristic> GetCharacteristics(string stationIDorcode = null);
         Task<Characteristic> GetCharacteristic(Int32 ID);
         Task<Characteristic> Add(Characteristic item);
         Task<IEnumerable<Characteristic>> Add(List<Characteristic> items);
@@ -80,7 +80,7 @@ namespace GageStatsAgent
         Task DeleteStationType(Int32 id);
 
         //Statistic
-        IQueryable<Statistic> GetStatistics();
+        IQueryable<Statistic> GetStatistics(string stationIDOrCode = null);
         Task<Statistic> GetStatistic(Int32 ID);
         Task<Statistic> Add(Statistic item);
         Task<IEnumerable<Statistic>> Add(List<Statistic> items);
@@ -150,9 +150,14 @@ namespace GageStatsAgent
         }
         #endregion
         #region Characteristic
-        public IQueryable<Characteristic> GetCharacteristics()
+        public IQueryable<Characteristic> GetCharacteristics(string stationIDOrCode = null)
         {
-            return Select<Characteristic>().Include(c=>c.VariableType).Include(c=>c.UnitType);
+            IQueryable<Characteristic> query = Select<Characteristic>().Include(c => c.VariableType).Include(c => c.UnitType);
+            if (stationIDOrCode != null)
+            {
+                query = query.Where(c => c.Station.Code == stationIDOrCode || c.Station.ID.ToString() == stationIDOrCode);
+            }
+            return query;
         }
         public Task<Characteristic> GetCharacteristic(int ID)
         {
@@ -268,10 +273,15 @@ namespace GageStatsAgent
         }
         #endregion
         #region Statistic
-        public IQueryable<Statistic> GetStatistics()
+        public IQueryable<Statistic> GetStatistics(string stationIDOrCode = null)
         {
-            return Select<Statistic>().Include(s=>s.PredictionInterval).Include("StatisticErrors.ErrorType")
-                .Include(s=>s.RegressionType).Include(s=>s.StatisticGroupType);
+            IQueryable<Statistic> query = Select<Statistic>().Include(s => s.PredictionInterval).Include("StatisticErrors.ErrorType")
+                    .Include(s => s.RegressionType).Include(s => s.StatisticGroupType);
+            if (stationIDOrCode != null)
+            {
+                query = query.Where(s => s.Station.Code == stationIDOrCode || s.Station.ID.ToString() == stationIDOrCode);
+            }
+            return query;
         }
         public Task<Statistic> GetStatistic(int ID)
         {
