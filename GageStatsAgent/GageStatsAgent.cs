@@ -64,9 +64,8 @@ namespace GageStatsAgent
         IQueryable<string> GetRoles();
 
         //Station
-        IQueryable<Station> GetStations(List<string> stationTypeList = null, List<string> agencyList = null);
+        IQueryable<Station> GetStations(List<string> stationTypeList = null, List<string> agencyList = null, List<string> regressionTypeList = null, List<string> variableTypeList = null);
         Task<Station> GetStation(string identifier);
-        int GetStationCount(List<string> regressionTypeList = null, List<string> variableTypeList = null);
         Task<Station> Add(Station item);
         Task<IEnumerable<Station>> Add(List<Station> items);
         Task<Station> Update(Int32 pkId, Station item);
@@ -215,14 +214,22 @@ namespace GageStatsAgent
 
         #endregion 
         #region Station
-        public IQueryable<Station> GetStations(List<string> stationTypeList = null, List<string> agencyList = null)
+        public IQueryable<Station> GetStations(List<string> stationTypeList = null, List<string> agencyList = null, List<string> regressionTypeList = null, List<string> variableTypeList = null)
         {
-            var query = this.Select<Station>();
+            IQueryable<Station> query = this.Select<Station>().Include(st => st.Statistics).Include(st => st.Characteristics);
             // if filters, apply them before returning query
             if (stationTypeList != null && stationTypeList.Any())
                 query = query.Where(st => stationTypeList.Contains(st.StationTypeID.ToString()) || stationTypeList.Contains(st.StationType.Code.ToLower()));
             if (agencyList != null && agencyList.Any())
                 query = query.Where(st => agencyList.Contains(st.AgencyID.ToString()) || agencyList.Contains(st.Agency.Code.ToLower()));
+            if (regressionTypeList != null && regressionTypeList.Any())
+            {
+                query = query.Where(st => st.Statistics.Any(s => regressionTypeList.Contains(s.RegressionTypeID.ToString()) || regressionTypeList.Contains(s.RegressionType.Code.ToLower())));
+            }
+            if (variableTypeList != null && variableTypeList.Any())
+            {
+                query = query.Where(st => st.Characteristics.Any(c => variableTypeList.Contains(c.VariableTypeID.ToString()) || variableTypeList.Contains(c.VariableType.Code.ToLower())));
+            }
             return query;
         }
         public Task<Station> GetStation(string identifier)
@@ -283,28 +290,6 @@ namespace GageStatsAgent
                 query = query.Where(s => s.Station.Code == stationIDOrCode || s.Station.ID.ToString() == stationIDOrCode);
             }
             return query;
-        }
-
-        public int GetStationCount(List<string> regressionTypeList = null, List<string> variableTypeList = null)
-        {
-            // I tried returning a list of station IDs/Codes, but the lists are too big sometimes
-            // could add pagination if we really want a list of the gages, or set a max count for the return
-            if (regressionTypeList.Any())
-            {
-                var stationIDs = Select<Statistic>().Where(s => regressionTypeList.Contains(s.RegressionTypeID.ToString()) || regressionTypeList.Contains(s.RegressionType.Code.ToLower()))
-                    .Select(s => s.Station.Code).Distinct();
-                this.sm("Station count: " + stationIDs.Count());
-                return stationIDs.Count();
-            }
-            if (variableTypeList.Any())
-            {
-                var stationIDs = Select<Characteristic>().Where(c => variableTypeList.Contains(c.VariableTypeID.ToString()) || variableTypeList.Contains(c.VariableType.Code.ToLower()))
-                    .Select(s => s.Station.Code).Distinct();
-                this.sm("Station count: " + stationIDs.Count());
-                return stationIDs.Count();
-            }
-
-            return -1;
         }
         public Task<Statistic> GetStatistic(int ID)
         {

@@ -45,15 +45,17 @@ namespace GageStatsServices.Controllers
         #region METHODS
         [HttpGet(Name = "Stations")]
         [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Stations/Get.md")]
-        public async Task<IActionResult> Get([FromQuery] string stationTypes = "", [FromQuery] string agencies = "", [FromQuery] string filterText = null, [FromQuery] int page = 1, [FromQuery] int pageCount = 50)
+        public async Task<IActionResult> Get([FromQuery] string stationTypes = "", [FromQuery] string agencies = "", [FromQuery] string regressionTypes = "", [FromQuery] string variableTypes = "",
+            [FromQuery] string filterText = null, [FromQuery] int page = 1, [FromQuery] int pageCount = 50)
         {
             try
             {
-                // Do we want/need a region filter?
                 List<string> stationTypeList = parse(stationTypes);
                 List<string> agencyList = parse(agencies);
+                List<string> regressionTypeList = parse(regressionTypes);
+                List<string> variableTypeList = parse(variableTypes);
 
-                IQueryable<Station> entities = agent.GetStations(stationTypeList, agencyList);
+                IQueryable<Station> entities = agent.GetStations(stationTypeList, agencyList, regressionTypeList, variableTypeList);
 
                 if (filterText != null)
                 {
@@ -65,6 +67,7 @@ namespace GageStatsServices.Controllers
                 // get number of items to skip for pagination
                 var skip = (page - 1) * pageCount;
                 sm("Returning page " + page + " of " + (entities.Count() / pageCount + 1) + ".");
+                sm("Total Count: " + entities.Count());
                 return Ok(entities.Skip(skip).Take(pageCount));
             }
             catch (Exception ex)
@@ -91,25 +94,6 @@ namespace GageStatsServices.Controllers
             catch (Exception ex)
             {
                 return await HandleExceptionAsync(ex);
-            }
-        }
-
-        [HttpGet("Count", Name = "Station Count")]
-        [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Stations/GetCount.md")]
-        public async Task<IActionResult> Get([FromQuery] string regressionTypes = "", [FromQuery] string variableTypes = "")
-        {
-            List<string> regressionTypeList = null;
-            List<string> variableTypeList = null;
-            try
-            {
-                regressionTypeList = parse(regressionTypes);
-                variableTypeList = parse(variableTypes);
-                if (!regressionTypeList.Any() && !variableTypeList.Any()) throw new BadRequestException("One or more required parameters is missing.");
-                return Ok(agent.GetStationCount(regressionTypeList, variableTypeList));
-            }
-            catch (Exception ex)
-            {
-                return HandleException(ex);
             }
         }
 
