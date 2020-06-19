@@ -64,7 +64,7 @@ namespace GageStatsAgent
         IQueryable<string> GetRoles();
 
         //Station
-        IQueryable<Station> GetStations(List<string> stationTypeList = null, List<string> agencyList = null, List<string> regressionTypeList = null, List<string> variableTypeList = null);
+        IQueryable<Station> GetStations(List<string> stationTypeList = null, List<string> agencyList = null, List<string> regressionTypeList = null, List<string> variableTypeList = null, List<string> statisticGroupList = null);
         Task<Station> GetStation(string identifier);
         Task<Station> Add(Station item);
         Task<IEnumerable<Station>> Add(List<Station> items);
@@ -214,7 +214,7 @@ namespace GageStatsAgent
 
         #endregion 
         #region Station
-        public IQueryable<Station> GetStations(List<string> stationTypeList = null, List<string> agencyList = null, List<string> regressionTypeList = null, List<string> variableTypeList = null)
+        public IQueryable<Station> GetStations(List<string> stationTypeList = null, List<string> agencyList = null, List<string> regressionTypeList = null, List<string> variableTypeList = null, List<string> statisticGroupList = null)
         {
             IQueryable<Station> query = this.Select<Station>().Include(st => st.Statistics).Include(st => st.Characteristics);
             // if filters, apply them before returning query
@@ -229,6 +229,10 @@ namespace GageStatsAgent
             if (variableTypeList != null && variableTypeList.Any())
             {
                 query = query.Where(st => st.Characteristics.Any(c => variableTypeList.Contains(c.VariableTypeID.ToString()) || variableTypeList.Contains(c.VariableType.Code.ToLower())));
+            }
+            if (statisticGroupList != null && statisticGroupList.Any())
+            {
+                query = query.Where(st => st.Statistics.Any(s => statisticGroupList.Contains(s.StatisticGroupTypeID.ToString()) || statisticGroupList.Contains(s.StatisticGroupType.Code.ToLower())));
             }
             return query;
         }
