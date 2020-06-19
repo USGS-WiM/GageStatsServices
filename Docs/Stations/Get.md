@@ -1,3 +1,3 @@
 Returns a paginated array of available station resources currently provided by the services.
 
-This endpoint allows for several query parameters, including station type, agency, regression type (used in statistics, e.g. "PK5"), variable type (used in characteristics, e.g. "DRNAREA"), and page number and count. The number of available pages and a total count of all stations meeting all of the criteria can be found in the "x-usgswim-messages" response header.
+This endpoint allows for several query parameters, including station type, agency, regression type (used in statistics, e.g. "PK5"), variable type (used in characteristics, e.g. "DRNAREA"), statistic group (e.g. "PFS" or peak flow statistics) and page number and count. The number of available pages and a total count of all stations meeting all of the criteria can be found in the "x-usgswim-messages" response header.
