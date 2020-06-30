@@ -46,7 +46,7 @@ namespace GageStatsServices.Controllers
         [HttpGet(Name = "Stations")]
         [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Stations/Get.md")]
         public async Task<IActionResult> Get([FromQuery] string stationTypes = "", [FromQuery] string agencies = "", [FromQuery] string regressionTypes = "", [FromQuery] string variableTypes = "",
-            [FromQuery] string statisticGroups = "", [FromQuery] string filterText = null, [FromQuery] int page = 1, [FromQuery] int pageCount = 50)
+            [FromQuery] string statisticGroups = "", [FromQuery] string filterText = null, [FromQuery] int page = 1, [FromQuery] int pageCount = 50, [FromQuery] bool includeStats = false)
         {
             try
             {
@@ -56,7 +56,7 @@ namespace GageStatsServices.Controllers
                 List<string> variableTypeList = parse(variableTypes);
                 List<string> statisticGroupList = parse(statisticGroups);
 
-                IQueryable<Station> entities = agent.GetStations(stationTypeList, agencyList, regressionTypeList, variableTypeList, statisticGroupList);
+                IQueryable<Station> entities = agent.GetStations(stationTypeList, agencyList, regressionTypeList, variableTypeList, statisticGroupList, includeStats);
 
                 if (filterText != null)
                 {
