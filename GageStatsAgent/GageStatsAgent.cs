@@ -229,13 +229,10 @@ namespace GageStatsAgent
         }
         public IQueryable<Station> GetNearest(double lat, double lon, double radius)
         {
-            GeometryFactory Geography = NtsGeometryServices.Instance.CreateGeometryFactory(4326);
-            var coordinate = new Coordinate();
-            coordinate.Y = lat;
-            coordinate.X = lon;
-            var point = Geography.CreatePoint(coordinate);
-            var query = this.Select<Station>().Where(x => x.Location.Within(point.Buffer(radius)));
-            return query; //.Select(
+            //var point = new Point(lon, lat);
+            //var query = this.Select<Station>().Where(x => x.Location.Within(point.Buffer(radius))); //.Buffer(radius)));
+            var query = String.Format(@"SELECT * FROM gagestats.""Stations"" as st where ST_Contains(st_transform(ST_Buffer(st_geomfromtext('Point(" + lon + " " + lat + ")',4236)::geography, " + radius + @")::geometry, 4236), st.""Location"")");
+            return FromSQL<Station>(query); 
         }
 
         public Task<Station> Add(Station item)
