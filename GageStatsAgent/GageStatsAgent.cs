@@ -64,7 +64,7 @@ namespace GageStatsAgent
         IQueryable<string> GetRoles();
 
         //Station
-        IQueryable<Station> GetStations(List<string> stationTypeList = null, List<string> agencyList = null, List<string> regressionTypeList = null, List<string> variableTypeList = null, List<string> statisticGroupList = null);
+        IQueryable<Station> GetStations(List<string> stationTypeList = null, List<string> agencyList = null, List<string> regressionTypeList = null, List<string> variableTypeList = null, List<string> statisticGroupList = null, bool includeStats = false);
         Task<Station> GetStation(string identifier);
         Task<Station> Add(Station item);
         Task<IEnumerable<Station>> Add(List<Station> items);
@@ -214,9 +214,10 @@ namespace GageStatsAgent
 
         #endregion 
         #region Station
-        public IQueryable<Station> GetStations(List<string> stationTypeList = null, List<string> agencyList = null, List<string> regressionTypeList = null, List<string> variableTypeList = null, List<string> statisticGroupList = null)
+        public IQueryable<Station> GetStations(List<string> stationTypeList = null, List<string> agencyList = null, List<string> regressionTypeList = null, List<string> variableTypeList = null, List<string> statisticGroupList = null, bool inclueStats = false)
         {
-            IQueryable<Station> query = this.Select<Station>().Include(st => st.Statistics).Include(st => st.Characteristics);
+            IQueryable<Station> query = this.Select<Station>();
+            if (inclueStats) query = query.Include(s => s.Statistics).Include(s => s.Characteristics);
             // if filters, apply them before returning query
             if (stationTypeList != null && stationTypeList.Any())
                 query = query.Where(st => stationTypeList.Contains(st.StationTypeID.ToString()) || stationTypeList.Contains(st.StationType.Code.ToLower()));
@@ -238,8 +239,8 @@ namespace GageStatsAgent
         }
         public Task<Station> GetStation(string identifier)
         {
-             return GetStations().Include("Characteristics.Citation").Include("Statistics.PredictionInterval").Include("Statistics.StatisticErrors")
-                .Include("Statistics.Citation").FirstOrDefaultAsync(s => s.Code == identifier || s.ID.ToString() == identifier);
+            return GetStations().Include("Characteristics.Citation").Include("Statistics.PredictionInterval").Include("Statistics.StatisticErrors")
+               .Include("Statistics.Citation").FirstOrDefaultAsync(s => s.Code == identifier || s.ID.ToString() == identifier);
         }
         public Task<Station> Add(Station item)
         {
