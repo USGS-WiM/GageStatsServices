@@ -47,7 +47,7 @@ namespace GageStatsAgent
         Task DeleteAgency(Int32 id);
 
         //Characteristic
-        IQueryable<Characteristic> GetCharacteristics();
+        IQueryable<Characteristic> GetCharacteristics(string stationIDorcode = null);
         Task<Characteristic> GetCharacteristic(Int32 ID);
         Task<Characteristic> Add(Characteristic item);
         Task<IEnumerable<Characteristic>> Add(List<Characteristic> items);
@@ -66,7 +66,7 @@ namespace GageStatsAgent
         IQueryable<string> GetRoles();
 
         //Station
-        IQueryable<Station> GetStations(List<string> stationTypeList = null, List<string> agencyList = null);
+        IQueryable<Station> GetStations(List<string> stationTypeList = null, List<string> agencyList = null, List<string> regressionTypeList = null, List<string> variableTypeList = null, List<string> statisticGroupList = null, bool includeStats = false);
         Task<Station> GetStation(string identifier);
         IQueryable<Station> GetNearest(double lat, double lon, double radius);
         //Task<Station> GetNearestStations(string identifier, double radius);
@@ -84,7 +84,7 @@ namespace GageStatsAgent
         Task DeleteStationType(Int32 id);
 
         //Statistic
-        IQueryable<Statistic> GetStatistics();
+        IQueryable<Statistic> GetStatistics(string stationIDOrCode = null);
         Task<Statistic> GetStatistic(Int32 ID);
         Task<Statistic> Add(Statistic item);
         Task<IEnumerable<Statistic>> Add(List<Statistic> items);
@@ -153,9 +153,14 @@ namespace GageStatsAgent
         }
         #endregion
         #region Characteristic
-        public IQueryable<Characteristic> GetCharacteristics()
+        public IQueryable<Characteristic> GetCharacteristics(string stationIDOrCode = null)
         {
-            return Select<Characteristic>().Include(c=>c.VariableType).Include(c=>c.UnitType);
+            IQueryable<Characteristic> query = Select<Characteristic>().Include(c => c.VariableType).Include(c => c.UnitType);
+            if (stationIDOrCode != null)
+            {
+                query = query.Where(c => c.Station.Code == stationIDOrCode || c.Station.ID.ToString() == stationIDOrCode);
+            }
+            return query;
         }
         public Task<Characteristic> GetCharacteristic(int ID)
         {
@@ -212,20 +217,33 @@ namespace GageStatsAgent
 
         #endregion 
         #region Station
-        public IQueryable<Station> GetStations(List<string> stationTypeList = null, List<string> agencyList = null)
+        public IQueryable<Station> GetStations(List<string> stationTypeList = null, List<string> agencyList = null, List<string> regressionTypeList = null, List<string> variableTypeList = null, List<string> statisticGroupList = null, bool includeStats = false)
         {
-            var query = this.Select<Station>();
+            IQueryable<Station> query = this.Select<Station>();
+            if (includeStats) query = query.Include(s => s.Statistics).Include(s => s.Characteristics);
             // if filters, apply them before returning query
             if (stationTypeList != null && stationTypeList.Any())
                 query = query.Where(st => stationTypeList.Contains(st.StationTypeID.ToString()) || stationTypeList.Contains(st.StationType.Code.ToLower()));
             if (agencyList != null && agencyList.Any())
                 query = query.Where(st => agencyList.Contains(st.AgencyID.ToString()) || agencyList.Contains(st.Agency.Code.ToLower()));
+            if (regressionTypeList != null && regressionTypeList.Any())
+            {
+                query = query.Where(st => st.Statistics.Any(s => regressionTypeList.Contains(s.RegressionTypeID.ToString()) || regressionTypeList.Contains(s.RegressionType.Code.ToLower())));
+            }
+            if (variableTypeList != null && variableTypeList.Any())
+            {
+                query = query.Where(st => st.Characteristics.Any(c => variableTypeList.Contains(c.VariableTypeID.ToString()) || variableTypeList.Contains(c.VariableType.Code.ToLower())));
+            }
+            if (statisticGroupList != null && statisticGroupList.Any())
+            {
+                query = query.Where(st => st.Statistics.Any(s => statisticGroupList.Contains(s.StatisticGroupTypeID.ToString()) || statisticGroupList.Contains(s.StatisticGroupType.Code.ToLower())));
+            }
             return query;
         }
         public Task<Station> GetStation(string identifier)
         {
-             return GetStations().Include("Characteristics.Citation").Include("Statistics.PredictionInterval").Include("Statistics.StatisticErrors")
-                .Include("Statistics.Citation").FirstOrDefaultAsync(s => s.Code == identifier || s.ID.ToString() == identifier);
+            return GetStations().Include("Characteristics.Citation").Include("Statistics.PredictionInterval").Include("Statistics.StatisticErrors")
+               .Include("Statistics.Citation").FirstOrDefaultAsync(s => s.Code == identifier || s.ID.ToString() == identifier);
         }
         public IQueryable<Station> GetNearest(double lat, double lon, double radius)
         {
@@ -279,10 +297,15 @@ namespace GageStatsAgent
         }
         #endregion
         #region Statistic
-        public IQueryable<Statistic> GetStatistics()
+        public IQueryable<Statistic> GetStatistics(string stationIDOrCode = null)
         {
-            return Select<Statistic>().Include(s=>s.PredictionInterval).Include("StatisticErrors.ErrorType")
-                .Include(s=>s.RegressionType).Include(s=>s.StatisticGroupType);
+            IQueryable<Statistic> query = Select<Statistic>().Include(s => s.PredictionInterval).Include("StatisticErrors.ErrorType")
+                    .Include(s => s.RegressionType).Include(s => s.StatisticGroupType);
+            if (stationIDOrCode != null)
+            {
+                query = query.Where(s => s.Station.Code == stationIDOrCode || s.Station.ID.ToString() == stationIDOrCode);
+            }
+            return query;
         }
         public Task<Statistic> GetStatistic(int ID)
         {
@@ -370,7 +393,7 @@ namespace GageStatsAgent
         }
         public IQueryable<RegressionType> GetRegressions()
         {
-                return this.Select<RegressionType>();
+                return this.Select<RegressionType>().OrderBy(rt => rt.ID);
         }
         public Task<RegressionType> GetRegression(Int32 ID)
         {
@@ -382,7 +405,7 @@ namespace GageStatsAgent
         }
         public IQueryable<StatisticGroupType> GetStatisticGroups()
         {
-            return this.Select<StatisticGroupType>();
+            return this.Select<StatisticGroupType>().OrderBy(sg => sg.ID);
         }
        public Task<StatisticGroupType> GetStatisticGroup(Int32 ID)
         {
@@ -390,7 +413,7 @@ namespace GageStatsAgent
         }
         public IQueryable<UnitType> GetUnits()
         {
-            return this.Select<UnitType>();
+            return this.Select<UnitType>().OrderBy(ut => ut.ID);
         }
         public Task<UnitType> GetUnit(Int32 ID)
         {
@@ -410,7 +433,7 @@ namespace GageStatsAgent
         }
         public IQueryable<VariableType> GetVariables()
         {
-            return this.Select<VariableType>();
+            return this.Select<VariableType>().OrderBy(vt => vt.ID);
         }
         public Task<VariableType> GetVariable(Int32 ID)
         {

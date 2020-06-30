@@ -43,5 +43,6 @@ namespace GageStatsDB.Resources
         public virtual VariableType VariableType { get; set; }
         public virtual UnitType UnitType { get; set; }
         public virtual Citation Citation { get; set; }
+        public virtual Station Station { get; set; }
     }
 }
