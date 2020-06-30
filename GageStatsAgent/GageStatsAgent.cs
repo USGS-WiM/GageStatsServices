@@ -214,10 +214,10 @@ namespace GageStatsAgent
 
         #endregion 
         #region Station
-        public IQueryable<Station> GetStations(List<string> stationTypeList = null, List<string> agencyList = null, List<string> regressionTypeList = null, List<string> variableTypeList = null, List<string> statisticGroupList = null, bool inclueStats = false)
+        public IQueryable<Station> GetStations(List<string> stationTypeList = null, List<string> agencyList = null, List<string> regressionTypeList = null, List<string> variableTypeList = null, List<string> statisticGroupList = null, bool includeStats = false)
         {
             IQueryable<Station> query = this.Select<Station>();
-            if (inclueStats) query = query.Include(s => s.Statistics).Include(s => s.Characteristics);
+            if (includeStats) query = query.Include(s => s.Statistics).Include(s => s.Characteristics);
             // if filters, apply them before returning query
             if (stationTypeList != null && stationTypeList.Any())
                 query = query.Where(st => stationTypeList.Contains(st.StationTypeID.ToString()) || stationTypeList.Contains(st.StationType.Code.ToLower()));
