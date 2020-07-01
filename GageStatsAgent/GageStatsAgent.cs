@@ -31,8 +31,6 @@ using WIM.Utilities;
 using GageStatsDB;
 using SharedDB.Resources;
 using Microsoft.EntityFrameworkCore;
-using NetTopologySuite.Geometries;
-using NetTopologySuite;
 
 namespace GageStatsAgent
 {
@@ -69,7 +67,6 @@ namespace GageStatsAgent
         IQueryable<Station> GetStations(List<string> stationTypeList = null, List<string> agencyList = null, List<string> regressionTypeList = null, List<string> variableTypeList = null, List<string> statisticGroupList = null, bool includeStats = false);
         Task<Station> GetStation(string identifier);
         IQueryable<Station> GetNearest(double lat, double lon, double radius);
-        //Task<Station> GetNearestStations(string identifier, double radius);
         Task<Station> Add(Station item);
         Task<IEnumerable<Station>> Add(List<Station> items);
         Task<Station> Update(Int32 pkId, Station item);
@@ -123,6 +120,7 @@ namespace GageStatsAgent
         public GageStatsAgent(GageStatsDBContext context, IHttpContextAccessor httpContextAccessor) :base(context)
         {
             this._messages = httpContextAccessor.HttpContext.Items;
+            this.context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
         }
         #endregion
         #region Methods    
@@ -249,7 +247,7 @@ namespace GageStatsAgent
         {
             //var point = new Point(lon, lat);
             //var query = this.Select<Station>().Where(x => x.Location.Within(point.Buffer(radius))); //.Buffer(radius)));
-            var query = String.Format(@"SELECT * FROM gagestats.""Stations"" as st where ST_Contains(st_transform(ST_Buffer(st_geomfromtext('Point(" + lon + " " + lat + ")',4236)::geography, " + radius + @")::geometry, 4236), st.""Location"")");
+            var query = String.Format(@"SELECT * FROM gagestats.""Stations"" as st where ST_Contains(st_transform(ST_Buffer(st_geomfromtext('Point({1} {0})',4236)::geography, {2})::geometry, 4236), st.""Location"")", lat, lon, radius);
             return FromSQL<Station>(query); 
         }
 
@@ -340,7 +338,6 @@ namespace GageStatsAgent
         public IUser GetUserByUsername(string username)
         {
             return Select<User>().FirstOrDefault(r => string.Equals(r.Username.ToLower(), username.ToLower()));
-            throw new NotImplementedException();
         }
         public IUser GetUserByID(int id)
         {
@@ -350,12 +347,21 @@ namespace GageStatsAgent
         public IUser AuthenticateUser(string username, string password)
         {
             //this is where one authenticates the username/password before passing back user
-            var user = (User)GetUserByUsername(username);
-            if (user == null || !WIM.Security.Cryptography.VerifyPassword(password, user.Salt, user.Password))
+            try
             {
+                var user = (User)GetUserByUsername(username);
+                if (user == null || !WIM.Security.Cryptography.VerifyPassword(password, user.Salt, user.Password))
+                {
+                    return null;
+                }
+                return user;
+
+            }
+            catch (Exception ex)
+            {
+                sm("Error authenticaticating user ", MessageType.error);
                 return null;
             }
-            return new User() { FirstName = "Jeremy", Role = Role.Admin, Username = username, Password = password, ID = 1 };
         }
         public Task<User> Add(User item)
         {
