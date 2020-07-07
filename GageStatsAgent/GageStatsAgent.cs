@@ -245,8 +245,6 @@ namespace GageStatsAgent
         }
         public IQueryable<Station> GetNearest(double lat, double lon, double radius)
         {
-            //var point = new Point(lon, lat);
-            //var query = this.Select<Station>().Where(x => x.Location.Within(point.Buffer(radius))); //.Buffer(radius)));
             var query = String.Format(@"SELECT * FROM gagestats.""Stations"" as st where ST_Contains(st_transform(ST_Buffer(st_geomfromtext('Point({1} {0})',4326)::geography, {2})::geometry, 4326), st.""Location"")", lat, lon, radius);
             return FromSQL<Station>(query); 
         }

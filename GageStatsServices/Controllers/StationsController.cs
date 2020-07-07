@@ -104,8 +104,7 @@ namespace GageStatsServices.Controllers
         {
             try
             {
-                //var entity = await agent.GetNearestStations(lat, lon, radius);
-                IQueryable<Station> gages = agent.GetNearest(lat, lon, radius); //.OrderBy(s => s.ID);
+                IQueryable<Station> gages = agent.GetNearest(lat, lon, radius);
 
                 // get number of items to skip for pagination
                 var skip = (page - 1) * pageCount;
