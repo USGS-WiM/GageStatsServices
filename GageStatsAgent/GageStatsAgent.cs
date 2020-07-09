@@ -66,6 +66,7 @@ namespace GageStatsAgent
         //Station
         IQueryable<Station> GetStations(List<string> stationTypeList = null, List<string> agencyList = null, List<string> regressionTypeList = null, List<string> variableTypeList = null, List<string> statisticGroupList = null, bool includeStats = false);
         Task<Station> GetStation(string identifier);
+        IQueryable<Station> GetNearest(double lat, double lon, double radius);
         Task<Station> Add(Station item);
         Task<IEnumerable<Station>> Add(List<Station> items);
         Task<Station> Update(Int32 pkId, Station item);
@@ -242,6 +243,12 @@ namespace GageStatsAgent
             return GetStations().Include("Characteristics.Citation").Include("Statistics.PredictionInterval").Include("Statistics.StatisticErrors")
                .Include("Statistics.Citation").FirstOrDefaultAsync(s => s.Code == identifier || s.ID.ToString() == identifier);
         }
+        public IQueryable<Station> GetNearest(double lat, double lon, double radius)
+        {
+            var query = String.Format(@"SELECT * FROM gagestats.""Stations"" as st where ST_Contains(st_transform(ST_Buffer(st_geomfromtext('Point({1} {0})',4326)::geography, {2})::geometry, 4326), st.""Location"")", lat, lon, radius);
+            return FromSQL<Station>(query); 
+        }
+
         public Task<Station> Add(Station item)
         {
             return Add<Station>(item);

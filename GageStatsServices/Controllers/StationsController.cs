@@ -98,6 +98,25 @@ namespace GageStatsServices.Controllers
             }
         }
 
+        [HttpGet("Nearest", Name = "Nearest Station")]
+        [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Stations/GetDistinct.md")]
+        public async Task<IActionResult> Nearest([FromQuery]double lat, [FromQuery]double lon, [FromQuery]double radius, [FromQuery] int page = 1, [FromQuery] int pageCount = 50)
+        {
+            try
+            {
+                IQueryable<Station> gages = agent.GetNearest(lat, lon, radius);
+
+                // get number of items to skip for pagination
+                var skip = (page - 1) * pageCount;
+                sm("Returning page " + page + " of " + (gages.Count() / pageCount + 1) + ".");
+                return Ok(gages.Skip(skip).Take(pageCount));
+            }
+            catch (Exception ex)
+            {
+                return await HandleExceptionAsync(ex);
+            }
+        }
+
         [HttpPost(Name = "Add Station")]
         [Authorize(Policy = Policy.AdminOnly)]
         [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Stations/Add.md")]
