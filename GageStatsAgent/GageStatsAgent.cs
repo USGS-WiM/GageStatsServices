@@ -34,7 +34,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GageStatsAgent
 {
-    public interface IGageStatsAgent:IAuthenticationAgent
+    public interface IGageStatsAgent : IAuthenticationAgent
     {
         //Agency
         IQueryable<Agency> GetAgencies();
@@ -111,13 +111,13 @@ namespace GageStatsAgent
         Task<VariableType> GetVariable(Int32 ID);
     }
 
-    public class GageStatsAgent :DBAgentBase, IGageStatsAgent
+    public class GageStatsAgent : DBAgentBase, IGageStatsAgent
     {
         #region Properties
         private readonly IDictionary<Object, Object> _messages;
         #endregion
         #region Constructor
-        public GageStatsAgent(GageStatsDBContext context, IHttpContextAccessor httpContextAccessor) :base(context)
+        public GageStatsAgent(GageStatsDBContext context, IHttpContextAccessor httpContextAccessor) : base(context)
         {
             this._messages = httpContextAccessor.HttpContext.Items;
             this.context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
@@ -162,7 +162,7 @@ namespace GageStatsAgent
         }
         public Task<Characteristic> GetCharacteristic(int ID)
         {
-            return GetCharacteristics().FirstOrDefaultAsync(c=>c.ID == ID);
+            return GetCharacteristics().FirstOrDefaultAsync(c => c.ID == ID);
         }
         public Task<Characteristic> Add(Characteristic item)
         {
@@ -245,8 +245,8 @@ namespace GageStatsAgent
         }
         public IQueryable<Station> GetNearest(double lat, double lon, double radius)
         {
-            var query = String.Format(@"SELECT * FROM gagestats.""Stations"" as st where ST_Contains(st_transform(ST_Buffer(st_geomfromtext('Point({1} {0})',4326)::geography, {2})::geometry, 4326), st.""Location"")", lat, lon, radius);
-            return FromSQL<Station>(query); 
+            var query = String.Format(getSQLStatement(sqltypeenum.stationsbyradius), lat, lon, radius);//@"SELECT * FROM gagestats.""Stations"" as st where ST_Contains(st_transform(ST_Buffer(st_geomfromtext('Point({1} {0})',4326)::geography, {2})::geometry, 4326), st.""Location"")", lat, lon, radius);
+            return FromSQL<Station>(query);
         }
 
         public Task<Station> Add(Station item)
@@ -339,7 +339,7 @@ namespace GageStatsAgent
         }
         public IUser GetUserByID(int id)
         {
-            return new User() { FirstName = "Jeremy", Role = Role.Admin, Username = "me-here", Password = "yellow", ID = 1, Salt="yes please" };
+            return new User() { FirstName = "Jeremy", Role = Role.Admin, Username = "me-here", Password = "yellow", ID = 1, Salt = "yes please" };
         }
 
         public IUser AuthenticateUser(string username, string password)
@@ -397,7 +397,7 @@ namespace GageStatsAgent
         }
         public IQueryable<RegressionType> GetRegressions()
         {
-                return this.Select<RegressionType>().OrderBy(rt => rt.ID);
+            return this.Select<RegressionType>().OrderBy(rt => rt.ID);
         }
         public Task<RegressionType> GetRegression(Int32 ID)
         {
@@ -411,7 +411,7 @@ namespace GageStatsAgent
         {
             return this.Select<StatisticGroupType>().OrderBy(sg => sg.ID);
         }
-       public Task<StatisticGroupType> GetStatisticGroup(Int32 ID)
+        public Task<StatisticGroupType> GetStatisticGroup(Int32 ID)
         {
             return this.Find<StatisticGroupType>(ID);
         }
@@ -450,6 +450,18 @@ namespace GageStatsAgent
         #endregion
         #endregion
         #region HELPER METHODS
+        private string getSQLStatement(sqltypeenum type)
+        {
+            string sql = string.Empty;
+            switch (type)
+            {
+                case sqltypeenum.stationsbyradius:
+                    return @"SELECT * FROM gagestats.""Stations"" as st 
+                                      where ST_Contains(st_transform(ST_Buffer(st_geomfromtext('Point({1} {0})',4326)::geography, {2})::geometry, 4326), st.""Location"")";
+                default:
+                    throw new Exception("No sql for table " + type);
+            }
+        }
         private Task Delete<T>(Int32 id) where T : class, new()
         {
             var entity = base.Find<T>(id).Result;
@@ -469,7 +481,11 @@ namespace GageStatsAgent
 
             ((List<Message>)this._messages["wim_msgs"]).Add(msg);
         }
-        #endregion
-    }
 
+        #endregion
+        private enum sqltypeenum
+        {
+            stationsbyradius
+        }
+    }
 }
