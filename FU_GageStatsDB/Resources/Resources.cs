@@ -44,6 +44,7 @@ namespace FU_GageStatsDB.Resources
         {
             try
             {
+                // TODO: to fix error w/ citations, try checking the splitlocation here and making author null if no numbers in title?
                 Int32 splitlocation = authortitle.IndexOfAny("0123456789".ToCharArray());
                 if (!getTitle)
                     //auther
@@ -191,6 +192,20 @@ namespace FU_GageStatsDB.Resources
                 Title = r.GetDataType<string>("Title"),
                 Author = r.GetDataType<string>("Author"),
                 CitationURL = r.GetDataType<string>("CitationURL")
+            };
+        }
+    }
+    public class GageStatsStations : Station
+    {
+        public static GageStatsStations FromDataReader(System.Data.IDataReader r)
+        {
+            return new GageStatsStations()
+            {
+                ID = r.GetDataType<Int32>("ID"),
+                Code = r.GetDataType<string>("Code"),
+                AgencyID = r.GetDataType<Int32>("AgencyID"),
+                Name = r.GetDataType<string>("Name"),
+                StationTypeID = r.GetDataType<Int32>("StationTypeID")
             };
         }
     }
