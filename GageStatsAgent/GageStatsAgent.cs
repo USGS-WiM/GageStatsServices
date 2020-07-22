@@ -153,7 +153,7 @@ namespace GageStatsAgent
         #region Characteristic
         public IQueryable<Characteristic> GetCharacteristics(string stationIDOrCode = null)
         {
-            IQueryable<Characteristic> query = Select<Characteristic>().Include(c => c.VariableType).Include(c => c.UnitType);
+            IQueryable<Characteristic> query = Select<Characteristic>().Include(c => c.VariableType).Include(c => c.UnitType).Include(c => c.Citation);
             if (stationIDOrCode != null)
             {
                 query = query.Where(c => c.Station.Code == stationIDOrCode || c.Station.ID.ToString() == stationIDOrCode);
