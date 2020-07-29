@@ -90,7 +90,7 @@ namespace GageStatsAgent
 
         //User
         IQueryable<User> GetUsers();
-        Task<User> GetUser(Int32 ID);
+        User GetUser(Int32 ID);
         Task<User> Add(User item);
         Task<IEnumerable<User>> Add(List<User> items);
         Task<User> Update(Int32 pkId, User item);
@@ -329,9 +329,9 @@ namespace GageStatsAgent
         {
             return Select<User>();
         }
-        public Task<User> GetUser(int ID)
+        public User GetUser(int ID)
         {
-            return Find<User>(ID);
+            return Select<User>().FirstOrDefault(u => u.ID == ID);
         }
         public IUser GetUserByUsername(string username)
         {
@@ -339,7 +339,7 @@ namespace GageStatsAgent
         }
         public IUser GetUserByID(int id)
         {
-            return new User() { FirstName = "Jeremy", Role = Role.Admin, Username = "me-here", Password = "yellow", ID = 1, Salt = "yes please" };
+            return Select<User>().FirstOrDefault(u => u.ID == id);
         }
 
         public IUser AuthenticateUser(string username, string password)
