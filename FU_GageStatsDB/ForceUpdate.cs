@@ -130,6 +130,7 @@ namespace FU_GageStatsDB
                         Int32 offset = 0;
                         Int32 currentcount = 0;
                         sm("Uploading Stations");
+                        var existingStations = gsDBOps.GetItems<GageStatsStations>(GageStatsDbOps.SQLType.e_getstations, new object[] { });
                         while (DBcontainsMoreRecords)
                         {
                             sm($"LIMIT: {limit} Offset: {offset} ");
@@ -160,21 +161,17 @@ namespace FU_GageStatsDB
                                 var agency = this.agencies.FirstOrDefault(e => String.Equals(e.Code, item.Agency_cd, StringComparison.OrdinalIgnoreCase))?? this.agencies.FirstOrDefault(e=>string.Equals(e.Name, "Undefined"));
                                 var stationType = this.stationTypeList.FirstOrDefault(e => String.Equals(e.Code, item.StationTypeCode))?? this.stationTypeList.FirstOrDefault(st=>string.Equals(st.Name, "Undefined"));
 
-                                var existingStations = gsDBOps.GetItems<GageStatsStations>(GageStatsDbOps.SQLType.e_getstations, new object[] { });
                                 // if station already exists (useful when running function to update citations)
                                 var currentStation = existingStations.FirstOrDefault(s => s.Code == item.Code);
-                                if (currentStation != null)
-                                {
-                                    item.ID = currentStation.ID;
-                                } else
-                                {
-                                    item.ID = gsDBOps.AddItem(GageStatsDbOps.SQLType.e_station, new object[] { item.Code, agency.ID, item.Name.Replace("'", " "), item.IsRegulated, stationType.ID, item.Location.AsText() });
-                                }
+                                if (currentStation != null) item.ID = currentStation.ID;
+                                else  item.ID = gsDBOps.AddItem(GageStatsDbOps.SQLType.e_station, new object[] { item.Code, agency.ID, item.Name.Replace("'", " "), item.IsRegulated, stationType.ID, item.Location.AsText() });
+        
                                 if (item.ID < 1)
                                 {
                                     sm($"99999999 Error pushing station {item.Code} 99999999");
                                     continue;
                                 }
+
                                 //get stats and characteristics to push
                                 List<FU_Statistics> statistics = ssdb.GetItems<FU_Statistics>(GageStatsDbOps.SQLType.e_statistic_data, item.Code).ToList();
 
