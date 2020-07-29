@@ -44,11 +44,13 @@ namespace FU_GageStatsDB.Resources
         {
             try
             {
-                // TODO: to fix error w/ citations, try checking the splitlocation here and making author null if no numbers in title?
                 Int32 splitlocation = authortitle.IndexOfAny("0123456789".ToCharArray());
                 if (!getTitle)
+                {
                     //auther
-                    return authortitle.Substring(0, splitlocation - 1).Trim();
+                    if (splitlocation > -1) return authortitle.Substring(0, splitlocation - 1).Trim();
+                    return null;
+                }
                 else
                     //title
                     return authortitle.Substring(splitlocation).Trim();
@@ -111,6 +113,39 @@ namespace FU_GageStatsDB.Resources
                 ID = Convert.ToInt32(r["ID"]),
                 Code = r["Code"].ToString(),
                 Name = r["Name"].ToString(),
+            };
+
+        }
+    }
+    public class GageStatsStatistic : Statistic
+    {
+        public static GageStatsStatistic FromDataReader(System.Data.IDataReader r)
+        {
+            return new GageStatsStatistic()
+            {
+                ID = Convert.ToInt32(r["ID"]),
+                StatisticGroupTypeID = Convert.ToInt32(r["StatisticGroupTypeID"]),
+                RegressionTypeID = Convert.ToInt32(r["RegressionTypeID"]),
+                StationID = Convert.ToInt32(r["StationID"]),
+                Value = Convert.ToDouble(r["Value"]),
+                UnitTypeID = Convert.ToInt32(r["UnitTypeID"]),
+                CitationID =  0,
+            };
+
+        }
+    }
+    public class GageStatsCharacteristic : Characteristic
+    {
+        public static GageStatsCharacteristic FromDataReader(System.Data.IDataReader r)
+        {
+            return new GageStatsCharacteristic()
+            {
+                ID = Convert.ToInt32(r["ID"]),
+                VariableTypeID = Convert.ToInt32(r["VariableTypeID"]),
+                StationID = Convert.ToInt32(r["StationID"]),
+                Value = Convert.ToDouble(r["Value"]),
+                UnitTypeID = Convert.ToInt32(r["UnitTypeID"]),
+                CitationID = 0,
             };
 
         }

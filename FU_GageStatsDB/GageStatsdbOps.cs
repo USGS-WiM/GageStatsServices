@@ -71,7 +71,7 @@ namespace FU_GageStatsDB
             string sql = string.Empty;
             try
             {
-                sql = String.Format(getSQL(type), pkID, args);
+                sql = String.Format(getSQL(type), args);
                 return base.Update(sql);
             }
             catch (Exception ex)
@@ -376,6 +376,18 @@ namespace FU_GageStatsDB
                 case SQLType.e_getstations:
                     results = @"SELECT * FROM ""gagestats"".""Stations""";
                     break;
+                case SQLType.e_getstatistics:
+                    results = @"SELECT * FROM ""gagestats"".""Statistics"" WHERE ""StationID"" = {0} AND ""CitationID"" is null";
+                    break;
+                case SQLType.e_getcharacteristics:
+                    results = @"SELECT * FROM ""gagestats"".""Characteristics"" WHERE ""StationID"" = {0} AND ""CitationID"" is null";
+                    break;
+                case SQLType.e_updatecharacteristic:
+                    results = @"UPDATE ""gagestats"".""Characteristics"" SET ""CitationID"" = {0} WHERE ""ID"" = {1}";
+                    break;
+                case SQLType.e_updatestatistic:
+                    results = @"UPDATE ""gagestats"".""Statistics"" SET ""CitationID"" = {0} WHERE ""ID"" = {1}";
+                    break;
                 default:
                     break;
             }
@@ -426,7 +438,12 @@ namespace FU_GageStatsDB
             e_getregressiontypes,
             e_regressiontype,
             e_errortype,
-            e_getstations
+            e_getstations,
+            e_getstatistics,
+            e_getcharacteristics,
+
+            e_updatecharacteristic,
+            e_updatestatistic
         }
         public enum ConnectionType
         {

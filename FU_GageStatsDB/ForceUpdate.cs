@@ -115,6 +115,7 @@ namespace FU_GageStatsDB
                 {
                     using (var gsDBOps = new GageStatsDbOps(GagesStatsDBConnectionstring, GageStatsDbOps.ConnectionType.e_postgresql))
                     {
+                        // COMMENT OUT if rerunning script
                         gsDBOps.ResetTables();
                 
                         bool DBcontainsMoreRecords = true;
@@ -152,7 +153,7 @@ namespace FU_GageStatsDB
                                 //Processing Station 06445685 17456 / 36683 - TextReader in stats year (54)
 
                                 //Processing Station 01656600 32323/36683
-                                if (currentcount < 36486) continue;
+                                //if (currentcount < 28788) continue;
                                 sm($"Processing Station {item.Code} {currentcount}/{stationcount}");
                                 if (string.IsNullOrEmpty(item.Name)) item.Name = "Undefined in Database";
                                 //POST Station
@@ -160,11 +161,11 @@ namespace FU_GageStatsDB
                                 var stationType = this.stationTypeList.FirstOrDefault(e => String.Equals(e.Code, item.StationTypeCode))?? this.stationTypeList.FirstOrDefault(st=>string.Equals(st.Name, "Undefined"));
 
                                 var existingStations = gsDBOps.GetItems<GageStatsStations>(GageStatsDbOps.SQLType.e_getstations, new object[] { });
+                                // if station already exists (useful when running function to update citations)
                                 var currentStation = existingStations.FirstOrDefault(s => s.Code == item.Code);
                                 if (currentStation != null)
                                 {
-                                    // TODO: need to test the line below:
-                                    item.ID = gsDBOps.GetItems<GageStatsStations>(GageStatsDbOps.SQLType.e_getstations, new object[] { }).FirstOrDefault(s => s.Code == item.Code).ID;
+                                    item.ID = currentStation.ID;
                                 } else
                                 {
                                     item.ID = gsDBOps.AddItem(GageStatsDbOps.SQLType.e_station, new object[] { item.Code, agency.ID, item.Name.Replace("'", " "), item.IsRegulated, stationType.ID, item.Location.AsText() });
@@ -175,17 +176,18 @@ namespace FU_GageStatsDB
                                     continue;
                                 }
                                 //get stats and characteristics to push
-                                // TODO: compare between statistics/characteristics citation tile split v. the title split in the FU_citation object, might have found the place in resource.cs file
-                                // can check the "Imported from Basin Characteristics file" citation as an example
-                                // TODO: add in function to loop through the existing chars/stats and update if citation is null??
                                 List<FU_Statistics> statistics = ssdb.GetItems<FU_Statistics>(GageStatsDbOps.SQLType.e_statistic_data, item.Code).ToList();
+
+                                // writing this in in case a citation fails, can use the next two lines to update any null citation IDs and skip adding chars/stats
+                                //updateCitationIDs(gsDBOps, item.ID, statistics, citationlist);
+                                //continue;
 
                                 //charactersitics
                                 gsDBOps.AddItems(GageStatsDbOps.SQLType.e_characteristics, statistics.Where(s => String.Equals(s.StatisticDefType, "BC", StringComparison.OrdinalIgnoreCase))
                                                                         .Select(c => new object[] {
                                                                             this.variableTypeList.FirstOrDefault(v=>String.Equals(v.Code,c.StatisticCode)).ID,
                                                                             this.unittypeList.FirstOrDefault(u=> string.Equals(u.Abbreviation, c.StatisticUnitAbbr)).ID,
-                                                                            citationlist.FirstOrDefault(s=>string.Equals(s.Title,c.Citation.Title,StringComparison.OrdinalIgnoreCase)&& string.Equals(s.Author,c.Citation.Author, StringComparison.OrdinalIgnoreCase) && string.Equals(s.CitationURL,c.Citation.CitationURL, StringComparison.OrdinalIgnoreCase))?.ID,
+                                                                            citationlist.FirstOrDefault(s=>string.Equals(s.Title,c.Citation.Title,StringComparison.OrdinalIgnoreCase)&& string.Equals(s.Author,c.Citation.Author, StringComparison.OrdinalIgnoreCase) && (s.CitationURL == "null" || string.Equals(s.CitationURL,c.Citation.CitationURL, StringComparison.OrdinalIgnoreCase)))?.ID,
                                                                             c.StatisticValue,
                                                                             c.StatisticRemarks
                                                                         }).ToList(), new object[] { item.ID });
@@ -220,7 +222,7 @@ namespace FU_GageStatsDB
                             //increment
                             offset = offset + 1000;
                         }//DO
-                     }//end using
+                    }//end using
                 }//end using
             }
             catch (Exception ex)
@@ -276,7 +278,47 @@ namespace FU_GageStatsDB
                     tw.WriteLine(s);
             }
 
-           
+        }
+
+        private void updateCitationIDs(GageStatsDbOps gsDBOps, Int32 stationID, List<FU_Statistics> statistics, List<GageStatsCitations> citationlist)
+        {
+            List<GageStatsStatistic> gsStatistics = gsDBOps.GetItems<GageStatsStatistic>(GageStatsDbOps.SQLType.e_getstatistics, new object[] { stationID }).ToList();
+            List<GageStatsCharacteristic> gsChars = gsDBOps.GetItems<GageStatsCharacteristic>(GageStatsDbOps.SQLType.e_getcharacteristics, new object[] { stationID }).ToList();
+            if (gsStatistics.Count < 1 && gsChars.Count < 1) return;
+            foreach (var stat in gsStatistics)
+            {
+                var regType = this.regressionTypeList.FirstOrDefault(rt => rt.ID == stat.RegressionTypeID);
+                var statType = this.statisticGroupTypeList.FirstOrDefault(sg => sg.ID == stat.StatisticGroupTypeID);
+                var unitType = this.unittypeList.FirstOrDefault(ut => ut.ID == stat.UnitTypeID);
+                var ssdbStat = statistics.FirstOrDefault(s => String.Equals(s.StatisticDefType, "FS", StringComparison.OrdinalIgnoreCase) && String.Equals(s.StatisticCode, regType.Code) && s.StatisticValue == stat.Value &&
+                    String.Equals(s.StatisticUnitAbbr, unitType.Abbreviation) && String.Equals(s.StatisticTypeCode, statType.Code));
+                if (ssdbStat != null)
+                {
+                    var cit = citationlist.FirstOrDefault(s => string.Equals(s.Title, ssdbStat.Citation.Title, StringComparison.OrdinalIgnoreCase));
+                    if (cit != null)
+                    {
+                        stat.CitationID = cit.ID;
+                        var updatedStat = gsDBOps.Update(GageStatsDbOps.SQLType.e_updatestatistic, stat.ID, new object[] { cit.ID, stat.ID });
+                    }
+                }
+
+            }
+            foreach (var stat in gsChars)
+            {
+                var varType = this.variableTypeList.FirstOrDefault(vt => vt.ID == stat.VariableTypeID);
+                var unitType = this.unittypeList.FirstOrDefault(ut => ut.ID == stat.UnitTypeID);
+                var ssdbStat = statistics.FirstOrDefault(s => String.Equals(s.StatisticDefType, "BC", StringComparison.OrdinalIgnoreCase) && String.Equals(s.StatisticCode, varType.Code) && s.StatisticValue == stat.Value &&
+                    String.Equals(s.StatisticUnitAbbr, unitType.Abbreviation));
+                if (ssdbStat != null)
+                {
+                    var cit = citationlist.FirstOrDefault(s => string.Equals(s.Title, ssdbStat.Citation.Title, StringComparison.OrdinalIgnoreCase));
+                    if (cit != null)
+                    {
+                        stat.CitationID = cit.ID;
+                        var updatedChar = gsDBOps.Update(GageStatsDbOps.SQLType.e_updatecharacteristic, stat.ID, new object[] { cit.ID, stat.ID });
+                    }
+                }
+            }
         }
         
         private void init()
