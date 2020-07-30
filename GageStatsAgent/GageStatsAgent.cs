@@ -240,8 +240,9 @@ namespace GageStatsAgent
         }
         public Task<Station> GetStation(string identifier)
         {
-            return GetStations().Include("Characteristics.Citation").Include("Statistics.PredictionInterval").Include("Statistics.StatisticErrors")
-               .Include("Statistics.Citation").FirstOrDefaultAsync(s => s.Code == identifier || s.ID.ToString() == identifier);
+            return GetStations().Include("Agency").Include("StationType").Include("Characteristics.Citation").Include("Characteristics.VariableType").Include("Characteristics.UnitType")
+                .Include("Statistics.PredictionInterval").Include("Statistics.StatisticErrors").Include("Statistics.RegressionType").Include("Statistics.UnitType")
+                .Include("Statistics.Citation").FirstOrDefaultAsync(s => s.Code == identifier || s.ID.ToString() == identifier);
         }
         public IQueryable<Station> GetNearest(double lat, double lon, double radius)
         {
