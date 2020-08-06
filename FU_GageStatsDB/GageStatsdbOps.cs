@@ -326,7 +326,7 @@ namespace FU_GageStatsDB
                 case SQLType.e_station:
                     //item.Code, agencyID, item.Name,item.IsRegulated, stationType, item.Location }
                     results = @"INSERT INTO ""gagestats"".""Stations""(""Code"",""AgencyID"",""Name"", ""IsRegulated"", ""StationTypeID"", ""Location"") 
-                                    VALUES('{0}',{1},'{2}',{3},{4}, ST_SetSRID(ST_GeomFromText('{5}'),4236));";
+                                    VALUES('{0}',{1},'{2}',{3},{4}, ST_SetSRID(ST_GeomFromText('{5}'),4326));";
                     break;
                 case SQLType.e_postcitation:
                     results = @"INSERT INTO ""gagestats"".""Citations""(""Title"",""Author"",""CitationURL"") VALUES('{0}','{1}','{2}');";

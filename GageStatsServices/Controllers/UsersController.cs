@@ -82,12 +82,10 @@ namespace GageStatsServices.Controllers
             try
             {
                 if (id < 0) return new BadRequestResult(); // This returns HTTP 404
-                if (!User.IsInRole(Role.Admin) || Convert.ToInt32(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.PrimarySid)?.Value) != id)
+                var x = agent.GetUser(id);
+                // managers cannot view other managers, just themselves
+                if (!User.IsInRole("Administrator") && User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value != x.Username)
                     return new UnauthorizedResult();// return HTTP 401
-
-                var x = await agent.GetUser(id);
-                x.Salt = null;
-                x.Password = null;
 
                 return Ok(x);
             }
@@ -140,10 +138,10 @@ namespace GageStatsServices.Controllers
                     string.IsNullOrEmpty(entity.Email)) return new BadRequestObjectResult(new Error(errorEnum.e_badRequest)); // This returns HTTP 404
 
                 //fetch object, assuming it exists
-                ObjectToBeUpdated = await agent.GetUser(id);
+                ObjectToBeUpdated = agent.GetUser(id);
                 if (ObjectToBeUpdated == null) return new NotFoundObjectResult(entity);
 
-                if (!User.IsInRole(Role.Admin) || Convert.ToInt32(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.PrimarySid)?.Value) != id)
+                if (!User.IsInRole("Administrator") && User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value != ObjectToBeUpdated.Username)
                     return new UnauthorizedResult();// return HTTP 401
 
                 ObjectToBeUpdated.FirstName = entity.FirstName;

@@ -6,7 +6,6 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.2" />
-    <PackageReference Include="Microsoft.Extensions.Options" Version="3.1.4" />
     <PackageReference Include="UnitsNet" Version="4.65.0" />
     <PackageReference Include="WiM.Resources" Version="1.2.2" />
     <PackageReference Include="WIM.Security" Version="1.1.1" />
