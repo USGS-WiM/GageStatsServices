@@ -21,6 +21,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Newtonsoft.Json;
 
 namespace GageStatsDB.Resources
 {
@@ -35,7 +36,9 @@ namespace GageStatsDB.Resources
         [Required]
         public string CitationURL { get; set; }
 
+        [JsonIgnore]
         public virtual ICollection<Statistic> Statistics { get; set; }
+        [JsonIgnore]
         public virtual ICollection<Characteristic> Characteristics {get; set;}
 
     }
