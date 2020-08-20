@@ -143,7 +143,8 @@ namespace GageStatsDB.Resources
             return this.StatisticGroupTypeID == other.StatisticGroupTypeID &&
                 this.RegressionTypeID == other.RegressionTypeID &&
                 this.StationID == other.StationID &&
-                this.UnitTypeID == other.UnitTypeID;
+                this.UnitTypeID == other.UnitTypeID &&
+                this.CitationID == other.CitationID;
 
 
         }
