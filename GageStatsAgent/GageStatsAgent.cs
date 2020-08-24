@@ -88,12 +88,12 @@ namespace GageStatsAgent
         Task<Statistic> Update(Int32 pkId, Statistic item);
         Task DeleteStatistic(Int32 id);
 
-        //User
-        IQueryable<User> GetUsers();
-        User GetUser(Int32 ID);
-        Task<User> Add(User item);
-        Task<IEnumerable<User>> Add(List<User> items);
-        Task<User> Update(Int32 pkId, User item);
+        //Manager
+        IQueryable<Manager> GetUsers();
+        Manager GetUser(Int32 ID);
+        Task<Manager> Add(Manager item);
+        Task<IEnumerable<Manager>> Add(List<Manager> items);
+        Task<Manager> Update(Int32 pkId, Manager item);
         Task DeleteUser(Int32 id);
 
         //Readonly (Shared Views) methods
@@ -325,22 +325,22 @@ namespace GageStatsAgent
             return Delete<Statistic>(id);
         }
         #endregion
-        #region User
-        public IQueryable<User> GetUsers()
+        #region Manager
+        public IQueryable<Manager> GetUsers()
         {
-            return Select<User>();
+            return Select<Manager>();
         }
-        public User GetUser(int ID)
+        public Manager GetUser(int ID)
         {
-            return Select<User>().FirstOrDefault(u => u.ID == ID);
+            return Select<Manager>().FirstOrDefault(u => u.ID == ID);
         }
         public IUser GetUserByUsername(string username)
         {
-            return Select<User>().FirstOrDefault(r => string.Equals(r.Username.ToLower(), username.ToLower()));
+            return Select<Manager>().FirstOrDefault(r => string.Equals(r.Username.ToLower(), username.ToLower()));
         }
         public IUser GetUserByID(int id)
         {
-            return Select<User>().FirstOrDefault(u => u.ID == id);
+            return Select<Manager>().FirstOrDefault(u => u.ID == id);
         }
 
         public IUser AuthenticateUser(string username, string password)
@@ -348,7 +348,7 @@ namespace GageStatsAgent
             //this is where one authenticates the username/password before passing back user
             try
             {
-                var user = (User)GetUserByUsername(username);
+                var user = (Manager)GetUserByUsername(username);
                 if (user == null || !WIM.Security.Cryptography.VerifyPassword(password, user.Salt, user.Password))
                 {
                     return null;
@@ -362,21 +362,21 @@ namespace GageStatsAgent
                 return null;
             }
         }
-        public Task<User> Add(User item)
+        public Task<Manager> Add(Manager item)
         {
-            return Add<User>(item);
+            return Add<Manager>(item);
         }
-        public Task<IEnumerable<User>> Add(List<User> items)
+        public Task<IEnumerable<Manager>> Add(List<Manager> items)
         {
-            return Add<User>(items);
+            return Add<Manager>(items);
         }
-        public Task<User> Update(int pkId, User item)
+        public Task<Manager> Update(int pkId, Manager item)
         {
-            return Update<User>(pkId, item);
+            return Update<Manager>(pkId, item);
         }
         public Task DeleteUser(int id)
         {
-            return Delete<User>(id);
+            return Delete<Manager>(id);
         }
         #endregion
         #region ReadOnly

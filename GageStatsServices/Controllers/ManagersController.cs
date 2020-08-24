@@ -34,31 +34,32 @@ using Microsoft.Extensions.Options;
 using System.Linq;
 using System.Security.Claims;
 using WIM.Security;
-using User = GageStatsDB.Resources.User;
+using SharedDB.Resources;
+using SharedAgent;
 
 namespace GageStatsServices.Controllers
 {
     [Authorize]
     [Route("[controller]")]
-    [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Users/summary.md")]
-    public class UsersController : JwtBearerAuthenticationBase
+    [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Managers/summary.md")]
+    public class ManagersController : JwtBearerAuthenticationBase
     {
         //Overrides base property
-        public new IGageStatsAgent agent => (IGageStatsAgent)base.agent; 
-        public UsersController(IGageStatsAgent agent, IOptions<JwtBearerSettings> jwtsettings ) : 
-            base(agent,jwtsettings.Value.SecretKey)
+        protected IGageStatsAgent agent;
+        public ManagersController(IGageStatsAgent sa, ISharedAgent shared_sa, IOptions<JwtBearerSettings> jwtsettings ) : 
+            base(sa,jwtsettings.Value.SecretKey)
         {
-
+            this.agent = sa;
         }
         #region METHODS
-        [HttpGet(Name = "Users")]
+        [HttpGet(Name = "Managers")]
         [Authorize(Policy = Policy.AdminOnly)]
-        [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Users/Get.md")]
+        [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Managers/Get.md")]
         public async Task<IActionResult> Get()
         {
             try
             {                
-                return Ok(agent.GetUsers().Select(u => new User() {
+                return Ok(agent.GetUsers().Select(u => new Manager() {
                     ID = u.ID,
                     Email = u.Email,
                     FirstName=u.FirstName,
@@ -74,9 +75,9 @@ namespace GageStatsServices.Controllers
             }
         }
 
-        [HttpGet("{id}", Name = "User")]
+        [HttpGet("{id}", Name = "Manager")]
         [Authorize(Policy = Policy.Managed)]
-        [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Users/GetDistinct.md")]
+        [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Managers/GetDistinct.md")]
         public async Task<IActionResult> Get(int id)
         {
             try
@@ -95,10 +96,10 @@ namespace GageStatsServices.Controllers
             }
         }
 
-        [HttpPost(Name = "Add User")]
+        [HttpPost(Name = "Add Manager")]
         [Authorize(Policy = Policy.AdminOnly)]
-        [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Users/Add.md")]
-        public async Task<IActionResult> Post([FromBody]User entity)
+        [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Managers/Add.md")]
+        public async Task<IActionResult> Post([FromBody]Manager entity)
         {
             try
             {
@@ -126,12 +127,12 @@ namespace GageStatsServices.Controllers
             }
         }
 
-        [HttpPut("{id}", Name = "Edit User")]
+        [HttpPut("{id}", Name = "Edit Manager")]
         [Authorize(Policy = Policy.Managed)]
-        [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Users/Edit.md")]
-        public async Task<IActionResult> Put(int id, [FromBody]User entity)
+        [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Managers/Edit.md")]
+        public async Task<IActionResult> Put(int id, [FromBody]Manager entity)
         {
-            User ObjectToBeUpdated = null;
+            Manager ObjectToBeUpdated = null;
             try
             {
                 if (string.IsNullOrEmpty(entity.FirstName) || string.IsNullOrEmpty(entity.LastName) ||
@@ -175,9 +176,9 @@ namespace GageStatsServices.Controllers
             }
         }
 
-        [HttpDelete("{id}", Name = "Delete User")]
+        [HttpDelete("{id}", Name = "Delete Manager")]
         [Authorize(Policy = Policy.AdminOnly)]
-        [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Users/Delete.md")]
+        [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Managers/Delete.md")]
         public async Task<IActionResult> Delete(int id)
         {
             try
@@ -192,7 +193,7 @@ namespace GageStatsServices.Controllers
         }
         #endregion
         #region HELPER METHODS
-        private string generateDefaultPassword(User entity)
+        private string generateDefaultPassword(Manager entity)
         {
             //Gage5tatsDefau1t+numbercharInlastname+first2letterFirstName
             string generatedPassword = "Gage5tatsDefau1t" + entity.LastName.Length + entity.FirstName.Substring(0, 2);

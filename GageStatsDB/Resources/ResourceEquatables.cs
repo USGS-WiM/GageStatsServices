@@ -180,26 +180,4 @@ namespace GageStatsDB.Resources
             return (this.StatisticID + this.ErrorTypeID).GetHashCode();
         }
     }
-    public partial class User : IEquatable<User>
-    {
-        public bool Equals(User other)
-        {
-            return String.Equals(this.Username.ToLower(), other.Username.ToLower()) &&
-                String.Equals(this.Email.ToLower(), other.Email.ToLower()) &&
-                String.Equals(this.FirstName.ToLower(), other.FirstName.ToLower()) &&
-                string.Equals(this.LastName.ToLower(), other.LastName.ToLower());
-
-        }
-        public override bool Equals(object obj)
-        {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != GetType()) return false;
-            return Equals(obj as User);
-        }
-        public override int GetHashCode()
-        {
-            return (this.Username +this.Email + this.FirstName + this.LastName).GetHashCode();
-        }
-    }
 }

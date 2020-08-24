@@ -7,7 +7,7 @@ using WIM.Resources;
 
 namespace GageStatsDB.Resources
 {
-    public partial class User:IUser
+    public partial class ManagerOld:IUser
     {
         [Required][DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int ID { get; set; }

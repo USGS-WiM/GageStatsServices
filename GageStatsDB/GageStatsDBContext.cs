@@ -41,7 +41,6 @@ namespace GageStatsDB
         public DbSet<Station> Stations { get; set; }
         public DbSet<StationType> StationTypes { get; set; }
         public DbSet<Statistic> Statistics { get; set; }
-        public DbSet<User> User { get; set; }
 
         //Shared views
         public DbSet<ErrorType> ErrorTypes { get; set; }
@@ -51,6 +50,7 @@ namespace GageStatsDB
         public DbSet<UnitConversionFactor> UnitConversionFactors { get; set; }
         public DbSet<UnitSystemType> UnitSystemTypes { get; set; }
         public DbSet<VariableType> VariableTypes { get; set; }
+        public DbSet<Manager> Managers { get; set; }
 
         public GageStatsDBContext() : base()
         {
@@ -71,6 +71,8 @@ namespace GageStatsDB
             modelBuilder.Entity<UnitSystemType>().ToTable("UnitSystemType_view");
             modelBuilder.Entity<UnitType>().ToTable("UnitType_view");
             modelBuilder.Entity<VariableType>().ToTable("VariableType_view");
+            modelBuilder.Entity<Manager>().ToTable("Managers_view"); // might need to migrate the DB first?
+
 
             //Specify other unique constraints
             //EF Core currently does not support changing the value of alternate keys. We do have #4073 tracking removing this restriction though.
@@ -79,7 +81,7 @@ namespace GageStatsDB
             modelBuilder.Entity<Agency>().HasIndex(k => k.Code).IsUnique();
             modelBuilder.Entity<StationType>().HasIndex(k => k.Code).IsUnique();
 
-            modelBuilder.Entity<User>().Property(e => e.Role).HasConversion<string>();
+            //modelBuilder.Entity<User>().Property(e => e.Role).HasConversion<string>();
 
             //add shadowstate for when models change
             foreach (var entitytype in modelBuilder.Model.GetEntityTypes())
@@ -138,6 +140,7 @@ namespace GageStatsDB
             //modelBuilder.Ignore(typeof(UnitSystemType));
             //modelBuilder.Ignore(typeof(UnitType));
             //modelBuilder.Ignore(typeof(VariableType));
+            //modelBuilder.Ignore(typeof(Manager));
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
