@@ -91,10 +91,12 @@ namespace GageStatsAgent
         //Manager
         IQueryable<Manager> GetUsers();
         Manager GetUser(Int32 ID);
-        Task<Manager> Add(Manager item);
-        Task<IEnumerable<Manager>> Add(List<Manager> items);
-        Task<Manager> Update(Int32 pkId, Manager item);
-        Task DeleteUser(Int32 id);
+
+        //Regions
+        IQueryable<Region> GetRegions();
+        Task<Region> GetRegion(Int32 ID);
+        Region GetRegionByIDOrCode(string identifier);
+        IQueryable<Region> GetManagerRegions(int managerID);
 
         //Readonly (Shared Views) methods
         IQueryable<ErrorType> GetErrors();
@@ -332,11 +334,11 @@ namespace GageStatsAgent
         }
         public Manager GetUser(int ID)
         {
-            return Select<Manager>().FirstOrDefault(u => u.ID == ID);
+            return Select<Manager>().Include(m => m.RegionManagers).FirstOrDefault(u => u.ID == ID);
         }
         public IUser GetUserByUsername(string username)
         {
-            return Select<Manager>().FirstOrDefault(r => string.Equals(r.Username.ToLower(), username.ToLower()));
+            return Select<Manager>().Include(m => m.RegionManagers).FirstOrDefault(r => string.Equals(r.Username.ToLower(), username.ToLower()));
         }
         public IUser GetUserByID(int id)
         {
@@ -377,6 +379,38 @@ namespace GageStatsAgent
         public Task DeleteUser(int id)
         {
             return Delete<Manager>(id);
+        }
+        #endregion
+        #region Region
+        public Region GetRegionByIDOrCode(string identifier)
+        {
+            try
+            {
+
+                return Select<Region>().FirstOrDefault(e => String.Equals(e.ID.ToString().Trim().ToLower(),
+                                                        identifier.Trim().ToLower()) || String.Equals(e.Code.Trim().ToLower(),
+                                                        identifier.Trim().ToLower()));
+            }
+            catch (Exception ex)
+            {
+                sm("Error finding region " + ex.Message, WIM.Resources.MessageType.error);
+                return null;
+            }
+
+
+        }
+        public IQueryable<Region> GetRegions()
+        {
+            return this.Select<Region>();
+        }
+        public Task<Region> GetRegion(int ID)
+        {
+            return this.Find<Region>(ID);
+        }
+        public IQueryable<Region> GetManagerRegions(int managerID)
+        {
+            return Select<RegionManager>().Where(rm => rm.ManagerID == managerID)
+                                .Include("Region").Select(rm => rm.Region);
         }
         #endregion
         #region ReadOnly

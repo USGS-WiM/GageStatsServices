@@ -6,7 +6,7 @@
 //       01234567890123456789012345678901234567890123456789012345678901234567890
 //-------+---------+---------+---------+---------+---------+---------+---------+
 
-// copyright:   2017 WIM - USGS
+// copyright:   2019 WIM - USGS
 
 //    authors:  Jeremy K. Newson USGS Web Informatics and Mapping
 //              
@@ -46,10 +46,12 @@ namespace GageStatsServices.Controllers
     {
         //Overrides base property
         protected IGageStatsAgent agent;
-        public ManagersController(IGageStatsAgent sa, ISharedAgent shared_sa, IOptions<JwtBearerSettings> jwtsettings ) : 
-            base(sa,jwtsettings.Value.SecretKey)
+        protected ISharedAgent shared;
+        public ManagersController(IGageStatsAgent sa, ISharedAgent shared_sa, IOptions<JwtBearerSettings> jwtsettings ) :
+                    base(sa,jwtsettings.Value.SecretKey)
         {
             this.agent = sa;
+            this.shared = shared_sa;
         }
         #region METHODS
         [HttpGet(Name = "Managers")]
@@ -58,15 +60,19 @@ namespace GageStatsServices.Controllers
         public async Task<IActionResult> Get()
         {
             try
-            {                
-                return Ok(agent.GetUsers().Select(u => new Manager() {
-                    ID = u.ID,
-                    Email = u.Email,
-                    FirstName=u.FirstName,
-                    LastName = u.LastName,
-                    Username = u.Username,
-                    PrimaryPhone = u.PrimaryPhone,
-                    Role = u.Role
+            {
+                return Ok(agent.GetUsers().Select(m => new Manager()
+                {
+                    ID = m.ID,
+                    Email = m.Email,
+                    FirstName = m.FirstName,
+                    LastName = m.LastName,
+                    OtherInfo = m.OtherInfo,
+                    PrimaryPhone = m.PrimaryPhone,
+                    Role = m.Role,
+                    SecondaryPhone = m.SecondaryPhone,
+                    Username = m.Username,
+                    RegionManagers = m.RegionManagers
                 }));
             }
             catch (Exception ex)
@@ -83,10 +89,14 @@ namespace GageStatsServices.Controllers
             try
             {
                 if (id < 0) return new BadRequestResult(); // This returns HTTP 404
-                var x = agent.GetUser(id);
                 // managers cannot view other managers, just themselves
-                if (!User.IsInRole("Administrator") && User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value != x.Username)
+                if (!User.IsInRole("Administrator") && Convert.ToInt32(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.PrimarySid)?.Value) != id)
                     return new UnauthorizedResult();// return HTTP 401
+
+                var x = agent.GetUser(id);
+                //remove info not relevant
+                x.Salt = null;
+                x.Password = null;
 
                 return Ok(x);
             }
@@ -114,12 +124,12 @@ namespace GageStatsServices.Controllers
                 entity.Password = Cryptography.GenerateSHA256Hash(entity.Password, entity.Salt);
 
                 if (!isValid(entity)) return new BadRequestResult(); // This returns HTTP 404
-                var x = await agent.Add(entity);
+                var x = await shared.Add(entity);
                 //remove info not relevant
                 x.Salt = null;
                 x.Password = null;
 
-                return Ok(await agent.Add(x));
+                return Ok(x);
             }
             catch (Exception ex)
             {
@@ -142,13 +152,18 @@ namespace GageStatsServices.Controllers
                 ObjectToBeUpdated = agent.GetUser(id);
                 if (ObjectToBeUpdated == null) return new NotFoundObjectResult(entity);
 
-                if (!User.IsInRole("Administrator") && User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value != ObjectToBeUpdated.Username)
+                // managers cannot edit other managers, just themselves
+                if (!User.IsInRole("Administrator") && Convert.ToInt32(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.PrimarySid)?.Value) != id)
                     return new UnauthorizedResult();// return HTTP 401
 
                 ObjectToBeUpdated.FirstName = entity.FirstName;
                 ObjectToBeUpdated.LastName = entity.LastName;
+                ObjectToBeUpdated.Username = entity.Username;
+                ObjectToBeUpdated.OtherInfo = entity.OtherInfo ?? entity.OtherInfo;
                 ObjectToBeUpdated.PrimaryPhone = entity.PrimaryPhone ?? entity.PrimaryPhone;
+                ObjectToBeUpdated.SecondaryPhone = entity.SecondaryPhone ?? entity.SecondaryPhone;
                 ObjectToBeUpdated.Email = entity.Email;
+                ObjectToBeUpdated.RegionManagers = entity.RegionManagers;
 
                 //admin can only change role
                 if (User.IsInRole(Role.Admin) && !string.IsNullOrEmpty(entity.Role))
@@ -162,7 +177,17 @@ namespace GageStatsServices.Controllers
                     ObjectToBeUpdated.Password = Cryptography.GenerateSHA256Hash(entity.Password, ObjectToBeUpdated.Salt);
                 }//end if
 
-                var x = await agent.Update(id, ObjectToBeUpdated);
+                var x = await shared.Update(id, ObjectToBeUpdated);
+
+                // add new region managers to DB
+                if (ObjectToBeUpdated.RegionManagers != null)
+                {
+                    var existingRMs = agent.GetUser(id).RegionManagers;
+                    foreach (var rm in ObjectToBeUpdated.RegionManagers)
+                    {
+                        if (!existingRMs.Any(r => r.ManagerID == rm.ManagerID && r.RegionID == rm.RegionID)) await shared.Add(rm);
+                    }
+                }
 
                 //remove info not relevant
                 x.Salt = null;
@@ -183,7 +208,9 @@ namespace GageStatsServices.Controllers
         {
             try
             {
-                await agent.DeleteUser(id);
+                if (id < 1) return new BadRequestResult();
+                await shared.DeleteManager(id);
+
                 return Ok();
             }
             catch (Exception ex)

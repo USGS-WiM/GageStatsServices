@@ -51,6 +51,8 @@ namespace GageStatsDB
         public DbSet<UnitSystemType> UnitSystemTypes { get; set; }
         public DbSet<VariableType> VariableTypes { get; set; }
         public DbSet<Manager> Managers { get; set; }
+        public DbSet<Region> Regions { get; set; }
+        public DbSet<RegionManager> RegionManager { get; set; }
 
         public GageStatsDBContext() : base()
         {
@@ -72,7 +74,11 @@ namespace GageStatsDB
             modelBuilder.Entity<UnitType>().ToTable("UnitType_view");
             modelBuilder.Entity<VariableType>().ToTable("VariableType_view");
             modelBuilder.Entity<Manager>().ToTable("Managers_view"); // might need to migrate the DB first?
+            modelBuilder.Entity<Region>().ToTable("Regions_view");
+            modelBuilder.Entity<RegionManager>().ToTable("RegionManager_view");
 
+            //unique key based on combination of both keys (many to many tables)
+            modelBuilder.Entity<RegionManager>().HasKey(k => new { k.ManagerID, k.RegionID });
 
             //Specify other unique constraints
             //EF Core currently does not support changing the value of alternate keys. We do have #4073 tracking removing this restriction though.
@@ -80,6 +86,7 @@ namespace GageStatsDB
             modelBuilder.Entity<Station>().HasIndex(k => k.Code).IsUnique();
             modelBuilder.Entity<Agency>().HasIndex(k => k.Code).IsUnique();
             modelBuilder.Entity<StationType>().HasIndex(k => k.Code).IsUnique();
+            modelBuilder.Entity<Manager>().HasIndex(k => k.Username).IsUnique();
 
             //modelBuilder.Entity<User>().Property(e => e.Role).HasConversion<string>();
 
@@ -88,7 +95,8 @@ namespace GageStatsDB
             {
                 if (new List<string>() { typeof(StatisticError).FullName,typeof(ErrorType).FullName,typeof(RegressionType).FullName,
                                          typeof(StatisticGroupType).FullName,typeof(UnitConversionFactor).FullName,typeof(UnitSystemType).FullName,
-                                         typeof(UnitType).FullName,typeof(VariableType).FullName }
+                                         typeof(UnitType).FullName,typeof(VariableType).FullName, typeof(Region).FullName, typeof(Manager).FullName,
+                                         typeof(RegionManager).FullName}
                 .Contains(entitytype.Name))
                 { continue; }
 
@@ -141,6 +149,8 @@ namespace GageStatsDB
             //modelBuilder.Ignore(typeof(UnitType));
             //modelBuilder.Ignore(typeof(VariableType));
             //modelBuilder.Ignore(typeof(Manager));
+            //modelBuilder.Ignore(typeof(Region));
+            //modelBuilder.Ignore(typeof(RegionManager));
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

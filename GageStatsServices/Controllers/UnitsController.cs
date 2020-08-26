@@ -28,6 +28,7 @@ using System.Collections.Generic;
 using SharedAgent;
 using WIM.Services.Attributes;
 using WIM.Security.Authorization;
+using Shared.Controllers;
 
 namespace NSSServices.Controllers
 {
