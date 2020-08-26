@@ -139,6 +139,11 @@ namespace GageStatsServices
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
         {
             app.UseX_Messages(option => { option.HostKey = this._hostKey; });
+            app.Use(async (context, next) =>
+            {
+                context.Response.Headers.Add("X-GageStatsServices-Version", Configuration.GetSection("Version").Value);
+                await next.Invoke();
+            });
             app.UseCors("CorsPolicy");
             app.UseRouting();
             app.UseAuthentication();
