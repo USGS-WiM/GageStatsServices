@@ -88,8 +88,6 @@ namespace GageStatsDB
             modelBuilder.Entity<StationType>().HasIndex(k => k.Code).IsUnique();
             modelBuilder.Entity<Manager>().HasIndex(k => k.Username).IsUnique();
 
-            //modelBuilder.Entity<User>().Property(e => e.Role).HasConversion<string>();
-
             //add shadowstate for when models change
             foreach (var entitytype in modelBuilder.Model.GetEntityTypes())
             {

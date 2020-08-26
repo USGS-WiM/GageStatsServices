@@ -30,7 +30,7 @@ using WIM.Services.Attributes;
 using WIM.Security.Authorization;
 using Shared.Controllers;
 
-namespace NSSServices.Controllers
+namespace GageStatsServices.Controllers
 {
     [Route("[controller]")]
     [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Units/summary.md")]
