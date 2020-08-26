@@ -1,2 +1,2 @@
 <span style="color:red">Requires Authentication</span>  
-Edits a User.
+Returns a manager based on the specified identifier.
