@@ -6,7 +6,7 @@
 //       01234567890123456789012345678901234567890123456789012345678901234567890
 //-------+---------+---------+---------+---------+---------+---------+---------+
 
-// copyright:   2017 WIM - USGS
+// copyright:   2019 WIM - USGS
 
 //    authors:  Jeremy K. Newson USGS Web Informatics and Mapping
 //              
@@ -34,38 +34,45 @@ using Microsoft.Extensions.Options;
 using System.Linq;
 using System.Security.Claims;
 using WIM.Security;
-using User = GageStatsDB.Resources.User;
+using SharedDB.Resources;
+using SharedAgent;
 
 namespace GageStatsServices.Controllers
 {
     [Authorize]
     [Route("[controller]")]
-    [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Users/summary.md")]
-    public class UsersController : JwtBearerAuthenticationBase
+    [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Managers/summary.md")]
+    public class ManagersController : JwtBearerAuthenticationBase
     {
         //Overrides base property
-        public new IGageStatsAgent agent => (IGageStatsAgent)base.agent; 
-        public UsersController(IGageStatsAgent agent, IOptions<JwtBearerSettings> jwtsettings ) : 
-            base(agent,jwtsettings.Value.SecretKey)
+        protected IGageStatsAgent agent;
+        protected ISharedAgent shared;
+        public ManagersController(IGageStatsAgent sa, ISharedAgent shared_sa, IOptions<JwtBearerSettings> jwtsettings ) :
+                    base(sa,jwtsettings.Value.SecretKey)
         {
-
+            this.agent = sa;
+            this.shared = shared_sa;
         }
         #region METHODS
-        [HttpGet(Name = "Users")]
+        [HttpGet(Name = "Managers")]
         [Authorize(Policy = Policy.AdminOnly)]
-        [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Users/Get.md")]
+        [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Managers/Get.md")]
         public async Task<IActionResult> Get()
         {
             try
-            {                
-                return Ok(agent.GetUsers().Select(u => new User() {
-                    ID = u.ID,
-                    Email = u.Email,
-                    FirstName=u.FirstName,
-                    LastName = u.LastName,
-                    Username = u.Username,
-                    PrimaryPhone = u.PrimaryPhone,
-                    Role = u.Role
+            {
+                return Ok(agent.GetUsers().Select(m => new Manager()
+                {
+                    ID = m.ID,
+                    Email = m.Email,
+                    FirstName = m.FirstName,
+                    LastName = m.LastName,
+                    OtherInfo = m.OtherInfo,
+                    PrimaryPhone = m.PrimaryPhone,
+                    Role = m.Role,
+                    SecondaryPhone = m.SecondaryPhone,
+                    Username = m.Username,
+                    RegionManagers = m.RegionManagers
                 }));
             }
             catch (Exception ex)
@@ -74,18 +81,22 @@ namespace GageStatsServices.Controllers
             }
         }
 
-        [HttpGet("{id}", Name = "User")]
+        [HttpGet("{id}", Name = "Manager")]
         [Authorize(Policy = Policy.Managed)]
-        [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Users/GetDistinct.md")]
+        [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Managers/GetDistinct.md")]
         public async Task<IActionResult> Get(int id)
         {
             try
             {
                 if (id < 0) return new BadRequestResult(); // This returns HTTP 404
-                var x = agent.GetUser(id);
                 // managers cannot view other managers, just themselves
-                if (!User.IsInRole("Administrator") && User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value != x.Username)
+                if (!User.IsInRole("Administrator") && Convert.ToInt32(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.PrimarySid)?.Value) != id)
                     return new UnauthorizedResult();// return HTTP 401
+
+                var x = agent.GetUser(id);
+                //remove info not relevant
+                x.Salt = null;
+                x.Password = null;
 
                 return Ok(x);
             }
@@ -95,10 +106,10 @@ namespace GageStatsServices.Controllers
             }
         }
 
-        [HttpPost(Name = "Add User")]
+        [HttpPost(Name = "Add Manager")]
         [Authorize(Policy = Policy.AdminOnly)]
-        [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Users/Add.md")]
-        public async Task<IActionResult> Post([FromBody]User entity)
+        [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Managers/Add.md")]
+        public async Task<IActionResult> Post([FromBody]Manager entity)
         {
             try
             {
@@ -113,12 +124,12 @@ namespace GageStatsServices.Controllers
                 entity.Password = Cryptography.GenerateSHA256Hash(entity.Password, entity.Salt);
 
                 if (!isValid(entity)) return new BadRequestResult(); // This returns HTTP 404
-                var x = await agent.Add(entity);
+                var x = await shared.Add(entity);
                 //remove info not relevant
                 x.Salt = null;
                 x.Password = null;
 
-                return Ok(await agent.Add(x));
+                return Ok(x);
             }
             catch (Exception ex)
             {
@@ -126,12 +137,12 @@ namespace GageStatsServices.Controllers
             }
         }
 
-        [HttpPut("{id}", Name = "Edit User")]
+        [HttpPut("{id}", Name = "Edit Manager")]
         [Authorize(Policy = Policy.Managed)]
-        [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Users/Edit.md")]
-        public async Task<IActionResult> Put(int id, [FromBody]User entity)
+        [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Managers/Edit.md")]
+        public async Task<IActionResult> Put(int id, [FromBody]Manager entity)
         {
-            User ObjectToBeUpdated = null;
+            Manager ObjectToBeUpdated = null;
             try
             {
                 if (string.IsNullOrEmpty(entity.FirstName) || string.IsNullOrEmpty(entity.LastName) ||
@@ -141,13 +152,18 @@ namespace GageStatsServices.Controllers
                 ObjectToBeUpdated = agent.GetUser(id);
                 if (ObjectToBeUpdated == null) return new NotFoundObjectResult(entity);
 
-                if (!User.IsInRole("Administrator") && User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value != ObjectToBeUpdated.Username)
+                // managers cannot edit other managers, just themselves
+                if (!User.IsInRole("Administrator") && Convert.ToInt32(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.PrimarySid)?.Value) != id)
                     return new UnauthorizedResult();// return HTTP 401
 
                 ObjectToBeUpdated.FirstName = entity.FirstName;
                 ObjectToBeUpdated.LastName = entity.LastName;
+                ObjectToBeUpdated.Username = entity.Username;
+                ObjectToBeUpdated.OtherInfo = entity.OtherInfo ?? entity.OtherInfo;
                 ObjectToBeUpdated.PrimaryPhone = entity.PrimaryPhone ?? entity.PrimaryPhone;
+                ObjectToBeUpdated.SecondaryPhone = entity.SecondaryPhone ?? entity.SecondaryPhone;
                 ObjectToBeUpdated.Email = entity.Email;
+                ObjectToBeUpdated.RegionManagers = entity.RegionManagers;
 
                 //admin can only change role
                 if (User.IsInRole(Role.Admin) && !string.IsNullOrEmpty(entity.Role))
@@ -161,7 +177,17 @@ namespace GageStatsServices.Controllers
                     ObjectToBeUpdated.Password = Cryptography.GenerateSHA256Hash(entity.Password, ObjectToBeUpdated.Salt);
                 }//end if
 
-                var x = await agent.Update(id, ObjectToBeUpdated);
+                var x = await shared.Update(id, ObjectToBeUpdated);
+
+                // add new region managers to DB
+                if (ObjectToBeUpdated.RegionManagers != null)
+                {
+                    var existingRMs = agent.GetUser(id).RegionManagers;
+                    foreach (var rm in ObjectToBeUpdated.RegionManagers)
+                    {
+                        if (!existingRMs.Any(r => r.ManagerID == rm.ManagerID && r.RegionID == rm.RegionID)) await shared.Add(rm);
+                    }
+                }
 
                 //remove info not relevant
                 x.Salt = null;
@@ -175,14 +201,16 @@ namespace GageStatsServices.Controllers
             }
         }
 
-        [HttpDelete("{id}", Name = "Delete User")]
+        [HttpDelete("{id}", Name = "Delete Manager")]
         [Authorize(Policy = Policy.AdminOnly)]
-        [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Users/Delete.md")]
+        [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Managers/Delete.md")]
         public async Task<IActionResult> Delete(int id)
         {
             try
             {
-                await agent.DeleteUser(id);
+                if (id < 1) return new BadRequestResult();
+                await shared.DeleteManager(id);
+
                 return Ok();
             }
             catch (Exception ex)
@@ -192,7 +220,7 @@ namespace GageStatsServices.Controllers
         }
         #endregion
         #region HELPER METHODS
-        private string generateDefaultPassword(User entity)
+        private string generateDefaultPassword(Manager entity)
         {
             //Gage5tatsDefau1t+numbercharInlastname+first2letterFirstName
             string generatedPassword = "Gage5tatsDefau1t" + entity.LastName.Length + entity.FirstName.Substring(0, 2);
