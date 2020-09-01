@@ -10,6 +10,9 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GageStatsServices.Test", "GageStatsServices.Test\GageStatsServices.Test.csproj", "{F648386D-6B72-4660-A018-CD9F32AB0490}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GageStatsDB", "GageStatsDB\GageStatsDB.csproj", "{849C452B-6622-4B37-8EE7-A4516AE30D54}"
+	ProjectSection(ProjectDependencies) = postProject
+		{7CCDC3B3-9355-470B-BB4F-F166CD7A86FB} = {7CCDC3B3-9355-470B-BB4F-F166CD7A86FB}
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GageStatsDB.Test", "GageStatsDB.Test\GageStatsDB.Test.csproj", "{AEDA0ACB-7C1E-4D32-8A3F-9950F2ED66DB}"
 EndProject
@@ -17,7 +20,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FU_GageStatsDB", "FU_GageSt
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared", "..\NSSServices\Shared\Shared.csproj", "{7CCDC3B3-9355-470B-BB4F-F166CD7A86FB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FU_GageStatsDB.Test", "FU_GageStatsDB.Test\FU_GageStatsDB.Test.csproj", "{382F30F7-0CB9-4B78-AAB1-B913E9A5CD5B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FU_GageStatsDB.Test", "FU_GageStatsDB.Test\FU_GageStatsDB.Test.csproj", "{382F30F7-0CB9-4B78-AAB1-B913E9A5CD5B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

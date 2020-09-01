@@ -25,4 +25,3 @@ HTTP/1.1 200 OK
     "role": "Manager",
     "token": "xxx"
 }
-```

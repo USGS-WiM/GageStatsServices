@@ -11,5 +11,4 @@ namespace GageStatsDB.Resources
     public partial class Station : IHypermedia {[NotMapped] public List<WIM.Resources.Link> Links { get; set; } }
     public partial class StationType : IHypermedia {[NotMapped] public List<WIM.Resources.Link> Links { get; set; } }
     public partial class Statistic : IHypermedia {[NotMapped] public List<WIM.Resources.Link> Links { get; set; } }
-    public partial class User : IHypermedia {[NotMapped] public List<WIM.Resources.Link> Links { get; set; } }
 }
