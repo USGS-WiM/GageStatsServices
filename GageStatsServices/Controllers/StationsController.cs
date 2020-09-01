@@ -87,53 +87,6 @@ namespace GageStatsServices.Controllers
             {
                 var entity = await agent.GetStation(idOrCode);
 
-        //        if (entity != null && csv == true)
-        //        {
-        //            public void GenerateReport<T>(List<T> rows) where T : class
-        //            {
-        //            }
-        //            var items = new List<Station>();
-        //            var myObj = entity;
-                    
-        //            for (int i = 0; i < 100; i++)
-        //            {
-        //                items.Add(myObj);
-        //            }
-        //            var output = GenerateReport<Station>(items);
-        //            Console.Write(output);
-        //        }
-        //        public string GenerateReport<T>(List<T> items) where T : class
-        //        {
-        //            var output = “”;
-        //            var delimiter = ‘;’;
-        //            var properties = typeof(T).GetProperties()
-        //             .Where(n =>
-        //             n.PropertyType == typeof(string)
-        //             || n.PropertyType == typeof(bool)
-        //             || n.PropertyType == typeof(char)
-        //             || n.PropertyType == typeof(byte)
-        //             || n.PropertyType == typeof(decimal)
-        //             || n.PropertyType == typeof(int)
-        //             || n.PropertyType == typeof(DateTime)
-        //             || n.PropertyType == typeof(DateTime?));
-        //            using (var sw = new StringWriter())
-        //            {
-        //                var header = properties
-        //                .Select(n => n.Name)
-        //                .Aggregate((a, b) => a + delimiter + b);
-        //                sw.WriteLine(header);
-        //                foreach (var item in items)
-        //                {
-        //                    var row = properties
-        //                    .Select(n => n.GetValue(item, null))
-        //                    .Select(n => n == null ? “null” : n.ToString()).Aggregate((a, b) => a + delimiter + b);
-        //                    sw.WriteLine(row);
-        //                }
-        //                output = sw.ToString();
-        //            }
-        //    return Ok(output);
-        //}
-        //        else
                 if (entity != null)
                 {
                     return Ok(entity);
