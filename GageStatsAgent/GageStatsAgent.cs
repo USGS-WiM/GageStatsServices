@@ -88,13 +88,15 @@ namespace GageStatsAgent
         Task<Statistic> Update(Int32 pkId, Statistic item);
         Task DeleteStatistic(Int32 id);
 
-        //User
-        IQueryable<User> GetUsers();
-        Task<User> GetUser(Int32 ID);
-        Task<User> Add(User item);
-        Task<IEnumerable<User>> Add(List<User> items);
-        Task<User> Update(Int32 pkId, User item);
-        Task DeleteUser(Int32 id);
+        //Manager
+        IQueryable<Manager> GetUsers();
+        Manager GetUser(Int32 ID);
+
+        //Regions
+        IQueryable<Region> GetRegions();
+        Task<Region> GetRegion(Int32 ID);
+        Region GetRegionByIDOrCode(string identifier);
+        IQueryable<Region> GetManagerRegions(int managerID);
 
         //Readonly (Shared Views) methods
         IQueryable<ErrorType> GetErrors();
@@ -240,8 +242,9 @@ namespace GageStatsAgent
         }
         public Task<Station> GetStation(string identifier)
         {
-            return GetStations().Include("Characteristics.Citation").Include("Statistics.PredictionInterval").Include("Statistics.StatisticErrors")
-               .Include("Statistics.Citation").FirstOrDefaultAsync(s => s.Code == identifier || s.ID.ToString() == identifier);
+            return GetStations().Include("Agency").Include("StationType").Include("Characteristics.Citation").Include("Characteristics.VariableType").Include("Characteristics.UnitType")
+                .Include("Statistics.PredictionInterval").Include("Statistics.StatisticErrors").Include("Statistics.RegressionType").Include("Statistics.UnitType")
+                .Include("Statistics.Citation").FirstOrDefaultAsync(s => s.Code == identifier || s.ID.ToString() == identifier);
         }
         public IQueryable<Station> GetNearest(double lat, double lon, double radius)
         {
@@ -324,22 +327,22 @@ namespace GageStatsAgent
             return Delete<Statistic>(id);
         }
         #endregion
-        #region User
-        public IQueryable<User> GetUsers()
+        #region Manager
+        public IQueryable<Manager> GetUsers()
         {
-            return Select<User>();
+            return Select<Manager>();
         }
-        public Task<User> GetUser(int ID)
+        public Manager GetUser(int ID)
         {
-            return Find<User>(ID);
+            return Select<Manager>().Include(m => m.RegionManagers).FirstOrDefault(u => u.ID == ID);
         }
         public IUser GetUserByUsername(string username)
         {
-            return Select<User>().FirstOrDefault(r => string.Equals(r.Username.ToLower(), username.ToLower()));
+            return Select<Manager>().Include(m => m.RegionManagers).FirstOrDefault(r => string.Equals(r.Username.ToLower(), username.ToLower()));
         }
         public IUser GetUserByID(int id)
         {
-            return new User() { FirstName = "Jeremy", Role = Role.Admin, Username = "me-here", Password = "yellow", ID = 1, Salt = "yes please" };
+            return Select<Manager>().FirstOrDefault(u => u.ID == id);
         }
 
         public IUser AuthenticateUser(string username, string password)
@@ -347,7 +350,7 @@ namespace GageStatsAgent
             //this is where one authenticates the username/password before passing back user
             try
             {
-                var user = (User)GetUserByUsername(username);
+                var user = (Manager)GetUserByUsername(username);
                 if (user == null || !WIM.Security.Cryptography.VerifyPassword(password, user.Salt, user.Password))
                 {
                     return null;
@@ -361,21 +364,53 @@ namespace GageStatsAgent
                 return null;
             }
         }
-        public Task<User> Add(User item)
+        public Task<Manager> Add(Manager item)
         {
-            return Add<User>(item);
+            return Add<Manager>(item);
         }
-        public Task<IEnumerable<User>> Add(List<User> items)
+        public Task<IEnumerable<Manager>> Add(List<Manager> items)
         {
-            return Add<User>(items);
+            return Add<Manager>(items);
         }
-        public Task<User> Update(int pkId, User item)
+        public Task<Manager> Update(int pkId, Manager item)
         {
-            return Update<User>(pkId, item);
+            return Update<Manager>(pkId, item);
         }
         public Task DeleteUser(int id)
         {
-            return Delete<User>(id);
+            return Delete<Manager>(id);
+        }
+        #endregion
+        #region Region
+        public Region GetRegionByIDOrCode(string identifier)
+        {
+            try
+            {
+
+                return Select<Region>().FirstOrDefault(e => String.Equals(e.ID.ToString().Trim().ToLower(),
+                                                        identifier.Trim().ToLower()) || String.Equals(e.Code.Trim().ToLower(),
+                                                        identifier.Trim().ToLower()));
+            }
+            catch (Exception ex)
+            {
+                sm("Error finding region " + ex.Message, WIM.Resources.MessageType.error);
+                return null;
+            }
+
+
+        }
+        public IQueryable<Region> GetRegions()
+        {
+            return this.Select<Region>();
+        }
+        public Task<Region> GetRegion(int ID)
+        {
+            return this.Find<Region>(ID);
+        }
+        public IQueryable<Region> GetManagerRegions(int managerID)
+        {
+            return Select<RegionManager>().Where(rm => rm.ManagerID == managerID)
+                                .Include("Region").Select(rm => rm.Region);
         }
         #endregion
         #region ReadOnly

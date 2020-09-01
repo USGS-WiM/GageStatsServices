@@ -225,6 +225,8 @@ namespace GageStatsServices.Controllers
         {
             try
             {
+                var existingStation = await agent.GetStation(id.ToString());
+                if (existingStation.Statistics.Count() > 0 || existingStation.Characteristics.Count() > 0) throw new Exception("Statistics or characteristics are assigned to this station."); 
                 await agent.DeleteStation(id);
                 return Ok();
             }
