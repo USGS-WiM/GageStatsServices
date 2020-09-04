@@ -80,7 +80,7 @@ namespace GageStatsServices.Controllers
 
         [HttpGet("{idOrCode}", Name = "Station")]
         [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Stations/GetDistinct.md")]
-        public async Task<IActionResult> Get(string idOrCode, [FromQuery]bool csv = false)
+        public async Task<IActionResult> Get(string idOrCode)
         {
             try
             {
