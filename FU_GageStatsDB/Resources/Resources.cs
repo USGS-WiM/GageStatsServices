@@ -194,6 +194,20 @@ namespace FU_GageStatsDB.Resources
             };
         }
     }
+    public class GageStatsRegion : Region
+    {
+        public static GageStatsRegion FromDataReader(System.Data.IDataReader r)
+        {
+            return new GageStatsRegion()
+            {
+                ID = Convert.ToInt32(r["ID"]),
+                Code = r["Code"].ToString(),
+                Name = r["Name"].ToString(),
+                Description = r["Description"].ToString()
+            };
+
+        }
+    }
     public class FUString
     {
         public string Value { get; set; }

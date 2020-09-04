@@ -49,6 +49,7 @@ namespace FU_GageStatsDB
         public List<RegressionType> regressionTypeList { get; private set; }
         public List<StationType> stationTypeList { get; private set; }
         public List<Agency> agencies { get; private set; }
+        public List<Region> regions { get; private set; }
 
         private string SSDBConnectionstring;
         private string GagesStatsDBConnectionstring;
@@ -73,6 +74,7 @@ namespace FU_GageStatsDB
             List<string> DBregressionList = this.regressionTypeList.Select(vt => vt.Code.Trim().ToUpper()).ToList();
             List<string> DBstationTypeList = this.stationTypeList.Select(vt => vt.Code.Trim().ToUpper()).ToList();
             List<string> DBAgencyList = this.agencies.Select(a => a.Code.Trim().ToUpper()).ToList();
+            List<string> DBRegionList = this.regions.Select(r => r.Code.Trim().ToUpper()).ToList();
            
 
             List<string> ssdbUnitAbbr = null;
@@ -81,6 +83,7 @@ namespace FU_GageStatsDB
             List<GageStatsRegressionType> ssdbRegressionList = null;
             List<GageStatsStationType> ssdbStationTypeList = null;
             List<string> ssAgencyList = null;
+            List<GageStatsRegion> ssdbRegionList = null;
 
             using (var ssdb = new GageStatsDbOps(SSDBConnectionstring, GageStatsDbOps.ConnectionType.e_access))
             {
@@ -158,6 +161,7 @@ namespace FU_GageStatsDB
                                 //POST Station
                                 var agency = this.agencies.FirstOrDefault(e => String.Equals(e.Code, item.Agency_cd, StringComparison.OrdinalIgnoreCase))?? this.agencies.FirstOrDefault(e=>string.Equals(e.Name, "Undefined"));
                                 var stationType = this.stationTypeList.FirstOrDefault(e => String.Equals(e.Code, item.StationTypeCode))?? this.stationTypeList.FirstOrDefault(st=>string.Equals(st.Name, "Undefined"));
+                                var region = t
                                 item.ID = gsDBOps.AddItem(GageStatsDbOps.SQLType.e_station,new object[] {item.Code, agency.ID, item.Name.Replace("'"," "),item.IsRegulated, stationType.ID, item.Location.AsText() });
                                 if (item.ID < 1) {
                                     sm($"99999999 Error pushing station {item.Code} 99999999");

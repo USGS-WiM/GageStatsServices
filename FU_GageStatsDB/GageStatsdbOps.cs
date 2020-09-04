@@ -238,8 +238,9 @@ namespace FU_GageStatsDB
                     //            LEFT JOIN DataSource ds ON (ds.DataSourceID = stat.DataSourceID))
                     //            WHERE IsNumeric(stat.StatisticValue))
                     //            ;     ";
-                    results = @"SELECT s.StationName as Name, s.StaID as Code, s.Latitude, s.Longitude, s.Agency_cd, s.StationTypeCode
+                    results = @"SELECT s.StationName as Name, s.StaID as Code, s.Latitude, s.Longitude, s.Agency_cd, s.StationTypeCode, s.IsRegulated, st.ST as StateCode
                                 FROM Station s
+                                LEFT JOIN States st ON (s.StateCode = st.StateCode)
                                 WHERE s.Latitude Is Not Null AND s.Longitude Is Not Null AND
                                     s.StaID In 
                                       (
