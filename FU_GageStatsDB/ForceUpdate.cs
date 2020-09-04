@@ -161,8 +161,8 @@ namespace FU_GageStatsDB
                                 //POST Station
                                 var agency = this.agencies.FirstOrDefault(e => String.Equals(e.Code, item.Agency_cd, StringComparison.OrdinalIgnoreCase))?? this.agencies.FirstOrDefault(e=>string.Equals(e.Name, "Undefined"));
                                 var stationType = this.stationTypeList.FirstOrDefault(e => String.Equals(e.Code, item.StationTypeCode))?? this.stationTypeList.FirstOrDefault(st=>string.Equals(st.Name, "Undefined"));
-                                var region = t
-                                item.ID = gsDBOps.AddItem(GageStatsDbOps.SQLType.e_station,new object[] {item.Code, agency.ID, item.Name.Replace("'"," "),item.IsRegulated, stationType.ID, item.Location.AsText() });
+                                var region = this.regions.FirstOrDefault(e => String.Equals(e.Code, item.StateCode));
+                                item.ID = gsDBOps.AddItem(GageStatsDbOps.SQLType.e_station,new object[] {item.Code, agency.ID, item.Name.Replace("'"," "), item.IsRegulated, stationType.ID, item.Location.AsText(), region.ID });
                                 if (item.ID < 1) {
                                     sm($"99999999 Error pushing station {item.Code} 99999999");
                                     continue;

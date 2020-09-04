@@ -13,6 +13,7 @@ namespace FU_GageStatsDB.Resources
     public class FU_Station:Station {
         public string Agency_cd { get; set; }
         public string StationTypeCode { get; set; }    
+        public string StateCode { get; set; }
 
         public static FU_Station FromDataReader(System.Data.IDataReader r)
         {
@@ -23,6 +24,8 @@ namespace FU_GageStatsDB.Resources
                 Location = new Point(r.GetDataType<double>("Longitude",-99.9), r.GetDataType<double>("Latitude",-99.9)),
                 Agency_cd = r.GetDataType<string>("Agency_cd"),
                 StationTypeCode = r.GetDataType<string>("StationTypeCode"),
+                IsRegulated = r.GetDataType<bool>("IsRegulated"),
+                StateCode = r.GetDataType<string>("StateCode")
 
             };
 
