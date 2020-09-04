@@ -91,13 +91,13 @@ namespace GageStatsServices.Controllers
                 {
                     if (csv == true)
                     {
-                        
+
                         string entityascsv = CsvSerializer.SerializeToString(entity);
                         return Ok(entityascsv);
                     } else {
                         return Ok(entity);
                     } 
-} else {
+            } else {
                     throw new BadRequestException("Station not found");
                 }
             }
