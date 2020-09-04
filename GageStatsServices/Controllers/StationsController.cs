@@ -30,7 +30,6 @@ using WIM.Security.Authorization;
 using GageStatsDB.Resources;
 using WIM.Exceptions.Services;
 using System.Linq;
-using ChoETL;
 using System.IO;
 
 namespace GageStatsServices.Controllers
