@@ -30,6 +30,7 @@ using WIM.Security.Authorization;
 using GageStatsDB.Resources;
 using WIM.Exceptions.Services;
 using System.Linq;
+using System.IO;
 
 namespace GageStatsServices.Controllers
 {
@@ -84,6 +85,7 @@ namespace GageStatsServices.Controllers
             try
             {
                 var entity = await agent.GetStation(idOrCode);
+
                 if (entity != null)
                 {
                     return Ok(entity);
