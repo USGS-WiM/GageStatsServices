@@ -69,6 +69,8 @@ namespace FU_GageStatsDB.Resources
                             case "Y":
                             case "on":
                             case "Yes":
+                            case "yes":
+                            case "YES":
                                 value = true;
                                 break;
                             default:

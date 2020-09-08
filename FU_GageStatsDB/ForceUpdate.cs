@@ -174,7 +174,7 @@ namespace FU_GageStatsDB
                                     sm($"99999999 Error pushing station {item.Code} 99999999");
                                     continue;
                                 }
-
+                                
                                 //get stats and characteristics to push
                                 List<FU_Statistics> statistics = ssdb.GetItems<FU_Statistics>(GageStatsDbOps.SQLType.e_statistic_data, item.Code).ToList();
 

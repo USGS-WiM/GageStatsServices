@@ -257,7 +257,8 @@ namespace FU_GageStatsDB.Resources
                 Code = r.GetDataType<string>("Code"),
                 AgencyID = r.GetDataType<Int32>("AgencyID"),
                 Name = r.GetDataType<string>("Name"),
-                StationTypeID = r.GetDataType<Int32>("StationTypeID")
+                StationTypeID = r.GetDataType<Int32>("StationTypeID"),
+                IsRegulated = r.GetDataType<Boolean>("IsRegulated")
             };
         }
     }
