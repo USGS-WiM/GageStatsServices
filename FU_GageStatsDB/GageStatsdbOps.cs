@@ -374,6 +374,9 @@ namespace FU_GageStatsDB
                 case SQLType.e_citation:
                     results = @"SELECT * FROM ""gagestats"".""Citations""";
                     break;
+                case SQLType.e_region:
+                    results = @"SELECT * FROM ""gagestats"".""Regions_view""";
+                    break;
                 default:
                     break;
             }
@@ -423,7 +426,8 @@ namespace FU_GageStatsDB
             e_unittype,
             e_getregressiontypes,
             e_regressiontype,
-            e_errortype            
+            e_errortype,
+            e_region
         }
         public enum ConnectionType
         {

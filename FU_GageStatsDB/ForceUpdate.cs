@@ -58,6 +58,7 @@ namespace FU_GageStatsDB
         #region Constructors
         public ForceUpdate(string dbusername, string dbpassword, string accessdb)
         {
+            //for 64bit driver add (*.mdb, *.accdb) options
             SSDBConnectionstring = string.Format(@"Driver={{Microsoft Access Driver (*.mdb)}};dbq={0}", accessdb);
             GagesStatsDBConnectionstring = string.Format("Server=test.c69uuui2tzs0.us-east-1.rds.amazonaws.com; database={0}; UID={1}; password={2}", "StatsDB", dbusername, dbpassword);
 
@@ -74,7 +75,6 @@ namespace FU_GageStatsDB
             List<string> DBregressionList = this.regressionTypeList.Select(vt => vt.Code.Trim().ToUpper()).ToList();
             List<string> DBstationTypeList = this.stationTypeList.Select(vt => vt.Code.Trim().ToUpper()).ToList();
             List<string> DBAgencyList = this.agencies.Select(a => a.Code.Trim().ToUpper()).ToList();
-            List<string> DBRegionList = this.regions.Select(r => r.Code.Trim().ToUpper()).ToList();
            
 
             List<string> ssdbUnitAbbr = null;
@@ -83,7 +83,6 @@ namespace FU_GageStatsDB
             List<GageStatsRegressionType> ssdbRegressionList = null;
             List<GageStatsStationType> ssdbStationTypeList = null;
             List<string> ssAgencyList = null;
-            List<GageStatsRegion> ssdbRegionList = null;
 
             using (var ssdb = new GageStatsDbOps(SSDBConnectionstring, GageStatsDbOps.ConnectionType.e_access))
             {
@@ -118,7 +117,7 @@ namespace FU_GageStatsDB
                 {
                     using (var gsDBOps = new GageStatsDbOps(GagesStatsDBConnectionstring, GageStatsDbOps.ConnectionType.e_postgresql))
                     {
-                        gsDBOps.ResetTables();
+                        //gsDBOps.ResetTables();
                 
                         bool DBcontainsMoreRecords = true;
                         var stationcount = ssdb.GetItems<FUInt>(GageStatsDbOps.SQLType.e_stationCount).FirstOrDefault().Value;
@@ -155,13 +154,13 @@ namespace FU_GageStatsDB
                                 //Processing Station 06445685 17456 / 36683 - TextReader in stats year (54)
 
                                 //Processing Station 01656600 32323/36683
-                                // if (currentcount < 32323) continue;
+                                // if (currentcount < 27437) continue;
                                 sm($"Processing Station {item.Code} {currentcount}/{stationcount}");
                                 if (string.IsNullOrEmpty(item.Name)) item.Name = "Undefined in Database";
                                 //POST Station
                                 var agency = this.agencies.FirstOrDefault(e => String.Equals(e.Code, item.Agency_cd, StringComparison.OrdinalIgnoreCase))?? this.agencies.FirstOrDefault(e=>string.Equals(e.Name, "Undefined"));
                                 var stationType = this.stationTypeList.FirstOrDefault(e => String.Equals(e.Code, item.StationTypeCode))?? this.stationTypeList.FirstOrDefault(st=>string.Equals(st.Name, "Undefined"));
-                                var region = this.regions.FirstOrDefault(e => String.Equals(e.Code, item.StateCode));
+                                var region = this.regions.FirstOrDefault(e => String.Equals(e.Code, item.StateCode)) ?? this.regions.FirstOrDefault(e => string.Equals(e.Name, "Undefined"));
                                 item.ID = gsDBOps.AddItem(GageStatsDbOps.SQLType.e_station,new object[] {item.Code, agency.ID, item.Name.Replace("'"," "), item.IsRegulated, stationType.ID, item.Location.AsText(), region.ID });
                                 if (item.ID < 1) {
                                     sm($"99999999 Error pushing station {item.Code} 99999999");
@@ -280,6 +279,7 @@ namespace FU_GageStatsDB
                 regressionTypeList = GageStatsDBOps.GetItems<GageStatsRegressionType>(GageStatsDbOps.SQLType.e_getregressiontypes).ToList<RegressionType>();
                 stationTypeList = GageStatsDBOps.GetItems<GageStatsStationType>(GageStatsDbOps.SQLType.e_stationtype).ToList<StationType>();
                 agencies = GageStatsDBOps.GetItems<GageStatsAgency>(GageStatsDbOps.SQLType.e_agency).ToList<Agency>();
+                regions = GageStatsDBOps.GetItems<GageStatsRegion>(GageStatsDbOps.SQLType.e_region).ToList<Region>();
             }//end using
         }
 
