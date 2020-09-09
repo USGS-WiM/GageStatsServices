@@ -30,8 +30,6 @@ using WIM.Security.Authorization;
 using GageStatsDB.Resources;
 using WIM.Exceptions.Services;
 using System.Linq;
-using ServiceStack.Text;
-using System.IO;
 
 namespace GageStatsServices.Controllers
 {
@@ -81,7 +79,7 @@ namespace GageStatsServices.Controllers
 
         [HttpGet("{idOrCode}", Name = "Station")]
         [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Stations/GetDistinct.md")]
-        public async Task<IActionResult> Get(string idOrCode, [FromQuery] bool csv = false)
+        public async Task<IActionResult> Get(string idOrCode)
         {
             try
             {
@@ -89,15 +87,8 @@ namespace GageStatsServices.Controllers
 
                 if (entity != null)
                 {
-                    if (csv == true)
-                    {
-
-                        string entityascsv = CsvSerializer.SerializeToString(entity);
-                        return Ok(entityascsv);
-                    } else {
-                        return Ok(entity);
-                    } 
-            } else {
+                     return Ok(entity);
+                } else {
                     throw new BadRequestException("Station not found");
                 }
             }
