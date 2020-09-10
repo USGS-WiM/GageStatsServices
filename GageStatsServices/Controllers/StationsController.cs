@@ -87,7 +87,7 @@ namespace GageStatsServices.Controllers
 
                 if (entity != null)
                 {
-                     return Ok(entity);
+                    return Ok(entity);
                 } else {
                     throw new BadRequestException("Station not found");
                 }

@@ -33,6 +33,7 @@ using SharedDB;
 using SharedAgent;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Hosting;
+using WebApiContrib.Core.Formatter.Csv;
 
 namespace GageStatsServices
 {
@@ -131,6 +132,7 @@ namespace GageStatsServices
                 options.Filters.Add(new GageStatsHypermedia());
                 options.ModelMetadataDetailsProviders.Add(new SuppressChildValidationMetadataProvider(typeof(Point)));
                 options.ModelMetadataDetailsProviders.Add(new SuppressChildValidationMetadataProvider(typeof(Geometry)));
+                options.OutputFormatters.Add(new CsvOutputFormatter(new CsvFormatterOptions()));
             })                               
                 .AddNewtonsoftJson(options => loadJsonOptions(options));                                                
         }     
