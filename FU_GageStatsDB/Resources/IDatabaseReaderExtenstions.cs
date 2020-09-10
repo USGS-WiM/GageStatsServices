@@ -58,6 +58,9 @@ namespace FU_GageStatsDB.Resources
                             case "off":
                             case "N":
                             case "":
+                            case "No":
+                            case "no":
+                            case "Undefined":
                                 value = false;
                                 break;
                             case "True":
@@ -65,6 +68,9 @@ namespace FU_GageStatsDB.Resources
                             case "1":
                             case "Y":
                             case "on":
+                            case "Yes":
+                            case "yes":
+                            case "YES":
                                 value = true;
                                 break;
                             default:

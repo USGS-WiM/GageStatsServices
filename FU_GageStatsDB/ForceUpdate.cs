@@ -49,6 +49,7 @@ namespace FU_GageStatsDB
         public List<RegressionType> regressionTypeList { get; private set; }
         public List<StationType> stationTypeList { get; private set; }
         public List<Agency> agencies { get; private set; }
+        public List<Region> regions { get; private set; }
 
         private string SSDBConnectionstring;
         private string GagesStatsDBConnectionstring;
@@ -57,6 +58,7 @@ namespace FU_GageStatsDB
         #region Constructors
         public ForceUpdate(string dbusername, string dbpassword, string accessdb)
         {
+            //for 64bit driver add (*.mdb, *.accdb) options
             SSDBConnectionstring = string.Format(@"Driver={{Microsoft Access Driver (*.mdb)}};dbq={0}", accessdb);
             GagesStatsDBConnectionstring = string.Format("Server=test.c69uuui2tzs0.us-east-1.rds.amazonaws.com; database={0}; UID={1}; password={2}", "StatsDB", dbusername, dbpassword);
 
@@ -115,20 +117,22 @@ namespace FU_GageStatsDB
                 {
                     using (var gsDBOps = new GageStatsDbOps(GagesStatsDBConnectionstring, GageStatsDbOps.ConnectionType.e_postgresql))
                     {
+                        // COMMENT OUT if rerunning script
                         gsDBOps.ResetTables();
                 
                         bool DBcontainsMoreRecords = true;
                         var stationcount = ssdb.GetItems<FUInt>(GageStatsDbOps.SQLType.e_stationCount).FirstOrDefault().Value;
 
                         sm("Uploading Citations");
-                        //citations
-                        //gsDBOps.AddItems(GageStatsDbOps.SQLType.e_postcitation, ssdb.GetItems<FU_Citation>(GageStatsDbOps.SQLType.e_citation).Select(c=> new object[] { c.Title, c.Author, c.CitationURL }),new object[] { });
+                        //citations // COMMENT OUT next line if rerunning script so citations don't duplicate
+                        gsDBOps.AddItems(GageStatsDbOps.SQLType.e_postcitation, ssdb.GetItems<FU_Citation>(GageStatsDbOps.SQLType.e_citation).Select(c=> new object[] { c.Title, c.Author, c.CitationURL }),new object[] { });
                         List<GageStatsCitations> citationlist = gsDBOps.GetItems<GageStatsCitations>(GageStatsDbOps.SQLType.e_citation, new object[] { }).ToList();
 
                         Int32 limit = 1000;
                         Int32 offset = 0;
                         Int32 currentcount = 0;
                         sm("Uploading Stations");
+                        var existingStations = gsDBOps.GetItems<GageStatsStations>(GageStatsDbOps.SQLType.e_getstations, new object[] { });
                         while (DBcontainsMoreRecords)
                         {
                             sm($"LIMIT: {limit} Offset: {offset} ");
@@ -137,9 +141,9 @@ namespace FU_GageStatsDB
                                 limit = (stationcount - offset);
                                 DBcontainsMoreRecords = false;
                             }//endif
-                            //#warning  TODO Impove method with threading and parallelizm
-                            // improvements https://docs.microsoft.com/en-us/dotnet/api/system.threading.tasks.parallel.foreach?view=netcore-2.2
-                            //https://docs.microsoft.com/en-us/dotnet/api/system.threading.tasks.parallel.for?view=netcore-2.2
+                             //#warning  TODO Impove method with threading and parallelizm
+                             // improvements https://docs.microsoft.com/en-us/dotnet/api/system.threading.tasks.parallel.foreach?view=netcore-2.2
+                             //https://docs.microsoft.com/en-us/dotnet/api/system.threading.tasks.parallel.for?view=netcore-2.2
                             foreach (var item in ssdb.GetItems<FU_Station>(GageStatsDbOps.SQLType.e_station, limit, limit + offset))
                             {
                                 currentcount++;
@@ -152,30 +156,41 @@ namespace FU_GageStatsDB
                                 //Processing Station 06445685 17456 / 36683 - TextReader in stats year (54)
 
                                 //Processing Station 01656600 32323/36683
-                                // if (currentcount < 32323) continue;
+                                // if (currentcount < 27437) continue;
                                 sm($"Processing Station {item.Code} {currentcount}/{stationcount}");
                                 if (string.IsNullOrEmpty(item.Name)) item.Name = "Undefined in Database";
                                 //POST Station
                                 var agency = this.agencies.FirstOrDefault(e => String.Equals(e.Code, item.Agency_cd, StringComparison.OrdinalIgnoreCase))?? this.agencies.FirstOrDefault(e=>string.Equals(e.Name, "Undefined"));
                                 var stationType = this.stationTypeList.FirstOrDefault(e => String.Equals(e.Code, item.StationTypeCode))?? this.stationTypeList.FirstOrDefault(st=>string.Equals(st.Name, "Undefined"));
-                                item.ID = gsDBOps.AddItem(GageStatsDbOps.SQLType.e_station,new object[] {item.Code, agency.ID, item.Name.Replace("'"," "),item.IsRegulated, stationType.ID, item.Location.AsText() });
-                                if (item.ID < 1) {
+                                var region = this.regions.FirstOrDefault(e => String.Equals(e.Code, item.StateCode)) ?? this.regions.FirstOrDefault(e => string.Equals(e.Name, "Undefined"));
+
+                                // if station already exists (useful when running function to update citations)
+                                var currentStation = existingStations.FirstOrDefault(s => s.Code == item.Code);
+                                if (currentStation != null) item.ID = currentStation.ID;
+                                else item.ID = gsDBOps.AddItem(GageStatsDbOps.SQLType.e_station,new object[] {item.Code, agency.ID, item.Name.Replace("'"," "), item.IsRegulated, stationType.ID, item.Location.AsText(), region.ID });
+        
+                                if (item.ID < 1)
+                                {
                                     sm($"99999999 Error pushing station {item.Code} 99999999");
                                     continue;
                                 }
+                                
                                 //get stats and characteristics to push
                                 List<FU_Statistics> statistics = ssdb.GetItems<FU_Statistics>(GageStatsDbOps.SQLType.e_statistic_data, item.Code).ToList();
 
+                                // writing this in in case a citation fails, can use the next two lines to update any null citation IDs and skip adding chars/stats
+                                //updateCitationIDs(gsDBOps, item.ID, statistics, citationlist);
+                                //continue;
 
                                 //charactersitics
                                 gsDBOps.AddItems(GageStatsDbOps.SQLType.e_characteristics, statistics.Where(s => String.Equals(s.StatisticDefType, "BC", StringComparison.OrdinalIgnoreCase))
                                                                         .Select(c => new object[] {
                                                                             this.variableTypeList.FirstOrDefault(v=>String.Equals(v.Code,c.StatisticCode)).ID,
                                                                             this.unittypeList.FirstOrDefault(u=> string.Equals(u.Abbreviation, c.StatisticUnitAbbr)).ID,
-                                                                            citationlist.FirstOrDefault(s=>string.Equals(s.Title,c.Citation.Title,StringComparison.OrdinalIgnoreCase)&& string.Equals(s.Author,c.Citation.Author, StringComparison.OrdinalIgnoreCase) && string.Equals(s.CitationURL,c.Citation.CitationURL, StringComparison.OrdinalIgnoreCase))?.ID,
+                                                                            citationlist.FirstOrDefault(s=>string.Equals(s.Title,c.Citation.Title,StringComparison.OrdinalIgnoreCase)&& string.Equals(s.Author,c.Citation.Author, StringComparison.OrdinalIgnoreCase) && (s.CitationURL == "null" || string.Equals(s.CitationURL,c.Citation.CitationURL, StringComparison.OrdinalIgnoreCase)))?.ID,
                                                                             c.StatisticValue,
                                                                             c.StatisticRemarks
-                                                                        }).ToList(), new object[] {item.ID });
+                                                                        }).ToList(), new object[] { item.ID });
 
 
                                 //Statistics
@@ -192,7 +207,7 @@ namespace FU_GageStatsDB
                                                                             Value = c.StatisticValue,
                                                                             YearsofRecord = c.StatisticYears,
                                                                             IsPreferred = c.StatisticIsPreferred,
-                                                                            PredictionInterval = (c.StatisticLowerCI.HasValue || c.StatisticUpperCI.HasValue||c.StatisticVariance.HasValue) ? new PredictionInterval()
+                                                                            PredictionInterval = (c.StatisticLowerCI.HasValue || c.StatisticUpperCI.HasValue || c.StatisticVariance.HasValue) ? new PredictionInterval()
                                                                             {
                                                                                 LowerConfidenceInterval = c.StatisticLowerCI,
                                                                                 UpperConfidenceInterval = c.StatisticUpperCI,
@@ -207,7 +222,7 @@ namespace FU_GageStatsDB
                             //increment
                             offset = offset + 1000;
                         }//DO
-                     }//end using
+                    }//end using
                 }//end using
             }
             catch (Exception ex)
@@ -263,7 +278,47 @@ namespace FU_GageStatsDB
                     tw.WriteLine(s);
             }
 
-           
+        }
+
+        private void updateCitationIDs(GageStatsDbOps gsDBOps, Int32 stationID, List<FU_Statistics> statistics, List<GageStatsCitations> citationlist)
+        {
+            List<GageStatsStatistic> gsStatistics = gsDBOps.GetItems<GageStatsStatistic>(GageStatsDbOps.SQLType.e_getstatistics, new object[] { stationID }).ToList();
+            List<GageStatsCharacteristic> gsChars = gsDBOps.GetItems<GageStatsCharacteristic>(GageStatsDbOps.SQLType.e_getcharacteristics, new object[] { stationID }).ToList();
+            if (gsStatistics.Count < 1 && gsChars.Count < 1) return;
+            foreach (var stat in gsStatistics)
+            {
+                var regType = this.regressionTypeList.FirstOrDefault(rt => rt.ID == stat.RegressionTypeID);
+                var statType = this.statisticGroupTypeList.FirstOrDefault(sg => sg.ID == stat.StatisticGroupTypeID);
+                var unitType = this.unittypeList.FirstOrDefault(ut => ut.ID == stat.UnitTypeID);
+                var ssdbStat = statistics.FirstOrDefault(s => String.Equals(s.StatisticDefType, "FS", StringComparison.OrdinalIgnoreCase) && String.Equals(s.StatisticCode, regType.Code) && s.StatisticValue == stat.Value &&
+                    String.Equals(s.StatisticUnitAbbr, unitType.Abbreviation) && String.Equals(s.StatisticTypeCode, statType.Code));
+                if (ssdbStat != null)
+                {
+                    var cit = citationlist.FirstOrDefault(s => string.Equals(s.Title, ssdbStat.Citation.Title, StringComparison.OrdinalIgnoreCase));
+                    if (cit != null)
+                    {
+                        stat.CitationID = cit.ID;
+                        var updatedStat = gsDBOps.Update(GageStatsDbOps.SQLType.e_updatestatistic, stat.ID, new object[] { cit.ID, stat.ID });
+                    }
+                }
+
+            }
+            foreach (var stat in gsChars)
+            {
+                var varType = this.variableTypeList.FirstOrDefault(vt => vt.ID == stat.VariableTypeID);
+                var unitType = this.unittypeList.FirstOrDefault(ut => ut.ID == stat.UnitTypeID);
+                var ssdbStat = statistics.FirstOrDefault(s => String.Equals(s.StatisticDefType, "BC", StringComparison.OrdinalIgnoreCase) && String.Equals(s.StatisticCode, varType.Code) && s.StatisticValue == stat.Value &&
+                    String.Equals(s.StatisticUnitAbbr, unitType.Abbreviation));
+                if (ssdbStat != null)
+                {
+                    var cit = citationlist.FirstOrDefault(s => string.Equals(s.Title, ssdbStat.Citation.Title, StringComparison.OrdinalIgnoreCase));
+                    if (cit != null)
+                    {
+                        stat.CitationID = cit.ID;
+                        var updatedChar = gsDBOps.Update(GageStatsDbOps.SQLType.e_updatecharacteristic, stat.ID, new object[] { cit.ID, stat.ID });
+                    }
+                }
+            }
         }
         
         private void init()
@@ -276,6 +331,7 @@ namespace FU_GageStatsDB
                 regressionTypeList = GageStatsDBOps.GetItems<GageStatsRegressionType>(GageStatsDbOps.SQLType.e_getregressiontypes).ToList<RegressionType>();
                 stationTypeList = GageStatsDBOps.GetItems<GageStatsStationType>(GageStatsDbOps.SQLType.e_stationtype).ToList<StationType>();
                 agencies = GageStatsDBOps.GetItems<GageStatsAgency>(GageStatsDbOps.SQLType.e_agency).ToList<Agency>();
+                regions = GageStatsDBOps.GetItems<GageStatsRegion>(GageStatsDbOps.SQLType.e_region).ToList<Region>();
             }//end using
         }
 

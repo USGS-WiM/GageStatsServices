@@ -71,7 +71,7 @@ namespace FU_GageStatsDB
             string sql = string.Empty;
             try
             {
-                sql = String.Format(getSQL(type), pkID, args);
+                sql = String.Format(getSQL(type), args);
                 return base.Update(sql);
             }
             catch (Exception ex)
@@ -238,8 +238,9 @@ namespace FU_GageStatsDB
                     //            LEFT JOIN DataSource ds ON (ds.DataSourceID = stat.DataSourceID))
                     //            WHERE IsNumeric(stat.StatisticValue))
                     //            ;     ";
-                    results = @"SELECT s.StationName as Name, s.StaID as Code, s.Latitude, s.Longitude, s.Agency_cd, s.StationTypeCode
+                    results = @"SELECT s.StationName as Name, s.StaID as Code, s.Latitude, s.Longitude, s.Agency_cd, s.StationTypeCode, s.IsRegulated, st.ST as StateCode
                                 FROM Station s
+                                LEFT JOIN States st ON (s.StateCode = st.StateCode)
                                 WHERE s.Latitude Is Not Null AND s.Longitude Is Not Null AND
                                     s.StaID In 
                                       (
@@ -325,8 +326,8 @@ namespace FU_GageStatsDB
             {
                 case SQLType.e_station:
                     //item.Code, agencyID, item.Name,item.IsRegulated, stationType, item.Location }
-                    results = @"INSERT INTO ""gagestats"".""Stations""(""Code"",""AgencyID"",""Name"", ""IsRegulated"", ""StationTypeID"", ""Location"") 
-                                    VALUES('{0}',{1},'{2}',{3},{4}, ST_SetSRID(ST_GeomFromText('{5}'),4326));";
+                    results = @"INSERT INTO ""gagestats"".""Stations""(""Code"",""AgencyID"",""Name"", ""IsRegulated"", ""StationTypeID"", ""Location"", ""RegionID"") 
+                                    VALUES('{0}',{1},'{2}',{3},{4}, ST_SetSRID(ST_GeomFromText('{5}'),4326),{6});";
                     break;
                 case SQLType.e_postcitation:
                     results = @"INSERT INTO ""gagestats"".""Citations""(""Title"",""Author"",""CitationURL"") VALUES('{0}','{1}','{2}');";
@@ -372,6 +373,24 @@ namespace FU_GageStatsDB
                     break;
                 case SQLType.e_citation:
                     results = @"SELECT * FROM ""gagestats"".""Citations""";
+                    break;
+                case SQLType.e_region:
+                    results = @"SELECT * FROM ""gagestats"".""Regions_view""";
+                    break;
+                case SQLType.e_getstations:
+                    results = @"SELECT * FROM ""gagestats"".""Stations""";
+                    break;
+                case SQLType.e_getstatistics:
+                    results = @"SELECT * FROM ""gagestats"".""Statistics"" WHERE ""StationID"" = {0} AND ""CitationID"" is null";
+                    break;
+                case SQLType.e_getcharacteristics:
+                    results = @"SELECT * FROM ""gagestats"".""Characteristics"" WHERE ""StationID"" = {0} AND ""CitationID"" is null";
+                    break;
+                case SQLType.e_updatecharacteristic:
+                    results = @"UPDATE ""gagestats"".""Characteristics"" SET ""CitationID"" = {0} WHERE ""ID"" = {1}";
+                    break;
+                case SQLType.e_updatestatistic:
+                    results = @"UPDATE ""gagestats"".""Statistics"" SET ""CitationID"" = {0} WHERE ""ID"" = {1}";
                     break;
                 default:
                     break;
@@ -422,7 +441,14 @@ namespace FU_GageStatsDB
             e_unittype,
             e_getregressiontypes,
             e_regressiontype,
-            e_errortype            
+            e_errortype,
+            e_region,
+            e_getstations,
+            e_getstatistics,
+            e_getcharacteristics,
+
+            e_updatecharacteristic,
+            e_updatestatistic
         }
         public enum ConnectionType
         {
