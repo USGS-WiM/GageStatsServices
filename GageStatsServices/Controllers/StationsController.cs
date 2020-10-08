@@ -139,13 +139,11 @@ namespace GageStatsServices.Controllers
 
                 if (!isOk) throw new Exception("Failed to retrieve NLDI data");
                 return Ok(nldi_sa.getStations());
-
             }
             catch (Exception ex)
             {                
                 return await HandleExceptionAsync(ex);
-            }
-            
+            }            
         }
 
         [HttpPost(Name = "Add Station")]

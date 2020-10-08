@@ -16,7 +16,6 @@ namespace GageStatsAgent.ServiceAgents
         #endregion
         #region Constructors
         public NLDIServiceAgent(NLDISettings settings, NavigationSettings navsettings)
-
         {
             this.NLDIsettings = settings;
             this.Navigationsettings = navsettings;
@@ -25,9 +24,10 @@ namespace GageStatsAgent.ServiceAgents
         #region Methods
         public async Task<bool> ReadNLDIAsync(double lat, double lon, double distance)
         {
-            string result = "";
+            string result_dn = "";
+            string result_up = "";
             string msg;
-            dynamic obj = null;
+            dynamic stations_obj = null;
 
             try
             {
@@ -44,13 +44,9 @@ namespace GageStatsAgent.ServiceAgents
                     conn.BaseAddress = new Uri(NLDIsettings.baseurl);
 
                     var reply = await conn.GetAsync(urlString);
-                    result = reply.Content.ReadAsStringAsync().Result;
-                    if (result != "")
-                    {
-                        obj = JsonConvert.DeserializeObject<dynamic>(result);
-                    }
+                    result_dn = reply.Content.ReadAsStringAsync().Result;
                 }
-
+                if (isDynamicError(result_dn, out msg)) throw new Exception(msg);
                 urlString = String.Format(getURI(serviceType.e_upstream), args);
 
                 using (HttpClient conn = new HttpClient())
@@ -58,17 +54,31 @@ namespace GageStatsAgent.ServiceAgents
                     conn.BaseAddress = new Uri(NLDIsettings.baseurl);
 
                     var reply = await conn.GetAsync(urlString);
-                    result = reply.Content.ReadAsStringAsync().Result;
-                    if (result != "")
-                    {
-                        if (obj)
-                        {
-                            obj = obj.add(JsonConvert.DeserializeObject<dynamic>(result));
-                        }
-                    }                    
-                    this.NLDIstations = obj;
+                    result_up = reply.Content.ReadAsStringAsync().Result;                   
                 }
-                if (isDynamicError(result, out msg)) throw new Exception(msg);
+
+                if (result_dn != "" && result_up != "")
+                {
+                    stations_obj = JsonConvert.SerializeObject(new[]
+                    {
+                            JsonConvert.DeserializeObject(result_dn), JsonConvert.DeserializeObject(result_up)
+                        });
+                    this.NLDIstations = stations_obj;
+                }
+                else if (result_dn == "" && result_up != "")
+                {
+                    stations_obj = JsonConvert.DeserializeObject<dynamic>(result_up);
+                }
+                else if (result_dn != "" && result_up == "")
+                {
+                    stations_obj = JsonConvert.DeserializeObject<dynamic>(result_dn);
+                }
+
+                if (stations_obj != null)
+                {
+                    this.NLDIstations = stations_obj;
+                }
+                if (isDynamicError(result_up, out msg)) throw new Exception(msg);
 
                 return true;
             }
