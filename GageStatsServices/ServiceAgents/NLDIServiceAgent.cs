@@ -135,25 +135,7 @@ namespace GageStatsAgent.ServiceAgents
 
         }
         //select generic storm event, All Cases and 50% probability
-        private async Task<double> getComid(double lat, double lon)
-        {
-            string urlString = "/NavigationServices/attributes?x=" + lon + "&y=" + lat;
-            double comid;
-            try
-            {
-                using (HttpClient conn = new HttpClient())
-                {
-                    conn.BaseAddress = new Uri("https://test.streamstats.usgs.gov");
-                    var reply = await conn.GetAsync(urlString, default(System.Threading.CancellationToken));
-                    comid = 1; //reply.COMID;
-                }
-                return comid;
-            }
-            catch(Exception)
-            {
-                return 0;
-            }
-        }
+        
         #endregion
         #region Enumerations
         public enum serviceType
