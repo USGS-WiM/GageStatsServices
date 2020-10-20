@@ -13,6 +13,7 @@ namespace FU_GageStatsDB.Resources
     public class FU_Station:Station {
         public string Agency_cd { get; set; }
         public string StationTypeCode { get; set; }    
+        public string StateCode { get; set; }
 
         public static FU_Station FromDataReader(System.Data.IDataReader r)
         {
@@ -23,6 +24,8 @@ namespace FU_GageStatsDB.Resources
                 Location = new Point(r.GetDataType<double>("Longitude",-99.9), r.GetDataType<double>("Latitude",-99.9)),
                 Agency_cd = r.GetDataType<string>("Agency_cd"),
                 StationTypeCode = r.GetDataType<string>("StationTypeCode"),
+                IsRegulated = r.GetDataType<bool>("IsRegulated"),
+                StateCode = r.GetDataType<string>("StateCode")
 
             };
 
@@ -46,8 +49,11 @@ namespace FU_GageStatsDB.Resources
             {
                 Int32 splitlocation = authortitle.IndexOfAny("0123456789".ToCharArray());
                 if (!getTitle)
+                {
                     //auther
-                    return authortitle.Substring(0, splitlocation - 1).Trim();
+                    if (splitlocation > -1) return authortitle.Substring(0, splitlocation - 1).Trim();
+                    return null;
+                }
                 else
                     //title
                     return authortitle.Substring(splitlocation).Trim();
@@ -110,6 +116,39 @@ namespace FU_GageStatsDB.Resources
                 ID = Convert.ToInt32(r["ID"]),
                 Code = r["Code"].ToString(),
                 Name = r["Name"].ToString(),
+            };
+
+        }
+    }
+    public class GageStatsStatistic : Statistic
+    {
+        public static GageStatsStatistic FromDataReader(System.Data.IDataReader r)
+        {
+            return new GageStatsStatistic()
+            {
+                ID = Convert.ToInt32(r["ID"]),
+                StatisticGroupTypeID = Convert.ToInt32(r["StatisticGroupTypeID"]),
+                RegressionTypeID = Convert.ToInt32(r["RegressionTypeID"]),
+                StationID = Convert.ToInt32(r["StationID"]),
+                Value = Convert.ToDouble(r["Value"]),
+                UnitTypeID = Convert.ToInt32(r["UnitTypeID"]),
+                CitationID =  0,
+            };
+
+        }
+    }
+    public class GageStatsCharacteristic : Characteristic
+    {
+        public static GageStatsCharacteristic FromDataReader(System.Data.IDataReader r)
+        {
+            return new GageStatsCharacteristic()
+            {
+                ID = Convert.ToInt32(r["ID"]),
+                VariableTypeID = Convert.ToInt32(r["VariableTypeID"]),
+                StationID = Convert.ToInt32(r["StationID"]),
+                Value = Convert.ToDouble(r["Value"]),
+                UnitTypeID = Convert.ToInt32(r["UnitTypeID"]),
+                CitationID = 0,
             };
 
         }
@@ -191,6 +230,35 @@ namespace FU_GageStatsDB.Resources
                 Title = r.GetDataType<string>("Title"),
                 Author = r.GetDataType<string>("Author"),
                 CitationURL = r.GetDataType<string>("CitationURL")
+            };
+        }
+    }
+    public class GageStatsRegion : Region
+    {
+        public static GageStatsRegion FromDataReader(System.Data.IDataReader r)
+        {
+            return new GageStatsRegion()
+            {
+                ID = Convert.ToInt32(r["ID"]),
+                Code = r["Code"].ToString(),
+                Name = r["Name"].ToString(),
+                Description = r["Description"].ToString()
+            };
+        }
+    }
+
+    public class GageStatsStations : Station
+    {
+        public static GageStatsStations FromDataReader(System.Data.IDataReader r)
+        {
+            return new GageStatsStations()
+            {
+                ID = r.GetDataType<Int32>("ID"),
+                Code = r.GetDataType<string>("Code"),
+                AgencyID = r.GetDataType<Int32>("AgencyID"),
+                Name = r.GetDataType<string>("Name"),
+                StationTypeID = r.GetDataType<Int32>("StationTypeID"),
+                IsRegulated = r.GetDataType<Boolean>("IsRegulated")
             };
         }
     }

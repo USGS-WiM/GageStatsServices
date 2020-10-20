@@ -30,6 +30,10 @@ using WIM.Security.Authorization;
 using GageStatsDB.Resources;
 using WIM.Exceptions.Services;
 using System.Linq;
+using System.IO;
+using GageStatsAgent.Resources;
+using Microsoft.Extensions.Options;
+using GageStatsAgent.ServiceAgents;
 
 namespace GageStatsServices.Controllers
 {
@@ -38,25 +42,30 @@ namespace GageStatsServices.Controllers
     public class StationsController : WIM.Services.Controllers.ControllerBase
     {
         public IGageStatsAgent agent { get; set; }
-        public StationsController(IGageStatsAgent agent ) : base()
+        private NLDISettings NLDIsettings { get; set; }
+        private NavigationSettings Navigationsettings { get; set; }
+        public StationsController(IGageStatsAgent agent, IOptions<NLDISettings> nldisettings, IOptions<NavigationSettings> navsettings) : base()
         {
+            NLDIsettings = nldisettings.Value;
+            Navigationsettings = navsettings.Value;
             this.agent = agent;
         }
         #region METHODS
         [HttpGet(Name = "Stations")]
         [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Stations/Get.md")]
-        public async Task<IActionResult> Get([FromQuery] string stationTypes = "", [FromQuery] string agencies = "", [FromQuery] string regressionTypes = "", [FromQuery] string variableTypes = "",
+        public async Task<IActionResult> Get([FromQuery] string regions = "", [FromQuery] string stationTypes = "", [FromQuery] string agencies = "", [FromQuery] string regressionTypes = "", [FromQuery] string variableTypes = "",
             [FromQuery] string statisticGroups = "", [FromQuery] string filterText = null, [FromQuery] int page = 1, [FromQuery] int pageCount = 50, [FromQuery] bool includeStats = false)
         {
             try
             {
+                List<string> regionList = parse(regions);
                 List<string> stationTypeList = parse(stationTypes);
                 List<string> agencyList = parse(agencies);
                 List<string> regressionTypeList = parse(regressionTypes);
                 List<string> variableTypeList = parse(variableTypes);
                 List<string> statisticGroupList = parse(statisticGroups);
 
-                IQueryable<Station> entities = agent.GetStations(stationTypeList, agencyList, regressionTypeList, variableTypeList, statisticGroupList, includeStats);
+                IQueryable<Station> entities = agent.GetStations(regionList, stationTypeList, agencyList, regressionTypeList, variableTypeList, statisticGroupList, includeStats);
 
                 if (filterText != null)
                 {
@@ -84,6 +93,7 @@ namespace GageStatsServices.Controllers
             try
             {
                 var entity = await agent.GetStation(idOrCode);
+
                 if (entity != null)
                 {
                     return Ok(entity);
@@ -99,22 +109,38 @@ namespace GageStatsServices.Controllers
         }
 
         [HttpGet("Nearest", Name = "Nearest Station")]
-        [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Stations/GetDistinct.md")]
-        public async Task<IActionResult> Nearest([FromQuery]double lat, [FromQuery]double lon, [FromQuery]double radius, [FromQuery] int page = 1, [FromQuery] int pageCount = 50)
+        [APIDescription(type = DescriptionType.e_link, Description = "GetNearest.md")]
+        public async Task<IActionResult> Nearest([FromQuery]double lat, [FromQuery]double lon, [FromQuery]double radius)
         {
             try
             {
                 IQueryable<Station> gages = agent.GetNearest(lat, lon, radius);
 
-                // get number of items to skip for pagination
-                var skip = (page - 1) * pageCount;
-                sm("Returning page " + page + " of " + (gages.Count() / pageCount + 1) + ".");
-                return Ok(gages.Skip(skip).Take(pageCount));
+                return Ok(gages);
             }
             catch (Exception ex)
             {
                 return await HandleExceptionAsync(ex);
             }
+        }
+
+        [HttpGet("Network", Name = "Nearest Stations on Network")]
+        [APIDescription(type = DescriptionType.e_link, Description = "GetNearestOnNetwork.md")]
+        public async Task<IActionResult> Network([FromQuery] double lat, [FromQuery] double lon, [FromQuery] double distance, [FromQuery] int page = 1, [FromQuery] int pageCount = 50)
+        {
+            try
+            {
+                //var nav_sa = new NavigationServiceAgent(this.Navsettings);
+                var nldi_sa = new NLDIServiceAgent(this.NLDIsettings, this.Navigationsettings);
+                var isOk = await nldi_sa.ReadNLDIAsync(lat, lon, distance);
+
+                if (!isOk) throw new Exception("Failed to retrieve NLDI data");
+                return Ok(nldi_sa.getStations());
+            }
+            catch (Exception ex)
+            {                
+                return await HandleExceptionAsync(ex);
+            }            
         }
 
         [HttpPost(Name = "Add Station")]

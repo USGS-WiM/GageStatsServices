@@ -68,6 +68,8 @@ namespace GageStatsServices
             //Configure injectable obj
             services.AddScoped<IAnalyticsAgent, GoogleAnalyticsAgent>((gaa) => new GoogleAnalyticsAgent(Configuration["AnalyticsKey"]));
             services.Configure<APIConfigSettings>(Configuration.GetSection("APIConfigSettings"));
+            services.Configure<GageStatsAgent.Resources.NLDISettings>(Configuration.GetSection("NLDISettings"));
+            services.Configure<GageStatsAgent.Resources.NavigationSettings>(Configuration.GetSection("NavigationSettings"));
             services.Configure<JwtBearerSettings>(Configuration.GetSection("JwtBearerSettings"));
 
             //provides access to httpcontext
