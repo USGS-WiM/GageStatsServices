@@ -109,7 +109,7 @@ namespace GageStatsServices.Controllers
         }
 
         [HttpGet("Nearest", Name = "Nearest Station")]
-        [APIDescription(type = DescriptionType.e_link, Description = "GetNearest.md")]
+        [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Stations/GetNearest.md")]
         public async Task<IActionResult> Nearest([FromQuery]double lat, [FromQuery]double lon, [FromQuery]double radius)
         {
             try
@@ -125,7 +125,7 @@ namespace GageStatsServices.Controllers
         }
 
         [HttpGet("Network", Name = "Nearest Stations on Network")]
-        [APIDescription(type = DescriptionType.e_link, Description = "GetNearestOnNetwork.md")]
+        [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Stations/GetNearestOnNetwork.md")]
         public async Task<IActionResult> Network([FromQuery] double lat, [FromQuery] double lon, [FromQuery] double distance, [FromQuery] int page = 1, [FromQuery] int pageCount = 50)
         {
             try
