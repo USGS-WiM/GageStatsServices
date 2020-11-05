@@ -59,7 +59,7 @@ namespace FU_GageStatsDB
         public ForceUpdate(string dbusername, string dbpassword, string accessdb)
         {
             //for 64bit driver add (*.mdb, *.accdb) options
-            SSDBConnectionstring = string.Format(@"Driver={{Microsoft Access Driver (*.mdb)}};dbq={0}", accessdb);
+            SSDBConnectionstring = string.Format(@"Driver={{Microsoft Access Driver (*.mdb, *.accdb)}};dbq={0}", accessdb);
             GagesStatsDBConnectionstring = string.Format("Server=test.c69uuui2tzs0.us-east-1.rds.amazonaws.com; database={0}; UID={1}; password={2}", "StatsDB", dbusername, dbpassword);
 
             init();
@@ -101,11 +101,13 @@ namespace FU_GageStatsDB
             var diffStationtypeList = ssdbStationTypeList.Where(r => !DBstationTypeList.Contains(r.Code.Trim().ToUpper())).ToList();
             var diffAgencies = ssAgencyList.Where(r => !DBAgencyList.Contains(r.Trim().ToUpper())).ToList();
 
-            if (diffVariable.Count > 0) createUpdateList(diffVariable);
             if (diffRegList.Count > 0) createUpdateList(diffRegList);
             if (diffSG.Count > 0) createUpdateList(diffSG);
             if (diffStationtypeList.Count > 0) createUpdateList(diffStationtypeList);
             //if (diffAgencies.Count > 0) createUpdateList(diffAgencies);
+
+            // need all unit types and stat groups to update variable types
+            if (diffVariable.Count > 0 && diffUnits.Count < 2 && diffSG.Count < 1) createUpdateList(diffVariable, unittypeList, statisticGroupTypeList);
 
             return diffUnits.Count < 2 && diffVariable.Count < 1 && diffSG.Count < 1 && diffRegList.Count < 1 && diffStationtypeList.Count <1;
         }
@@ -240,7 +242,7 @@ namespace FU_GageStatsDB
 
             return string.Join("\n", stringBuilder);
         }
-        private void createUpdateList<T>(List<T> diffList)
+        private void createUpdateList<T>(List<T> diffList, List<UnitType> unitTypeList = null, List<StatisticGroupType> statisticGroupTypeList = null)
         {
             string tableName = "";
             List<string> updateList = new List<string>();
@@ -249,16 +251,33 @@ namespace FU_GageStatsDB
             switch (typeof(T).Name)
             {
                 case "GageStatsVariableType":
-                    tableName = @"""shared"".""VariableType""(""Name"",""Code"",""Description"")";
-                    updateList = diffList.Cast<GageStatsVariableType>()
-                        .Select(t => 
-                            String.Format(insertStmnt, tableName, String.Join(',', new List<string>() {$"'{t.Name}'", $"'{t.Code}'", $"'{t.Description}'" }))).ToList();
+                    if (unittypeList != null && statisticGroupTypeList != null)
+                    {
+                        var vtList = diffList.Cast<GageStatsVariableType>(); // loop through and assign unit types and stat group types
+                        foreach (var vt in vtList)
+                        {
+                            if (unitTypeList.FirstOrDefault(ut => ut.Abbreviation == vt.MetricAbbrev) != null) vt.MetricUnitTypeID = unitTypeList.FirstOrDefault(ut => ut.Abbreviation == vt.MetricAbbrev).ID;
+                            if (unitTypeList.FirstOrDefault(ut => ut.Abbreviation == vt.EnglishAbbrev) != null) vt.EnglishUnitTypeID = unitTypeList.FirstOrDefault(ut => ut.Abbreviation == vt.EnglishAbbrev).ID;
+                            if (statisticGroupTypeList.FirstOrDefault(st => st.Code == vt.StatType) != null) vt.StatisticGroupTypeID = statisticGroupTypeList.FirstOrDefault(st => st.Code == vt.StatType).ID;
+                        }
+                        tableName = @"""shared"".""VariableType""(""Name"",""Code"",""Description"", ""MetricUnitTypeID"", ""EnglishUnitTypeID"", ""StatisticGroupTypeID"")";
+                        updateList = vtList
+                            .Select(t =>
+                                String.Format(insertStmnt, tableName, String.Join(',', new List<string>() { $"'{t.Name}'", $"'{t.Code}'", $"'{t.Description}'", $"'{t.MetricUnitTypeID}'", $"'{t.EnglishUnitTypeID}'", $"'{t.StatisticGroupTypeID}'" }))).ToList();
+                    }
+                    else
+                    {
+                        tableName = @"""shared"".""VariableType""(""Name"",""Code"",""Description"")";
+                        updateList = diffList.Cast<GageStatsVariableType>()
+                            .Select(t =>
+                                String.Format(insertStmnt, tableName, String.Join(',', new List<string>() { $"'{t.Name}'", $"'{t.Code}'", $"'{t.Description}'" }))).ToList();
+                    }
                     break;
                 case "GageStatsStatisticGroupType":
-                    tableName = @"""shared"".""StatisticGroupType""(""Name"",""Code"")";
+                    tableName = @"""shared"".""StatisticGroupType""(""Name"",""Code"",""DefType"")";
                     updateList = diffList.Cast<GageStatsStatisticGroupType>()
                         .Select(t =>
-                            String.Format(insertStmnt, tableName, String.Join(',', new List<string>() { $"'{t.Name}'", $"'{t.Code}'" }))).ToList();
+                            String.Format(insertStmnt, tableName, String.Join(',', new List<string>() { $"'{t.Name}'", $"'{t.Code}'", $"'{t.DefType}'" }))).ToList();
                     break;
                 case "GageStatsRegressionType":
                     tableName = @"""shared"".""RegressionType""(""Name"",""Code"",""Description"")";
