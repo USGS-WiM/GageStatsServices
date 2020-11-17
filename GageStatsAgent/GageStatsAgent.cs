@@ -101,7 +101,7 @@ namespace GageStatsAgent
         //Readonly (Shared Views) methods
         IQueryable<ErrorType> GetErrors();
         Task<ErrorType> GetError(Int32 ID);
-        IQueryable<StatisticGroupType> GetStatisticGroups();
+        IQueryable<StatisticGroupType> GetStatisticGroups(List<string> defTypeList = null);
         Task<RegressionType> GetRegression(Int32 ID);
         IQueryable<RegressionType> GetRegressions();
         Task<StatisticGroupType> GetStatisticGroup(Int32 ID);
@@ -109,7 +109,7 @@ namespace GageStatsAgent
         Task<UnitType> GetUnit(Int32 ID);
         IQueryable<UnitSystemType> GetUnitSystems();
         Task<UnitSystemType> GetUnitSystem(Int32 ID);
-        IQueryable<VariableType> GetVariables();
+        IQueryable<VariableType> GetVariables(List<string> statisticGroupList = null);
         Task<VariableType> GetVariable(Int32 ID);
     }
 
@@ -444,9 +444,14 @@ namespace GageStatsAgent
         {
             return this.Select<StatisticGroupType>().FirstOrDefault(r => string.Equals(r.Code.ToLower(), code.ToLower()));
         }
-        public IQueryable<StatisticGroupType> GetStatisticGroups()
+        public IQueryable<StatisticGroupType> GetStatisticGroups(List<string> defTypeList = null)
         {
-            return this.Select<StatisticGroupType>().OrderBy(sg => sg.ID);
+            var query = this.Select<StatisticGroupType>();
+            if (defTypeList != null && defTypeList.Count > 0)
+            {
+                query = query.Where(sg => defTypeList.Contains(sg.DefType.ToLower())).OrderBy(st => st.ID);
+            }
+            return query.OrderBy(sg => sg.ID);
         }
         public Task<StatisticGroupType> GetStatisticGroup(Int32 ID)
         {
@@ -472,9 +477,14 @@ namespace GageStatsAgent
         {
             return this.Find<UnitSystemType>(ID);
         }
-        public IQueryable<VariableType> GetVariables()
+        public IQueryable<VariableType> GetVariables(List<string> statisticGroupList = null)
         {
-            return this.Select<VariableType>().OrderBy(vt => vt.ID);
+            IQueryable<VariableType> query = this.Select<VariableType>().Include(vt => vt.MetricUnitType).Include(vt => vt.EnglishUnitType).Include(vt => vt.StatisticGroupType);
+            if (statisticGroupList != null && statisticGroupList.Count > 0)
+            {
+                query = query.Where(vt => statisticGroupList.Contains(vt.StatisticGroupTypeID.ToString().Trim()) || statisticGroupList.Contains(vt.StatisticGroupType.Code.ToLower()));
+            }
+            return query.OrderBy(vt => vt.ID);
         }
         public Task<VariableType> GetVariable(Int32 ID)
         {
