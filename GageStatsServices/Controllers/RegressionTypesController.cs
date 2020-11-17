@@ -46,13 +46,19 @@ namespace GageStatsServices.Controllers
         #region METHOD
         [HttpGet(Name = "Regression Types")]
         [APIDescription(type = DescriptionType.e_link, Description = "/Docs/RegressionTypes/Get.md")]
-        public async Task<IActionResult> GetRegressionTypes()
+        public async Task<IActionResult> GetRegressionTypes([FromQuery] string regions = "", [FromQuery] string stationTypes = "", [FromQuery] string agencies = "",
+            [FromQuery] string variableTypes = "", [FromQuery] string statisticGroups = "", [FromQuery] string filterText = null)
         {
             IQueryable<RegressionType> entities = null;
             try
             {
+                List<string> regionList = parse(regions);
+                List<string> stationTypeList = parse(stationTypes);
+                List<string> agencyList = parse(agencies);
+                List<string> variableTypeList = parse(variableTypes);
+                List<string> statisticGroupList = parse(statisticGroups);
 
-                entities = agent.GetRegressions();
+                entities = agent.GetRegressions(regionList, stationTypeList, agencyList, variableTypeList, statisticGroupList, filterText);
 
                 sm($"regressiontype count {entities.Count()}");
                 return Ok(entities);

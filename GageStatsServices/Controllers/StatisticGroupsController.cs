@@ -49,14 +49,20 @@ namespace GageStatsServices.Controllers
         #region METHOD
         [HttpGet(Name ="Statistic Groups")]
         [APIDescription(type = DescriptionType.e_link, Description = "/Docs/StatisticGroups/Get.md")]
-        public async Task<IActionResult> Get([FromQuery] string defTypes = "")
+        public async Task<IActionResult> Get([FromQuery] string defTypes = "", [FromQuery] string regions = "", [FromQuery] string stationTypes = "", [FromQuery] string agencies = "", [FromQuery] string regressionTypes = "",
+            [FromQuery] string variableTypes = "", [FromQuery] string filterText = null)
         {
             IQueryable<StatisticGroupType> entities = null;
-            List<string> defTypeList = null;
             try
             {
-                defTypeList = parse(defTypes);
-                entities = agent.GetStatisticGroups(defTypeList);
+                List<string> defTypeList = parse(defTypes);
+                List<string> regionList = parse(regions);
+                List<string> stationTypeList = parse(stationTypes);
+                List<string> agencyList = parse(agencies);
+                List<string> regressionTypeList = parse(regressionTypes);
+                List<string> variableTypeList = parse(variableTypes);
+
+                entities = agent.GetStatisticGroups(defTypeList, regionList, stationTypeList, agencyList, regressionTypeList, variableTypeList);
 
                 sm($"statistic group count {entities.Count()}");
                 return Ok(entities);

@@ -54,7 +54,7 @@ namespace GageStatsServices.Controllers
                 List<string> variableTypeList = parse(variableTypes);
                 List<string> statisticGroupList = parse(statisticGroups);
 
-                return Ok(agent.GetAgencies(regionList, stationTypeList, regressionTypeList, variableTypeList, statisticGroupList));
+                return Ok(agent.GetAgencies(regionList, stationTypeList, regressionTypeList, variableTypeList, statisticGroupList, filterText));
             }
             catch (Exception ex)
             {
