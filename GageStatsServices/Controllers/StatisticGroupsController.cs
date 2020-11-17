@@ -49,12 +49,14 @@ namespace GageStatsServices.Controllers
         #region METHOD
         [HttpGet(Name ="Statistic Groups")]
         [APIDescription(type = DescriptionType.e_link, Description = "/Docs/StatisticGroups/Get.md")]
-        public async Task<IActionResult> Get()
+        public async Task<IActionResult> Get([FromQuery] string defTypes = "")
         {
             IQueryable<StatisticGroupType> entities = null;
+            List<string> defTypeList = null;
             try
             {
-                entities = agent.GetStatisticGroups();
+                defTypeList = parse(defTypes);
+                entities = agent.GetStatisticGroups(defTypeList);
 
                 sm($"statistic group count {entities.Count()}");
                 return Ok(entities);

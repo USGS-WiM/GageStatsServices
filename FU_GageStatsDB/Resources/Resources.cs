@@ -4,6 +4,7 @@ using SharedDB.Resources;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using WIM.Utilities.Extensions;
 
 namespace FU_GageStatsDB.Resources
 {
@@ -116,6 +117,7 @@ namespace FU_GageStatsDB.Resources
                 ID = Convert.ToInt32(r["ID"]),
                 Code = r["Code"].ToString(),
                 Name = r["Name"].ToString(),
+                DefType = r["DefType"].ToString(), 
             };
 
         }
@@ -168,6 +170,9 @@ namespace FU_GageStatsDB.Resources
     }
     public class GageStatsVariableType : VariableType
     {
+        public string MetricAbbrev { get; set; }
+        public string EnglishAbbrev { get; set; }
+        public string StatType { get; set; }
         public static GageStatsVariableType FromDataReader(System.Data.IDataReader r)
         {
             return new GageStatsVariableType()
@@ -175,7 +180,10 @@ namespace FU_GageStatsDB.Resources
                 ID = Convert.ToInt32(r["ID"]),
                 Code = r["Code"].ToString(),
                 Name = r["Name"].ToString(),
-                Description = r["Description"].ToString()
+                Description = r["Description"].ToString(),
+                MetricAbbrev = r.HasColumn("MetricAbbrev") ? r["MetricAbbrev"].ToString() : null,
+                EnglishAbbrev = r.HasColumn("EnglishAbbrev") ? r["EnglishAbbrev"].ToString() : null,
+                StatType = r.HasColumn("StatType") ? r["StatType"].ToString() : null
             };
 
         }
