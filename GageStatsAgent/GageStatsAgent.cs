@@ -37,7 +37,7 @@ namespace GageStatsAgent
     public interface IGageStatsAgent : IAuthenticationAgent
     {
         //Agency
-        IQueryable<Agency> GetAgencies();
+        IQueryable<Agency> GetAgencies(List<string> regionList = null, List<string> stationTypeList = null, List<string> regressionTypeList = null, List<string> variableTypeList = null, List<string> statisticGroupList = null);
         Task<Agency> GetAgency(Int32 ID);
         Task<Agency> Add(Agency item);
         Task<IEnumerable<Agency>> Add(List<Agency> items);
@@ -127,9 +127,13 @@ namespace GageStatsAgent
         #endregion
         #region Methods    
         #region Agency
-        public IQueryable<Agency> GetAgencies()
+        public IQueryable<Agency> GetAgencies(List<string> regionList = null, List<string> stationTypeList = null, List<string> regressionTypeList = null, List<string> variableTypeList = null, List<string> statisticGroupList = null)
         {
-            return Select<Agency>();
+            // filter by other elements, so basically need to filter stations by those items and see which agencies are used in that list
+            var stations = this.GetStations(regionList, null, regressionTypeList, variableTypeList, statisticGroupList);
+            return Select<Agency>().Where(a => stations.Any(s => s.AgencyID == a.ID));
+            // st.Statistics.Any(s => regressionTypeList.Contains(s.RegressionTypeID.ToString()) || regressionTypeList.Contains(s.RegressionType.Code.ToLower())))
+            // query.Where(st => agencyList.Contains(st.AgencyID.ToString()) || agencyList.Contains(st.Agency.Code.ToLower()));
         }
         public Task<Agency> GetAgency(int ID)
         {
