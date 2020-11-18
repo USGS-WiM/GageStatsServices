@@ -474,7 +474,9 @@ namespace GageStatsAgent
             {
                 // filter by other elements to get all available agencies for that selection
                 var stations = this.GetStations(regionList, stationTypeList, agencyList, regressionTypeList, variableTypeList, null, true, filterText);
-                return stations.SelectMany(s => s.Statistics).Select(st => st.StatisticGroupType).Distinct().OrderBy(sg => sg.ID);
+                return stations.SelectMany(s => s.Statistics).Select(s => s.StatisticGroupType)
+                    .Union(stations.SelectMany(s => s.Characteristics).Select(c => c.VariableType.StatisticGroupType)).Distinct()
+                    .OrderBy(sg => sg.ID);
             }
 
             var query = this.Select<StatisticGroupType>();
@@ -510,21 +512,20 @@ namespace GageStatsAgent
         }
         public IQueryable<VariableType> GetVariables(List<string> regionList = null, List<string> stationTypeList = null, List<string> agencyList = null, List<string> regressionTypeList = null, List<string> statisticGroupList = null, string filterText = null)
         {
+            // TODO: reconsider this, the problem is, if a user is making this request from the gagestats page, we want them filtered by what variables are used in the gages filtered
+            // BUT, if we're using it in other places, like when adding a new characteristic to a gage, we might want to filter the available variables by the statistic group instead
+            // we might want to create a parameter called "gagestatisticgroups", "statisticgroupsbygage" or something like that?
             IQueryable<VariableType> query = this.Select<VariableType>().Include(vt => vt.MetricUnitType).Include(vt => vt.EnglishUnitType).Include(vt => vt.StatisticGroupType);
-            // if no filters
-            if (!regionList.Any() && !stationTypeList.Any() && !agencyList.Any() && !regressionTypeList.Any() && !statisticGroupList.Any() && filterText == null) return query.OrderBy(vt => vt.ID);
-            
-            // filter by other elements to get all available agencies for that selection
-            var stations = this.GetStations(regionList, stationTypeList, agencyList, regressionTypeList, null, statisticGroupList, true, filterText);
-            
-            if (statisticGroupList != null && statisticGroupList.Count > 0)
+            // if any filters other than statisticgroups, filter by variables used in the filtered list of stations
+            if (regionList.Any() || stationTypeList.Any() || agencyList.Any() || regressionTypeList.Any() || filterText == null)
             {
-                // if statistic group filter given, filter by (a) station filters or (b) any variables with those assigned statistic groups
-                query = query.Where(vt => stations.Any(s => s.Characteristics.Any(c => c.VariableTypeID == vt.ID)) || statisticGroupList.Contains(vt.StatisticGroupTypeID.ToString().Trim()) || statisticGroupList.Contains(vt.StatisticGroupType.Code.ToLower()));
-            } else
+                // filter by other elements to get all available agencies for that selection
+                var stations = this.GetStations(regionList, stationTypeList, agencyList, regressionTypeList, null, statisticGroupList, false, filterText);
+                query = stations.SelectMany(s => s.Characteristics).Select(c => c.VariableType).Distinct().Include(vt => vt.MetricUnitType).Include(vt => vt.EnglishUnitType).Include(vt => vt.StatisticGroupType);
+            } else if (statisticGroupList.Any())
             {
-                // else just filter by stations
-                return stations.SelectMany(s => s.Characteristics).Select(c => c.VariableType).Distinct().Include(vt => vt.MetricUnitType).Include(vt => vt.EnglishUnitType).Include(vt => vt.StatisticGroupType);
+                // if only statistic group given, filter variables by the assigned statistic groups
+                query = query.Where(vt => statisticGroupList.Contains(vt.StatisticGroupTypeID.ToString().Trim()) || statisticGroupList.Contains(vt.StatisticGroupType.Code.ToLower()));
             }
             return query.OrderBy(vt => vt.ID);
         }

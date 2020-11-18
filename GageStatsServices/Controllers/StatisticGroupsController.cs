@@ -62,7 +62,7 @@ namespace GageStatsServices.Controllers
                 List<string> regressionTypeList = parse(regressionTypes);
                 List<string> variableTypeList = parse(variableTypes);
 
-                entities = agent.GetStatisticGroups(defTypeList, regionList, stationTypeList, agencyList, regressionTypeList, variableTypeList);
+                entities = agent.GetStatisticGroups(defTypeList, regionList, stationTypeList, agencyList, regressionTypeList, variableTypeList, filterText);
 
                 sm($"statistic group count {entities.Count()}");
                 return Ok(entities);
