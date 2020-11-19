@@ -517,7 +517,7 @@ namespace GageStatsAgent
             // we might want to create a parameter called "gagestatisticgroups", "statisticgroupsbygage" or something like that?
             IQueryable<VariableType> query = this.Select<VariableType>().Include(vt => vt.MetricUnitType).Include(vt => vt.EnglishUnitType).Include(vt => vt.StatisticGroupType);
             // if any filters other than statisticgroups, filter by variables used in the filtered list of stations
-            if (regionList.Any() || stationTypeList.Any() || agencyList.Any() || regressionTypeList.Any() || filterText == null)
+            if (regionList.Any() || stationTypeList.Any() || agencyList.Any() || regressionTypeList.Any() || filterText != null)
             {
                 // filter by other elements to get all available agencies for that selection
                 var stations = this.GetStations(regionList, stationTypeList, agencyList, regressionTypeList, null, statisticGroupList, false, filterText);
