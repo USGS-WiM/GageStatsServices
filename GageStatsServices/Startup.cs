@@ -133,9 +133,10 @@ namespace GageStatsServices
                 options.Filters.Add(new GageStatsHypermedia());
                 options.ModelMetadataDetailsProviders.Add(new SuppressChildValidationMetadataProvider(typeof(Point)));
                 options.ModelMetadataDetailsProviders.Add(new SuppressChildValidationMetadataProvider(typeof(Geometry)));
-            })                               
-                .AddNewtonsoftJson(options => loadJsonOptions(options));                                                
-        }     
+                options.MaxIAsyncEnumerableBufferLimit = 40000;
+            })
+                 .AddNewtonsoftJson(options => loadJsonOptions(options));
+        }
 
         // Method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
@@ -157,6 +158,7 @@ namespace GageStatsServices
         #region Helper Methods
         private void loadJsonOptions(MvcNewtonsoftJsonOptions options)
         {
+            //options.SerializerSettings.TraceWriter = new memoryTraceWriter();
             options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
             options.SerializerSettings.MissingMemberHandling = Newtonsoft.Json.MissingMemberHandling.Ignore;
             options.SerializerSettings.NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore;
