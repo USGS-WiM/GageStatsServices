@@ -108,12 +108,13 @@ namespace GageStatsServices.Controllers
 
         [HttpGet("Nearest", Name = "Nearest Station")]
         [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Stations/GetNearest.md")]
-        public async Task<IActionResult> Nearest([FromQuery]double lat, [FromQuery]double lon, [FromQuery]double radius)
+        public async Task<IActionResult> Nearest([FromQuery]double lat, [FromQuery]double lon, [FromQuery]double radius, [FromQuery] bool geojson = false)
         {
             try
             {
                 IQueryable<Station> gages = agent.GetNearest(lat, lon, radius);
 
+                if (geojson) return Ok(GeojsonFormatter.ToGeojson(gages));
                 return Ok(gages);
             }
             catch (Exception ex)
