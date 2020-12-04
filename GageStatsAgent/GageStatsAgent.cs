@@ -71,6 +71,7 @@ namespace GageStatsAgent
         Task<IEnumerable<Station>> Add(List<Station> items);
         Task<Station> Update(Int32 pkId, Station item);
         Task DeleteStation(Int32 id);
+        IQueryable<Station> GetStationsWithinBounds(double xmin, double ymin, double xmax, double ymax);
 
         //StationType
         IQueryable<StationType> GetStationTypes(List<string> regionList = null, List<string> agencyList = null, List<string> regressionTypeList = null, List<string> variableTypeList = null, List<string> statisticGroupList = null, string filterText = null);
@@ -263,6 +264,11 @@ namespace GageStatsAgent
             var radius_m = radius * 1000; //GageStatsDB searches in meters by default, user has specified km
             var query = String.Format(getSQLStatement(sqltypeenum.stationsbyradius), lat, lon, radius_m);
             return FromSQL<Station>(query);
+        }
+        public IQueryable<Station> GetStationsWithinBounds(double xmin, double ymin, double xmax, double ymax)
+        {
+            var query = String.Format(getSQLStatement(sqltypeenum.stationsbyboundingbox), xmin, ymin, xmax, ymax);
+            return FromSQL<Station>(query).Include(s => s.StationType);
         }
         public Task<Station> Add(Station item)
         {
@@ -548,6 +554,8 @@ namespace GageStatsAgent
                 case sqltypeenum.stationsbyradius:
                     return @"SELECT * FROM gagestats.""Stations"" as st 
                                       where ST_Contains(st_transform(ST_Buffer(st_geomfromtext('Point({1} {0})',4326)::geography, {2})::geometry, 4326), st.""Location"")";
+                case sqltypeenum.stationsbyboundingbox:
+                    return @"select * from gagestats.""Stations"" where ""Location"" @ ST_MakeEnvelope({0}, {1}, {2}, {3}, 4326)";
                 default:
                     throw new Exception("No sql for table " + type);
             }
@@ -575,7 +583,8 @@ namespace GageStatsAgent
         #endregion
         private enum sqltypeenum
         {
-            stationsbyradius
+            stationsbyradius,
+            stationsbyboundingbox
         }
     }
 }

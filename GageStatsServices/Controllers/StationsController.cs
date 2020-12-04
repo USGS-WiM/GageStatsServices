@@ -55,7 +55,7 @@ namespace GageStatsServices.Controllers
         [HttpGet(Name = "Stations")]
         [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Stations/Get.md")]
         public async Task<IActionResult> Get([FromQuery] string regions = "", [FromQuery] string stationTypes = "", [FromQuery] string agencies = "", [FromQuery] string regressionTypes = "", [FromQuery] string variableTypes = "",
-            [FromQuery] string statisticGroups = "", [FromQuery] string filterText = null, [FromQuery] int page = 1, [FromQuery] int pageCount = 50, [FromQuery] bool includeStats = false)
+            [FromQuery] string statisticGroups = "", [FromQuery] string filterText = null, [FromQuery] int page = 1, [FromQuery] int pageCount = 50, [FromQuery] bool includeStats = false, [FromQuery] bool geojson = false)
         {
             try
             {
@@ -72,7 +72,11 @@ namespace GageStatsServices.Controllers
                 var skip = (page - 1) * pageCount;
                 sm("Returning page " + page + " of " + (entities.Count() / pageCount + 1) + ".");
                 sm("Total Count: " + entities.Count());
-                return Ok(entities.Skip(skip).Take(pageCount));
+                entities = entities.Skip(skip).Take(pageCount);
+
+                if (geojson) return Ok(GeojsonFormatter.ToGeojson(entities)); // return as geojson
+
+                return Ok(entities);
             }
             catch (Exception ex)
             {
@@ -137,17 +141,16 @@ namespace GageStatsServices.Controllers
             }            
         }
 
-        [HttpGet("Geojson", Name = "StationGeojson")]
-        [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Stations/GetNearest.md")]
-        public async Task<IActionResult> Geojson([FromQuery] string boundList = null)
+        [HttpGet("Bounds", Name = "Stations Within Bounding Box")]
+        [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Stations/GetWithinBounds.md")]
+        public async Task<IActionResult> WithinBounds([FromQuery] double xmin, [FromQuery] double ymin, [FromQuery] double xmax, [FromQuery] double ymax, [FromQuery] bool geojson = false)
         {
-            var bounds = "[[48.33434, -84.94629], [44.41024, -102.52441]]";
             try
             {
-                IEnumerable<Station> gages = agent.GetStations().Take(1000).AsEnumerable();
-                var test = GeojsonFormatter.ToGeojson(gages);
+                IEnumerable<Station> gages = agent.GetStationsWithinBounds(xmin, ymin, xmax, ymax).AsEnumerable();
+                if (geojson) return Ok(GeojsonFormatter.ToGeojson(gages));
 
-                return Ok(test);
+                return Ok(gages);
             }
             catch (Exception ex)
             {
