@@ -1,19 +1,17 @@
 ﻿//------------------------------------------------------------------------------
-//----- NavigationHypermedia ---------------------------------------------------
+//----- GeojsonFormatter ---------------------------------------------------
 //------------------------------------------------------------------------------
 
 //-------1---------2---------3---------4---------5---------6---------7---------8
 //       01234567890123456789012345678901234567890123456789012345678901234567890
 //-------+---------+---------+---------+---------+---------+---------+---------+
 
-// copyright:   2017 WIM - USGS
+// copyright:   2020 WIM - USGS
 
-//    authors:  Jeremy K. Newson USGS Web Informatics and Mapping
+//    authors:  Katrin E Jacobsen USGS Web Informatics and Mapping
 //              
 //  
-//   purpose:   Intersects the pipeline after
-//
-//discussion:   Controllers are objects which handle all interaction with resources. 
+//   purpose:   Formats response into Geojson FeatureCollection
 //              
 //
 //
