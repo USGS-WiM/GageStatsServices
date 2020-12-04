@@ -250,7 +250,7 @@ namespace GageStatsAgent
             {
                 query = query.Where(st => st.Name.ToUpper().Contains(filterText.ToUpper()) || st.Code.ToUpper().Contains(filterText.ToUpper()));
             }
-            return query.OrderBy(s => s.ID);
+            return query.Include(s => s.StationType).OrderBy(s => s.ID);
         }
         public Task<Station> GetStation(string identifier)
         {

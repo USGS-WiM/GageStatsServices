@@ -34,6 +34,7 @@ using System.IO;
 using GageStatsAgent.Resources;
 using Microsoft.Extensions.Options;
 using GageStatsAgent.ServiceAgents;
+using GageStatsServices.Filters;
 
 namespace GageStatsServices.Controllers
 {
@@ -134,6 +135,24 @@ namespace GageStatsServices.Controllers
             {                
                 return await HandleExceptionAsync(ex);
             }            
+        }
+
+        [HttpGet("Geojson", Name = "StationGeojson")]
+        [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Stations/GetNearest.md")]
+        public async Task<IActionResult> Geojson([FromQuery] string boundList = null)
+        {
+            var bounds = "[[48.33434, -84.94629], [44.41024, -102.52441]]";
+            try
+            {
+                IEnumerable<Station> gages = agent.GetStations().Take(1000).AsEnumerable();
+                var test = GeojsonFormatter.ToGeojson(gages);
+
+                return Ok(test);
+            }
+            catch (Exception ex)
+            {
+                return await HandleExceptionAsync(ex);
+            }
         }
 
         [HttpPost(Name = "Add Station")]
