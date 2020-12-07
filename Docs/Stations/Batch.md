@@ -20,7 +20,10 @@ content-length: 576
         "stationTypeID":"1",
         "location": {
             "type": "Point",
-            "coordinates": [11.111,-99.999]
+            "coordinates": [
+				11.111,
+				-99.999
+			]
         },
 		"locationSource":"example source",
         "regionID": 1
@@ -33,8 +36,8 @@ content-length: 576
         "location": {
             "type": "Point",
             "coordinates": [
-                "0": -99.999,
-                "1": 44.445
+                11.111,
+				-99.999
             ]
         },
 		"locationSource":"example source",
@@ -55,8 +58,8 @@ HTTP/1.1 200 OK
         "location": {
             "type": "Point",
             "coordinates": [
-                "0": -99.999,
-                "1": 44.444
+                11.111,
+				-99.999
             ]
         },
         "regionID": 1
@@ -70,8 +73,8 @@ HTTP/1.1 200 OK
         "location": {
             "type": "Point",
             "coordinates": [
-                "0": -99.999,
-                "1": 44.445
+                11.111,
+				-99.999
             ]
         },
         "regionID": 1
