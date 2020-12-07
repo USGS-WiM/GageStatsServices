@@ -45,11 +45,18 @@ namespace GageStatsServices.Controllers
         #region METHOD
         [HttpGet(Name ="Variables")]
         [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Variables/Get.md")]
-        public override async Task<IActionResult> Get()
+        public async Task<IActionResult> GetVariables([FromQuery] string regions = "", [FromQuery] string stationTypes = "", [FromQuery] string agencies = "", 
+            [FromQuery] string regressionTypes = "", [FromQuery] string statisticGroups = "", [FromQuery] string filterText = null)
         {
             try
             {
-                return Ok(agent.GetVariables());  
+                List<string> regionList = parse(regions);
+                List<string> stationTypeList = parse(stationTypes);
+                List<string> agencyList = parse(agencies);
+                List<string> regressionTypeList = parse(regressionTypes);
+                List<string> statisticGroupList = parse(statisticGroups);
+
+                return Ok(agent.GetVariables(regionList, stationTypeList, agencyList, regressionTypeList, statisticGroupList, filterText));
             }
             catch (Exception ex)
             {

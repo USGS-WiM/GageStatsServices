@@ -65,14 +65,7 @@ namespace GageStatsServices.Controllers
                 List<string> variableTypeList = parse(variableTypes);
                 List<string> statisticGroupList = parse(statisticGroups);
 
-                IQueryable<Station> entities = agent.GetStations(regionList, stationTypeList, agencyList, regressionTypeList, variableTypeList, statisticGroupList, includeStats);
-
-                if (filterText != null)
-                {
-                    entities = entities.Where(s => s.Name.ToUpper().Contains(filterText.ToUpper()) || s.Code.ToUpper().Contains(filterText.ToUpper()));
-                }
-
-                entities = entities.OrderBy(s => s.ID);
+                IQueryable<Station> entities = agent.GetStations(regionList, stationTypeList, agencyList, regressionTypeList, variableTypeList, statisticGroupList, includeStats, filterText);
 
                 // get number of items to skip for pagination
                 var skip = (page - 1) * pageCount;
