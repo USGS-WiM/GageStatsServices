@@ -3,6 +3,7 @@ using System.Net.Http;
 using GageStatsAgent.Resources;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace GageStatsAgent.ServiceAgents
 {
@@ -95,7 +96,7 @@ namespace GageStatsAgent.ServiceAgents
             }
             else
             {
-                return "No stations located within search distance.";
+                return new JObject();
             }            
         }
 
@@ -135,7 +136,7 @@ namespace GageStatsAgent.ServiceAgents
 
         }
         //select generic storm event, All Cases and 50% probability
-        
+
         #endregion
         #region Enumerations
         public enum serviceType

@@ -35,6 +35,7 @@ using GageStatsAgent.Resources;
 using Microsoft.Extensions.Options;
 using GageStatsAgent.ServiceAgents;
 using GageStatsServices.Filters;
+using Newtonsoft.Json.Linq;
 
 namespace GageStatsServices.Controllers
 {
@@ -106,16 +107,23 @@ namespace GageStatsServices.Controllers
             }
         }
 
-        [HttpGet("Nearest", Name = "Nearest Station")]
+        [HttpGet("Nearest", Name = "Nearest Stations")]
         [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Stations/GetNearest.md")]
-        public async Task<IActionResult> Nearest([FromQuery]double lat, [FromQuery]double lon, [FromQuery]double radius, [FromQuery] bool geojson = false)
+        public async Task<IActionResult> Nearest([FromQuery]double lat, [FromQuery]double lon, [FromQuery]double radius, [FromQuery] bool includeStats = false, [FromQuery] bool geojson = false, [FromQuery] int page = 1, [FromQuery] int pageCount = 50)
         {
             try
             {
-                IQueryable<Station> gages = agent.GetNearest(lat, lon, radius);
+                IQueryable<Station> stations = agent.GetNearest(lat, lon, radius, includeStats);
+                if (stations.Count() == 0) sm("No stations located within search distance.", MessageType.warning);
 
-                if (geojson) return Ok(GeojsonFormatter.ToGeojson(gages));
-                return Ok(gages);
+                // get number of items to skip for pagination
+                var skip = (page - 1) * pageCount;
+                sm("Returning page " + page + " of " + (stations.Count() / pageCount + 1) + ".");
+                sm("Total Count: " + stations.Count());
+                stations = stations.Skip(skip).Take(pageCount);
+
+                if (geojson) return Ok(GeojsonFormatter.ToGeojson(stations));
+                return Ok(stations);
             }
             catch (Exception ex)
             {
@@ -125,16 +133,46 @@ namespace GageStatsServices.Controllers
 
         [HttpGet("Network", Name = "Nearest Stations on Network")]
         [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Stations/GetNearestOnNetwork.md")]
-        public async Task<IActionResult> Network([FromQuery] double lat, [FromQuery] double lon, [FromQuery] double distance, [FromQuery] int page = 1, [FromQuery] int pageCount = 50)
+        public async Task<IActionResult> Network([FromQuery] double lat, [FromQuery] double lon, [FromQuery] double distance, [FromQuery] bool includeStats = false, [FromQuery] bool geojson = false, [FromQuery] int page = 1, [FromQuery] int pageCount = 50)
         {
             try
             {
-                //var nav_sa = new NavigationServiceAgent(this.Navsettings);
                 var nldi_sa = new NLDIServiceAgent(this.NLDIsettings, this.Navigationsettings);
                 var isOk = await nldi_sa.ReadNLDIAsync(lat, lon, distance);
 
                 if (!isOk) throw new Exception("Failed to retrieve NLDI data");
-                return Ok(nldi_sa.getStations());
+                // TODO: cleanup
+                JObject nldi_stations = (JObject)nldi_sa.getStations();
+                var stationCodes = new List<string>();
+                if (nldi_stations["features"] != null)
+                {
+                    var count = nldi_stations["features"].Count();
+                    if (count == 0) sm("No stations located within search distance.", MessageType.warning);
+                    foreach (var feat in nldi_stations["features"])
+                    {
+                        var id = (string)feat["properties"]["identifier"];
+                        string splitID = id.Split(new string[] { "-" }, StringSplitOptions.None)[1];
+                        stationCodes.Add(splitID);
+                    }
+
+                    if (count > 0)
+                    {
+                        var stations = agent.GetStations(null, null, null, null, null, null, includeStats, null, stationCodes);
+                        // need to pull in geojson changes and use that
+                        if (geojson) return Ok(GeojsonFormatter.ToGeojson(stations));
+
+                        // get number of items to skip for pagination
+                        var skip = (page - 1) * pageCount;
+                        sm("Returning page " + page + " of " + (stations.Count() / pageCount + 1) + ".");
+                        sm("Total Count: " + stations.Count());
+                        stations = stations.Skip(skip).Take(pageCount);
+
+                        return Ok(stations);
+                    }
+                }
+
+                sm("No stations located within search distance.", MessageType.warning);
+                return Ok(nldi_stations);
             }
             catch (Exception ex)
             {                
@@ -144,14 +182,20 @@ namespace GageStatsServices.Controllers
 
         [HttpGet("Bounds", Name = "Stations Within Bounding Box")]
         [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Stations/GetWithinBounds.md")]
-        public async Task<IActionResult> WithinBounds([FromQuery] double xmin, [FromQuery] double ymin, [FromQuery] double xmax, [FromQuery] double ymax, [FromQuery] bool geojson = false)
+        public async Task<IActionResult> WithinBounds([FromQuery] double xmin, [FromQuery] double ymin, [FromQuery] double xmax, [FromQuery] double ymax, [FromQuery] bool geojson = false, [FromQuery] bool includeStats = false, [FromQuery] int page = 1, [FromQuery] int pageCount = 50)
         {
             try
             {
-                IEnumerable<Station> gages = agent.GetStationsWithinBounds(xmin, ymin, xmax, ymax).AsEnumerable();
-                if (geojson) return Ok(GeojsonFormatter.ToGeojson(gages));
+                IEnumerable<Station> stations = agent.GetStationsWithinBounds(xmin, ymin, xmax, ymax, includeStats).AsEnumerable();
+                if (geojson) return Ok(GeojsonFormatter.ToGeojson(stations));
 
-                return Ok(gages);
+                // get number of items to skip for pagination
+                var skip = (page - 1) * pageCount;
+                sm("Returning page " + page + " of " + (stations.Count() / pageCount + 1) + ".");
+                sm("Total Count: " + stations.Count());
+                stations = stations.Skip(skip).Take(pageCount);
+
+                return Ok(stations);
             }
             catch (Exception ex)
             {
