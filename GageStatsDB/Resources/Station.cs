@@ -42,8 +42,8 @@ namespace GageStatsDB.Resources
         public int StationTypeID { get; set; }
         [Required]
         public Geometry Location { get; set; }
+        public string LocationSource { get; set; }
         public int? RegionID { get; set; }
-
         public ICollection<Statistic> Statistics { get; set; }
         public ICollection<Characteristic> Characteristics { get; set; }
         public Agency Agency { get; set; }
