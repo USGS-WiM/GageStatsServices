@@ -148,7 +148,7 @@ namespace GageStatsServices.Controllers
                 {
                     var count = nldi_stations["features"].Count();
                     if (count == 0) sm("No stations located within search distance.", MessageType.warning);
-                    foreach (var feat in nldi_stations["features"])
+                    foreach (var feat in nldi_stations["features"].Children())
                     {
                         var id = (string)feat["properties"]["identifier"];
                         string splitID = id.Split(new string[] { "-" }, StringSplitOptions.None)[1];

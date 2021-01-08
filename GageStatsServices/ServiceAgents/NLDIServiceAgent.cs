@@ -4,6 +4,7 @@ using GageStatsAgent.Resources;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Collections.Generic;
 
 namespace GageStatsAgent.ServiceAgents
 {
@@ -60,11 +61,27 @@ namespace GageStatsAgent.ServiceAgents
 
                 if (result_dn != "" && result_up != "")
                 {
-                    stations_obj = JsonConvert.SerializeObject(new[]
+                    JObject dn_obj = JsonConvert.DeserializeObject<dynamic>(result_dn);
+                    JObject up_obj = JsonConvert.DeserializeObject<JObject>(result_up);
+                    var features = new List<object>();
+                    // need to combine features instead of creating an array of objects
+                    if (up_obj["features"] != null)
                     {
-                            JsonConvert.DeserializeObject(result_dn), JsonConvert.DeserializeObject(result_up)
-                        });
-                    this.NLDIstations = stations_obj;
+                        foreach (var feat in up_obj["features"])
+                        {
+                            features.Add(JsonConvert.DeserializeObject(JsonConvert.SerializeObject(feat)));
+                        }
+                    }
+                    if (dn_obj["features"] != null)
+                    {
+                        foreach (var feat in dn_obj["features"])
+                        {
+                            features.Add(JsonConvert.DeserializeObject(JsonConvert.SerializeObject(feat)));
+                        }
+                    }
+                    //dn_obj["features"] = "[" + string.Join(",", features) + "]";
+                    dn_obj["features"] = JsonConvert.DeserializeObject<dynamic>(JsonConvert.SerializeObject(features));
+                    stations_obj = dn_obj;
                 }
                 else if (result_dn == "" && result_up != "")
                 {
@@ -77,6 +94,7 @@ namespace GageStatsAgent.ServiceAgents
 
                 if (stations_obj != null)
                 {
+                    //if (stations_obj is string) stations_obj = JsonConvert.DeserializeObject<JObject>(stations_obj);
                     this.NLDIstations = stations_obj;
                 }
                 if (isDynamicError(result_up, out msg)) throw new Exception(msg);
