@@ -29,6 +29,7 @@ using Microsoft.AspNetCore.Authorization;
 using WIM.Security.Authorization;
 using GageStatsDB.Resources;
 using WIM.Exceptions.Services;
+using System.Linq;
 
 namespace GageStatsServices.Controllers
 {
@@ -80,7 +81,10 @@ namespace GageStatsServices.Controllers
             try
             {
                 if (!isValid(entity)) return new BadRequestResult(); // This returns HTTP 404
-                return Ok(await agent.Add(entity));
+                // if preferred, mark others at this station as not preferred
+                entity = await agent.Add(entity);
+                if (entity.IsPreferred) agent.TriggerStatisticPreferred(entity.ID, entity.RegressionTypeID, entity.StationID); // didn't work for some reason
+                return Ok(entity);
             }
             catch (Exception ex)
             {
@@ -97,8 +101,14 @@ namespace GageStatsServices.Controllers
             {
 
                 entities.ForEach(e => e.ID = 0);
+                // if preferred, mark others at this station as not preferred
                 if (!isValid(entities)) return new BadRequestObjectResult("Object is invalid");
-                return Ok(await agent.Add(entities));
+                entities = (await agent.Add(entities)).ToList();
+                entities.ForEach(e =>
+                {
+                    if (e.IsPreferred) agent.TriggerStatisticPreferred(e.ID, e.RegressionTypeID, e.StationID);
+                });
+                return Ok(entities);
             }
             catch (Exception ex)
             {
@@ -114,6 +124,9 @@ namespace GageStatsServices.Controllers
             try
             {
                 if (id < 0 || !isValid(entity)) return new BadRequestResult(); // This returns HTTP 404
+                // if preferred, mark others at this station as not preferred
+                entity = await agent.Update(id, entity);
+                if (entity.IsPreferred) agent.TriggerStatisticPreferred(entity.ID, entity.RegressionTypeID, entity.StationID);
                 return Ok(await agent.Update(id, entity));
 
             }

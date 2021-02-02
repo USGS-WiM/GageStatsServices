@@ -87,6 +87,7 @@ namespace GageStatsAgent
         Task<IEnumerable<Statistic>> Add(List<Statistic> items);
         Task<Statistic> Update(Int32 pkId, Statistic item);
         Task DeleteStatistic(Int32 id);
+        void TriggerStatisticPreferred(Int32 statID, Int32 regTypeID, Int32 stationID);
 
         //Manager
         IQueryable<Manager> GetUsers();
@@ -341,6 +342,17 @@ namespace GageStatsAgent
         public Task DeleteStatistic(int id)
         {
             return Delete<Statistic>(id);
+        }
+        public void TriggerStatisticPreferred(Int32 statID, Int32 regTypeID, Int32 stationID)
+        {
+            // change all statistics with x reg type ID within the station to not preferred
+            var statistics = Select<Statistic>().Where(s => s.ID != statID && s.StationID == stationID && s.RegressionTypeID == regTypeID && s.IsPreferred).ToList();
+            statistics.ForEach(s =>
+            {
+                s.IsPreferred = false;
+                Update<Statistic>(s.ID, s);
+            });
+            return;
         }
         #endregion
         #region Manager
