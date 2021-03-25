@@ -109,7 +109,7 @@ namespace GageStatsServices.Controllers
 
         [HttpGet("Nearest", Name = "Nearest Stations")]
         [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Stations/GetNearest.md")]
-        public async Task<IActionResult> Nearest([FromQuery]double lat, [FromQuery]double lon, [FromQuery]double radius, [FromQuery] bool includeStats = false, [FromQuery] bool geojson = false, [FromQuery] int page = 1, [FromQuery] int pageCount = 50)
+        public async Task<IActionResult> Nearest([FromQuery]double lat, [FromQuery]double lon, [FromQuery]double radius, [FromQuery] bool includeStats = false, [FromQuery] bool geojson = false, [FromQuery] int? page = null, [FromQuery] int pageCount = 50)
         {
             try
             {
@@ -117,10 +117,14 @@ namespace GageStatsServices.Controllers
                 if (stations.Count() == 0) sm("No stations located within search distance.", MessageType.warning);
 
                 // get number of items to skip for pagination
-                var skip = (page - 1) * pageCount;
-                sm("Returning page " + page + " of " + (stations.Count() / pageCount + 1) + ".");
-                sm("Total Count: " + stations.Count());
-                stations = stations.Skip(skip).Take(pageCount);
+                // checking for page number to be sent for this so it doesn't cause issues in StreamStats for now
+                if (page != null)
+                {
+                    var skip = (Convert.ToInt32(page) - 1) * pageCount;
+                    sm("Returning page " + page + " of " + (stations.Count() / pageCount + 1) + ".");
+                    sm("Total Count: " + stations.Count());
+                    stations = stations.Skip(skip).Take(pageCount);
+                }
 
                 if (geojson) return Ok(GeojsonFormatter.ToGeojson(stations));
                 return Ok(stations);
@@ -133,7 +137,7 @@ namespace GageStatsServices.Controllers
 
         [HttpGet("Network", Name = "Nearest Stations on Network")]
         [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Stations/GetNearestOnNetwork.md")]
-        public async Task<IActionResult> Network([FromQuery] double lat, [FromQuery] double lon, [FromQuery] double distance, [FromQuery] bool includeStats = false, [FromQuery] bool geojson = false, [FromQuery] int page = 1, [FromQuery] int pageCount = 50)
+        public async Task<IActionResult> Network([FromQuery] double lat, [FromQuery] double lon, [FromQuery] double distance, [FromQuery] bool includeStats = false, [FromQuery] bool geojson = false, [FromQuery] int? page = null, [FromQuery] int pageCount = 50)
         {
             try
             {
@@ -141,7 +145,7 @@ namespace GageStatsServices.Controllers
                 var isOk = await nldi_sa.ReadNLDIAsync(lat, lon, distance);
 
                 if (!isOk) throw new Exception("Failed to retrieve NLDI data");
-                // TODO: cleanup
+
                 JObject nldi_stations = (JObject)nldi_sa.getStations();
                 var stationCodes = new List<string>();
                 if (nldi_stations["features"] != null)
@@ -162,10 +166,14 @@ namespace GageStatsServices.Controllers
                         if (geojson) return Ok(GeojsonFormatter.ToGeojson(stations));
 
                         // get number of items to skip for pagination
-                        var skip = (page - 1) * pageCount;
-                        sm("Returning page " + page + " of " + (stations.Count() / pageCount + 1) + ".");
-                        sm("Total Count: " + stations.Count());
-                        stations = stations.Skip(skip).Take(pageCount);
+                        // checking for page number to be sent for this so it doesn't cause issues in StreamStats for now
+                        if (page != null)
+                        {
+                            var skip = (Convert.ToInt32(page) - 1) * pageCount;
+                            sm("Returning page " + page + " of " + (stations.Count() / pageCount + 1) + ".");
+                            sm("Total Count: " + stations.Count());
+                            stations = stations.Skip(skip).Take(pageCount);
+                        }
 
                         return Ok(stations);
                     }
@@ -182,7 +190,7 @@ namespace GageStatsServices.Controllers
 
         [HttpGet("Bounds", Name = "Stations Within Bounding Box")]
         [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Stations/GetWithinBounds.md")]
-        public async Task<IActionResult> WithinBounds([FromQuery] double xmin, [FromQuery] double ymin, [FromQuery] double xmax, [FromQuery] double ymax, [FromQuery] bool geojson = false, [FromQuery] bool includeStats = false, [FromQuery] int page = 1, [FromQuery] int pageCount = 50)
+        public async Task<IActionResult> WithinBounds([FromQuery] double xmin, [FromQuery] double ymin, [FromQuery] double xmax, [FromQuery] double ymax, [FromQuery] bool geojson = false, [FromQuery] bool includeStats = false, [FromQuery] int? page = null, [FromQuery] int pageCount = 50)
         {
             try
             {
@@ -190,10 +198,14 @@ namespace GageStatsServices.Controllers
                 if (geojson) return Ok(GeojsonFormatter.ToGeojson(stations));
 
                 // get number of items to skip for pagination
-                var skip = (page - 1) * pageCount;
-                sm("Returning page " + page + " of " + (stations.Count() / pageCount + 1) + ".");
-                sm("Total Count: " + stations.Count());
-                stations = stations.Skip(skip).Take(pageCount);
+                // checking for page number to be sent for this so it doesn't cause issues in StreamStats for now
+                if (page != null)
+                {
+                    var skip = (Convert.ToInt32(page) - 1) * pageCount;
+                    sm("Returning page " + page + " of " + (stations.Count() / pageCount + 1) + ".");
+                    sm("Total Count: " + stations.Count());
+                    stations = stations.Skip(skip).Take(pageCount);
+                }
 
                 return Ok(stations);
             }

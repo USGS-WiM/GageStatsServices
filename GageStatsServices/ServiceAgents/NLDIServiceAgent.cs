@@ -79,7 +79,6 @@ namespace GageStatsAgent.ServiceAgents
                             features.Add(JsonConvert.DeserializeObject(JsonConvert.SerializeObject(feat)));
                         }
                     }
-                    //dn_obj["features"] = "[" + string.Join(",", features) + "]";
                     dn_obj["features"] = JsonConvert.DeserializeObject<dynamic>(JsonConvert.SerializeObject(features));
                     stations_obj = dn_obj;
                 }
@@ -94,7 +93,6 @@ namespace GageStatsAgent.ServiceAgents
 
                 if (stations_obj != null)
                 {
-                    //if (stations_obj is string) stations_obj = JsonConvert.DeserializeObject<JObject>(stations_obj);
                     this.NLDIstations = stations_obj;
                 }
                 if (isDynamicError(result_up, out msg)) throw new Exception(msg);
