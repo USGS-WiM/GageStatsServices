@@ -1,0 +1,1 @@
+Returns an array of all available statistic resources for a specified station currently provided by the services.

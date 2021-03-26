@@ -4,7 +4,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using GageStatsAgent;
-using Microsoft.AspNetCore.Mvc;
 using WIM.Services.Middleware;
 using WIM.Services.Analytics;
 using WIM.Utilities.ServiceAgent;
@@ -32,13 +31,15 @@ using WIM.Security.Authorization;
 using WIM.Resources;
 using SharedDB;
 using SharedAgent;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Hosting;
 
 namespace GageStatsServices
 {
     public class Startup
     {
         private string _hostKey = "USGSWiM_HostName";
-        public Startup(IHostingEnvironment env)
+        public Startup(IWebHostEnvironment env)
         {
             var builder = new ConfigurationBuilder()
                 .SetBasePath(env.ContentRootPath)
@@ -58,6 +59,8 @@ namespace GageStatsServices
         //Method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddControllers();
+
             //Transient objects are always different; a new instance is provided to every controller and every service.
             //Singleton objects are the same for every object and every request.
             //Scoped objects are the same within a request, but different across different requests.
@@ -65,6 +68,8 @@ namespace GageStatsServices
             //Configure injectable obj
             services.AddScoped<IAnalyticsAgent, GoogleAnalyticsAgent>((gaa) => new GoogleAnalyticsAgent(Configuration["AnalyticsKey"]));
             services.Configure<APIConfigSettings>(Configuration.GetSection("APIConfigSettings"));
+            services.Configure<GageStatsAgent.Resources.NLDISettings>(Configuration.GetSection("NLDISettings"));
+            services.Configure<GageStatsAgent.Resources.NavigationSettings>(Configuration.GetSection("NavigationSettings"));
             services.Configure<JwtBearerSettings>(Configuration.GetSection("JwtBearerSettings"));
 
             //provides access to httpcontext
@@ -90,12 +95,13 @@ namespace GageStatsServices
                                                 //.EnableSensitiveDataLogging()
                                                 );
 
+            services.AddScoped<IAnalyticsAgent, GoogleAnalyticsAgent>((gaa) => new GoogleAnalyticsAgent(Configuration["AnalyticsKey"]));
             //Authentication
             services.AddAuthentication(x =>
             {
-                x.DefaultAuthenticateScheme = BasicDefaults.AuthenticationScheme;
-                x.DefaultChallengeScheme = BasicDefaults.AuthenticationScheme;
-            }).AddBasicAuthentication()
+                x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })//.AddBasicAuthentication()
            .AddJwtBearer(options =>
            {
                options.Events = new JWTBearerAuthenticationEvents();
@@ -113,14 +119,13 @@ namespace GageStatsServices
            });
 
             //Authorization
-            services.AddAuthorization(options => loadAutorizationPolicies(options));
+            services.AddAuthorization(options => loadAuthorizationPolicies(options));
             services.AddCors(options =>
             {
                 options.AddPolicy("CorsPolicy", builder => builder.AllowAnyOrigin()
                                                                  .AllowAnyMethod()
                                                                  .AllowAnyHeader()
-                                                                 .WithExposedHeaders(new string[] { this._hostKey, X_MessagesDefault.msgheader })
-                                                                 .AllowCredentials());
+                                                                 .WithExposedHeaders(new string[] { this._hostKey, X_MessagesDefault.msgheader }));
             });
 
             services.AddMvc(options => {
@@ -128,24 +133,32 @@ namespace GageStatsServices
                 options.Filters.Add(new GageStatsHypermedia());
                 options.ModelMetadataDetailsProviders.Add(new SuppressChildValidationMetadataProvider(typeof(Point)));
                 options.ModelMetadataDetailsProviders.Add(new SuppressChildValidationMetadataProvider(typeof(Geometry)));
-            })                               
-                .AddJsonOptions(options => loadJsonOptions(options));                                                
-        }     
+                options.MaxIAsyncEnumerableBufferLimit = 40000;
+            })
+                 .AddNewtonsoftJson(options => loadJsonOptions(options));
+        }
 
         // Method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
         {
             app.UseX_Messages(option => { option.HostKey = this._hostKey; });
-            app.UseAuthentication();
+            app.Use(async (context, next) =>
+            {
+                context.Response.Headers.Add("X-Version", Configuration.GetSection("Version").Value);
+                await next.Invoke();
+            });
             app.UseCors("CorsPolicy");
-            app.Use_Analytics();            
-
-            app.UseMvc();            
+            app.UseRouting();
+            app.UseAuthentication();
+            app.UseAuthorization();
+            app.Use_Analytics();
+            app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
         }
 
         #region Helper Methods
-        private void loadJsonOptions(MvcJsonOptions options)
+        private void loadJsonOptions(MvcNewtonsoftJsonOptions options)
         {
+            //options.SerializerSettings.TraceWriter = new memoryTraceWriter();
             options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
             options.SerializerSettings.MissingMemberHandling = Newtonsoft.Json.MissingMemberHandling.Ignore;
             options.SerializerSettings.NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore;
@@ -156,7 +169,7 @@ namespace GageStatsServices
             foreach (var converter in GeoJsonSerializer.Create(new GeometryFactory(new PrecisionModel(), 4326)).Converters)
             { options.SerializerSettings.Converters.Add(converter); }
         }
-        private void loadAutorizationPolicies(AuthorizationOptions options)
+        private void loadAuthorizationPolicies(AuthorizationOptions options)
         {     
             options.AddPolicy(
                 Policy.Managed,

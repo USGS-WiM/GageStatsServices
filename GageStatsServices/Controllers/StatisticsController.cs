@@ -28,11 +28,12 @@ using WIM.Services.Attributes;
 using Microsoft.AspNetCore.Authorization;
 using WIM.Security.Authorization;
 using GageStatsDB.Resources;
+using WIM.Exceptions.Services;
 
 namespace GageStatsServices.Controllers
 {
     [Route("[controller]")]
-    [APIDescription(type = DescriptionType.e_link, Description = "/Docs/GageStats/summary.md")]
+    [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Statistics/summary.md")]
     public class StatisticsController : WIM.Services.Controllers.ControllerBase
     {
         public IGageStatsAgent agent { get; set; }
@@ -43,11 +44,12 @@ namespace GageStatsServices.Controllers
         #region METHODS
         [HttpGet(Name = "Statistics")]
         [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Statistics/Get.md")]
-        public async Task<IActionResult> Get()
+        public async Task<IActionResult> Get([FromQuery] string stationIDOrCode)
         {
             try
-            {                
-                return Ok(agent.GetStatistics());
+            {
+                if (stationIDOrCode == null) throw new BadRequestException("A station ID or code is required.");
+                return Ok(agent.GetStatistics(stationIDOrCode));
             }
             catch (Exception ex)
             {

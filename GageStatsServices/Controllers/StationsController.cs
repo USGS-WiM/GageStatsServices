@@ -28,27 +28,56 @@ using WIM.Services.Attributes;
 using Microsoft.AspNetCore.Authorization;
 using WIM.Security.Authorization;
 using GageStatsDB.Resources;
+using WIM.Exceptions.Services;
+using System.Linq;
+using System.IO;
+using GageStatsAgent.Resources;
+using Microsoft.Extensions.Options;
+using GageStatsAgent.ServiceAgents;
+using GageStatsServices.Filters;
+using Newtonsoft.Json.Linq;
 
 namespace GageStatsServices.Controllers
 {
     [Route("[controller]")]
-    [APIDescription(type = DescriptionType.e_link, Description = "/Docs/GageStats/summary.md")]
+    [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Stations/summary.md")]
     public class StationsController : WIM.Services.Controllers.ControllerBase
     {
         public IGageStatsAgent agent { get; set; }
-        public StationsController(IGageStatsAgent agent ) : base()
+        private NLDISettings NLDIsettings { get; set; }
+        private NavigationSettings Navigationsettings { get; set; }
+        public StationsController(IGageStatsAgent agent, IOptions<NLDISettings> nldisettings, IOptions<NavigationSettings> navsettings) : base()
         {
+            NLDIsettings = nldisettings.Value;
+            Navigationsettings = navsettings.Value;
             this.agent = agent;
         }
         #region METHODS
         [HttpGet(Name = "Stations")]
         [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Stations/Get.md")]
-        public async Task<IActionResult> Get()
+        public async Task<IActionResult> Get([FromQuery] string regions = "", [FromQuery] string stationTypes = "", [FromQuery] string agencies = "", [FromQuery] string regressionTypes = "", [FromQuery] string variableTypes = "",
+            [FromQuery] string statisticGroups = "", [FromQuery] string filterText = null, [FromQuery] int page = 1, [FromQuery] int pageCount = 50, [FromQuery] bool includeStats = false, [FromQuery] bool geojson = false)
         {
             try
             {
-                
-                return Ok(agent.GetStations());
+                List<string> regionList = parse(regions);
+                List<string> stationTypeList = parse(stationTypes);
+                List<string> agencyList = parse(agencies);
+                List<string> regressionTypeList = parse(regressionTypes);
+                List<string> variableTypeList = parse(variableTypes);
+                List<string> statisticGroupList = parse(statisticGroups);
+
+                IQueryable<Station> entities = agent.GetStations(regionList, stationTypeList, agencyList, regressionTypeList, variableTypeList, statisticGroupList, includeStats, filterText);
+
+                // get number of items to skip for pagination
+                var skip = (page - 1) * pageCount;
+                sm("Returning page " + page + " of " + (entities.Count() / pageCount + 1) + ".");
+                sm("Total Count: " + entities.Count());
+                entities = entities.Skip(skip).Take(pageCount);
+
+                if (geojson) return Ok(GeojsonFormatter.ToGeojson(entities)); // return as geojson
+
+                return Ok(entities);
             }
             catch (Exception ex)
             {
@@ -56,14 +85,129 @@ namespace GageStatsServices.Controllers
             }
         }
 
-        [HttpGet("{id}", Name = "Station")]
+        [HttpGet("{idOrCode}", Name = "Station")]
         [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Stations/GetDistinct.md")]
-        public async Task<IActionResult> Get(int id)
+        public async Task<IActionResult> Get(string idOrCode)
         {
             try
             {
-                if (id < 0) return new BadRequestResult(); // This returns HTTP 404
-                return Ok(await agent.GetStation(id));
+                var entity = await agent.GetStation(idOrCode);
+
+                if (entity != null)
+                {
+                    return Ok(entity);
+                } else
+                {
+                    throw new BadRequestException("Station not found");
+                }
+            }
+            catch (Exception ex)
+            {
+                return await HandleExceptionAsync(ex);
+            }
+        }
+
+        [HttpGet("Nearest", Name = "Nearest Stations")]
+        [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Stations/GetNearest.md")]
+        public async Task<IActionResult> Nearest([FromQuery]double lat, [FromQuery]double lon, [FromQuery]double radius, [FromQuery] bool includeStats = false, [FromQuery] bool geojson = false, [FromQuery] int? page = null, [FromQuery] int pageCount = 50)
+        {
+            try
+            {
+                IQueryable<Station> stations = agent.GetNearest(lat, lon, radius, includeStats);
+                if (stations.Count() == 0) sm("No stations located within search distance.", MessageType.warning);
+
+                // get number of items to skip for pagination
+                // checking for page number to be sent for this so it doesn't cause issues in StreamStats for now
+                if (page != null)
+                {
+                    var skip = (Convert.ToInt32(page) - 1) * pageCount;
+                    sm("Returning page " + page + " of " + (stations.Count() / pageCount + 1) + ".");
+                    sm("Total Count: " + stations.Count());
+                    stations = stations.Skip(skip).Take(pageCount);
+                }
+
+                if (geojson) return Ok(GeojsonFormatter.ToGeojson(stations));
+                return Ok(stations);
+            }
+            catch (Exception ex)
+            {
+                return await HandleExceptionAsync(ex);
+            }
+        }
+
+        [HttpGet("Network", Name = "Nearest Stations on Network")]
+        [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Stations/GetNearestOnNetwork.md")]
+        public async Task<IActionResult> Network([FromQuery] double lat, [FromQuery] double lon, [FromQuery] double distance, [FromQuery] bool includeStats = false, [FromQuery] bool geojson = false, [FromQuery] int? page = null, [FromQuery] int pageCount = 50)
+        {
+            try
+            {
+                var nldi_sa = new NLDIServiceAgent(this.NLDIsettings, this.Navigationsettings);
+                var isOk = await nldi_sa.ReadNLDIAsync(lat, lon, distance);
+
+                if (!isOk) throw new Exception("Failed to retrieve NLDI data");
+
+                JObject nldi_stations = (JObject)nldi_sa.getStations();
+                var stationCodes = new List<string>();
+                if (nldi_stations["features"] != null)
+                {
+                    var count = nldi_stations["features"].Count();
+                    if (count == 0) sm("No stations located within search distance.", MessageType.warning);
+                    foreach (var feat in nldi_stations["features"].Children())
+                    {
+                        var id = (string)feat["properties"]["identifier"];
+                        string splitID = id.Split(new string[] { "-" }, StringSplitOptions.None)[1];
+                        stationCodes.Add(splitID);
+                    }
+
+                    if (count > 0)
+                    {
+                        var stations = agent.GetStations(null, null, null, null, null, null, includeStats, null, stationCodes);
+                        // need to pull in geojson changes and use that
+                        if (geojson) return Ok(GeojsonFormatter.ToGeojson(stations));
+
+                        // get number of items to skip for pagination
+                        // checking for page number to be sent for this so it doesn't cause issues in StreamStats for now
+                        if (page != null)
+                        {
+                            var skip = (Convert.ToInt32(page) - 1) * pageCount;
+                            sm("Returning page " + page + " of " + (stations.Count() / pageCount + 1) + ".");
+                            sm("Total Count: " + stations.Count());
+                            stations = stations.Skip(skip).Take(pageCount);
+                        }
+
+                        return Ok(stations);
+                    }
+                }
+
+                sm("No stations located within search distance.", MessageType.warning);
+                return Ok(nldi_stations);
+            }
+            catch (Exception ex)
+            {                
+                return await HandleExceptionAsync(ex);
+            }            
+        }
+
+        [HttpGet("Bounds", Name = "Stations Within Bounding Box")]
+        [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Stations/GetWithinBounds.md")]
+        public async Task<IActionResult> WithinBounds([FromQuery] double xmin, [FromQuery] double ymin, [FromQuery] double xmax, [FromQuery] double ymax, [FromQuery] bool geojson = false, [FromQuery] bool includeStats = false, [FromQuery] int? page = null, [FromQuery] int pageCount = 50)
+        {
+            try
+            {
+                IEnumerable<Station> stations = agent.GetStationsWithinBounds(xmin, ymin, xmax, ymax, includeStats).AsEnumerable();
+                if (geojson) return Ok(GeojsonFormatter.ToGeojson(stations));
+
+                // get number of items to skip for pagination
+                // checking for page number to be sent for this so it doesn't cause issues in StreamStats for now
+                if (page != null)
+                {
+                    var skip = (Convert.ToInt32(page) - 1) * pageCount;
+                    sm("Returning page " + page + " of " + (stations.Count() / pageCount + 1) + ".");
+                    sm("Total Count: " + stations.Count());
+                    stations = stations.Skip(skip).Take(pageCount);
+                }
+
+                return Ok(stations);
             }
             catch (Exception ex)
             {
@@ -129,6 +273,8 @@ namespace GageStatsServices.Controllers
         {
             try
             {
+                var existingStation = await agent.GetStation(id.ToString());
+                if (existingStation.Statistics.Count() > 0 || existingStation.Characteristics.Count() > 0) throw new Exception("Statistics or characteristics are assigned to this station."); 
                 await agent.DeleteStation(id);
                 return Ok();
             }

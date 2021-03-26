@@ -1,0 +1,1 @@
+Returns an array of all available characteristics for a specified station currently provided by the services.

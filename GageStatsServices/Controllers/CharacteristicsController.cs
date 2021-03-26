@@ -29,11 +29,12 @@ using Microsoft.AspNetCore.Authorization;
 using WIM.Security.Authentication;
 using GageStatsDB.Resources;
 using WIM.Security.Authorization;
+using WIM.Exceptions.Services;
 
 namespace GageStatsServices.Controllers
 {
     [Route("[controller]")]
-    [APIDescription(type = DescriptionType.e_link, Description = "/Docs/GageStats/summary.md")]
+    [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Characteristics/summary.md")]
     public class CharacteristicsController : WIM.Services.Controllers.ControllerBase
     {
         public IGageStatsAgent agent { get; set; }
@@ -44,12 +45,13 @@ namespace GageStatsServices.Controllers
         #region METHODS
         [HttpGet(Name = "Characteristics")]
         [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Characteristics/Get.md")]
-        public async Task<IActionResult> Get()
+        public async Task<IActionResult> Get([FromQuery] string stationIDOrCode)
         {
             try
             {
+                if (stationIDOrCode == null) throw new BadRequestException("A station ID or code is required.");
                 
-                return Ok(agent.GetCharacteristics());
+                return Ok(agent.GetCharacteristics(stationIDOrCode));
             }
             catch (Exception ex)
             {

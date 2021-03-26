@@ -20,10 +20,10 @@ bld/
 [Oo]bj/
 
 # include dist
-!NSSServices/
-!NSSServices/[Dd]ist/*
-!NSSServices/[Dd]ist/[Bb]in/*
-!NSSServices/[Dd]ist/[Bb]in/*.dll
+!GageStatsServices/
+!GageStatsServices/[Dd]ist/*
+!GageStatsServices/[Dd]ist/[Bb]in/*
+!GageStatsServices/[Dd]ist/[Bb]in/*.dll
 
 # Roslyn cache directories
 *.ide/

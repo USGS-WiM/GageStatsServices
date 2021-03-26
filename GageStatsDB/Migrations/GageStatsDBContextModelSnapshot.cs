@@ -18,24 +18,30 @@ namespace GageStatsDB.Migrations
             modelBuilder
                 .HasDefaultSchema("gagestats")
                 .HasAnnotation("Npgsql:PostgresExtension:postgis", ",,")
-                .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn)
-                .HasAnnotation("ProductVersion", "2.2.4-servicing-10062")
+                .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn)
+                .HasAnnotation("ProductVersion", "3.1.4")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             modelBuilder.Entity("GageStatsDB.Resources.Agency", b =>
                 {
                     b.Property<int>("ID")
-                        .ValueGeneratedOnAdd();
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
                     b.Property<string>("Code")
-                        .IsRequired();
+                        .IsRequired()
+                        .HasColumnType("text");
 
-                    b.Property<string>("Description");
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
 
-                    b.Property<DateTime>("LastModified");
+                    b.Property<DateTime>("LastModified")
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Name")
-                        .IsRequired();
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.HasKey("ID");
 
@@ -48,21 +54,30 @@ namespace GageStatsDB.Migrations
             modelBuilder.Entity("GageStatsDB.Resources.Characteristic", b =>
                 {
                     b.Property<int>("ID")
-                        .ValueGeneratedOnAdd();
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
-                    b.Property<int?>("CitationID");
+                    b.Property<int?>("CitationID")
+                        .HasColumnType("integer");
 
-                    b.Property<string>("Comments");
+                    b.Property<string>("Comments")
+                        .HasColumnType("text");
 
-                    b.Property<DateTime>("LastModified");
+                    b.Property<DateTime>("LastModified")
+                        .HasColumnType("timestamp without time zone");
 
-                    b.Property<int>("StationID");
+                    b.Property<int>("StationID")
+                        .HasColumnType("integer");
 
-                    b.Property<int>("UnitTypeID");
+                    b.Property<int>("UnitTypeID")
+                        .HasColumnType("integer");
 
-                    b.Property<double>("Value");
+                    b.Property<double>("Value")
+                        .HasColumnType("double precision");
 
-                    b.Property<int>("VariableTypeID");
+                    b.Property<int>("VariableTypeID")
+                        .HasColumnType("integer");
 
                     b.HasKey("ID");
 
@@ -76,18 +91,24 @@ namespace GageStatsDB.Migrations
             modelBuilder.Entity("GageStatsDB.Resources.Citation", b =>
                 {
                     b.Property<int>("ID")
-                        .ValueGeneratedOnAdd();
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
                     b.Property<string>("Author")
-                        .IsRequired();
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("CitationURL")
-                        .IsRequired();
+                        .IsRequired()
+                        .HasColumnType("text");
 
-                    b.Property<DateTime>("LastModified");
+                    b.Property<DateTime>("LastModified")
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Title")
-                        .IsRequired();
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.HasKey("ID");
 
@@ -97,15 +118,21 @@ namespace GageStatsDB.Migrations
             modelBuilder.Entity("GageStatsDB.Resources.PredictionInterval", b =>
                 {
                     b.Property<int>("ID")
-                        .ValueGeneratedOnAdd();
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
-                    b.Property<DateTime>("LastModified");
+                    b.Property<DateTime>("LastModified")
+                        .HasColumnType("timestamp without time zone");
 
-                    b.Property<double?>("LowerConfidenceInterval");
+                    b.Property<double?>("LowerConfidenceInterval")
+                        .HasColumnType("double precision");
 
-                    b.Property<double?>("UpperConfidenceInterval");
+                    b.Property<double?>("UpperConfidenceInterval")
+                        .HasColumnType("double precision");
 
-                    b.Property<double?>("Variance");
+                    b.Property<double?>("Variance")
+                        .HasColumnType("double precision");
 
                     b.HasKey("ID");
 
@@ -115,24 +142,39 @@ namespace GageStatsDB.Migrations
             modelBuilder.Entity("GageStatsDB.Resources.Station", b =>
                 {
                     b.Property<int>("ID")
-                        .ValueGeneratedOnAdd();
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
-                    b.Property<int>("AgencyID");
+                    b.Property<int>("AgencyID")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Code")
-                        .IsRequired();
+                        .IsRequired()
+                        .HasColumnType("text");
 
-                    b.Property<bool?>("IsRegulated");
+                    b.Property<bool?>("IsRegulated")
+                        .HasColumnType("boolean");
 
-                    b.Property<DateTime>("LastModified");
+                    b.Property<DateTime>("LastModified")
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<Geometry>("Location")
-                        .IsRequired();
+                        .IsRequired()
+                        .HasColumnType("geometry");
+
+                    b.Property<string>("LocationSource")
+                        .HasColumnType("text");
 
                     b.Property<string>("Name")
-                        .IsRequired();
+                        .IsRequired()
+                        .HasColumnType("text");
 
-                    b.Property<int>("StationTypeID");
+                    b.Property<int?>("RegionID")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("StationTypeID")
+                        .HasColumnType("integer");
 
                     b.HasKey("ID");
 
@@ -149,17 +191,23 @@ namespace GageStatsDB.Migrations
             modelBuilder.Entity("GageStatsDB.Resources.StationType", b =>
                 {
                     b.Property<int>("ID")
-                        .ValueGeneratedOnAdd();
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
                     b.Property<string>("Code")
-                        .IsRequired();
+                        .IsRequired()
+                        .HasColumnType("text");
 
-                    b.Property<string>("Description");
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
 
-                    b.Property<DateTime>("LastModified");
+                    b.Property<DateTime>("LastModified")
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Name")
-                        .IsRequired();
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.HasKey("ID");
 
@@ -172,27 +220,42 @@ namespace GageStatsDB.Migrations
             modelBuilder.Entity("GageStatsDB.Resources.Statistic", b =>
                 {
                     b.Property<int>("ID")
-                        .ValueGeneratedOnAdd();
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
-                    b.Property<int?>("CitationID");
+                    b.Property<int?>("CitationID")
+                        .HasColumnType("integer");
 
-                    b.Property<string>("Comments");
+                    b.Property<string>("Comments")
+                        .HasColumnType("text");
 
-                    b.Property<DateTime>("LastModified");
+                    b.Property<bool>("IsPreferred")
+                        .HasColumnType("boolean");
 
-                    b.Property<int?>("PredictionIntervalID");
+                    b.Property<DateTime>("LastModified")
+                        .HasColumnType("timestamp without time zone");
 
-                    b.Property<int>("RegressionTypeID");
+                    b.Property<int?>("PredictionIntervalID")
+                        .HasColumnType("integer");
 
-                    b.Property<int>("StationID");
+                    b.Property<int>("RegressionTypeID")
+                        .HasColumnType("integer");
 
-                    b.Property<int>("StatisticGroupTypeID");
+                    b.Property<int>("StationID")
+                        .HasColumnType("integer");
 
-                    b.Property<int>("UnitTypeID");
+                    b.Property<int>("StatisticGroupTypeID")
+                        .HasColumnType("integer");
 
-                    b.Property<double>("Value");
+                    b.Property<int>("UnitTypeID")
+                        .HasColumnType("integer");
 
-                    b.Property<double?>("YearsofRecord");
+                    b.Property<double>("Value")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("YearsofRecord")
+                        .HasColumnType("double precision");
 
                     b.HasKey("ID");
 
@@ -209,13 +272,18 @@ namespace GageStatsDB.Migrations
             modelBuilder.Entity("GageStatsDB.Resources.StatisticError", b =>
                 {
                     b.Property<int>("ID")
-                        .ValueGeneratedOnAdd();
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
-                    b.Property<int>("ErrorTypeID");
+                    b.Property<int>("ErrorTypeID")
+                        .HasColumnType("integer");
 
-                    b.Property<int>("StatisticID");
+                    b.Property<int>("StatisticID")
+                        .HasColumnType("integer");
 
-                    b.Property<double>("Value");
+                    b.Property<double>("Value")
+                        .HasColumnType("double precision");
 
                     b.HasKey("ID");
 
@@ -224,51 +292,17 @@ namespace GageStatsDB.Migrations
                     b.ToTable("StatisticError");
                 });
 
-            modelBuilder.Entity("GageStatsDB.Resources.User", b =>
-                {
-                    b.Property<int>("ID")
-                        .ValueGeneratedOnAdd();
-
-                    b.Property<string>("Email")
-                        .IsRequired();
-
-                    b.Property<string>("FirstName")
-                        .IsRequired();
-
-                    b.Property<DateTime>("LastModified");
-
-                    b.Property<string>("LastName")
-                        .IsRequired();
-
-                    b.Property<string>("Password")
-                        .IsRequired();
-
-                    b.Property<string>("PrimaryPhone");
-
-                    b.Property<string>("Role")
-                        .IsRequired();
-
-                    b.Property<string>("Salt")
-                        .IsRequired();
-
-                    b.Property<string>("Username")
-                        .IsRequired();
-
-                    b.HasKey("ID");
-
-                    b.ToTable("User");
-                });
-
             modelBuilder.Entity("GageStatsDB.Resources.Characteristic", b =>
                 {
                     b.HasOne("GageStatsDB.Resources.Citation", "Citation")
                         .WithMany("Characteristics")
                         .HasForeignKey("CitationID");
 
-                    b.HasOne("GageStatsDB.Resources.Station")
+                    b.HasOne("GageStatsDB.Resources.Station", "Station")
                         .WithMany("Characteristics")
                         .HasForeignKey("StationID")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("GageStatsDB.Resources.Station", b =>
@@ -276,12 +310,14 @@ namespace GageStatsDB.Migrations
                     b.HasOne("GageStatsDB.Resources.Agency", "Agency")
                         .WithMany("Stations")
                         .HasForeignKey("AgencyID")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("GageStatsDB.Resources.StationType", "StationType")
                         .WithMany("Stations")
                         .HasForeignKey("StationTypeID")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("GageStatsDB.Resources.Statistic", b =>
@@ -299,7 +335,8 @@ namespace GageStatsDB.Migrations
                     b.HasOne("GageStatsDB.Resources.Station", "Station")
                         .WithMany("Statistics")
                         .HasForeignKey("StationID")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("GageStatsDB.Resources.StatisticError", b =>
@@ -307,7 +344,8 @@ namespace GageStatsDB.Migrations
                     b.HasOne("GageStatsDB.Resources.Statistic", "Statistic")
                         .WithMany("StatisticErrors")
                         .HasForeignKey("StatisticID")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

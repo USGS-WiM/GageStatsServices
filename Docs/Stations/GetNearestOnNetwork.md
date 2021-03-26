@@ -1,0 +1,1 @@
+Returns a list of NLDI stations located on the network within a specified search distance (kilometers).

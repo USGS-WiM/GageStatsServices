@@ -25,7 +25,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using WIM.Services.Attributes;
 
-namespace NSSServices.Controllers
+namespace GageStatsServices.Controllers
 {
     [Route("[controller]")]
     [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Roles/summary.md")]

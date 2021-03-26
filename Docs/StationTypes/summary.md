@@ -1,0 +1,1 @@
+The station type resource represents the type of gaging station, e.g. Low Flow, partial record (LF).
