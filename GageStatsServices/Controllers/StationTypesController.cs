@@ -43,12 +43,18 @@ namespace GageStatsServices.Controllers
         #region METHODS
         [HttpGet(Name = "StationTypes")]
         [APIDescription(type = DescriptionType.e_link, Description = "/Docs/StationTypes/Get.md")]
-        public async Task<IActionResult> Get()
+        public async Task<IActionResult> Get([FromQuery] string regions = "", [FromQuery] string agencies = "", [FromQuery] string regressionTypes = "", [FromQuery] string variableTypes = "",
+            [FromQuery] string statisticGroups = "", [FromQuery] string filterText = null)
         {
             try
             {
-                
-                return Ok(agent.GetStationTypes());
+                List<string> regionList = parse(regions);
+                List<string> agencyList = parse(agencies);
+                List<string> regressionTypeList = parse(regressionTypes);
+                List<string> variableTypeList = parse(variableTypes);
+                List<string> statisticGroupList = parse(statisticGroups);
+
+                return Ok(agent.GetStationTypes(regionList, agencyList, regressionTypeList, variableTypeList, statisticGroupList, filterText));
             }
             catch (Exception ex)
             {

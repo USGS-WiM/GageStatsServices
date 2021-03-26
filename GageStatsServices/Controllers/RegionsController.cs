@@ -48,12 +48,18 @@ namespace GageStatsServices.Controllers
         #region METHODS
         [HttpGet(Name = "Regions")]
         [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Regions/Get.md")]
-        public async Task<IActionResult> Get()
+        public async Task<IActionResult> Get([FromQuery] string stationTypes = "", [FromQuery] string agencies = "", [FromQuery] string regressionTypes = "", [FromQuery] string variableTypes = "", [FromQuery] string statisticGroups = "", [FromQuery] string filterText = null)
         {
             IQueryable<Region> entities = null;
             try
             {
-                entities = agent.GetRegions();
+                List<string> stationTypeList = parse(stationTypes);
+                List<string> agencyList = parse(agencies);
+                List<string> regressionTypeList = parse(regressionTypes);
+                List<string> variableTypeList = parse(variableTypes);
+                List<string> statisticGroupList = parse(statisticGroups);
+
+                entities = agent.GetRegions(stationTypeList, agencyList, regressionTypeList, variableTypeList, statisticGroupList, filterText);
                 return Ok(entities);
             }
             catch (Exception ex)
