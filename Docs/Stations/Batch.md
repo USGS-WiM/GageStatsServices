@@ -62,6 +62,7 @@ HTTP/1.1 200 OK
 				-99.999
             ]
         },
+        "locationSource":"example source",
         "regionID": 1
 	},
 	{
@@ -77,6 +78,7 @@ HTTP/1.1 200 OK
 				-99.999
             ]
         },
+        "locationSource":"example source",
         "regionID": 1
 	}
 ]
