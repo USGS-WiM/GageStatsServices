@@ -161,7 +161,13 @@ namespace GageStatsServices.Controllers
 
                     if (count > 0)
                     {
-                        var stations = agent.GetStations(null, null, null, null, null, null, includeStats, null, stationCodes);
+                        var stations = agent.GetStations(null, null, null, null, null, null, includeStats, null, stationCodes).ToList();
+                        foreach (var sta in stations)
+                        {
+                            // stream direction
+                            var direction = (string)nldi_stations["features"].First(feat => feat["properties"]["identifier"].ToString().Split(new string[] { "-" }, StringSplitOptions.None)[1] == sta.Code)["properties"]["direction"];
+                            sta.Direction = direction;
+                        }
                         // need to pull in geojson changes and use that
                         if (geojson) return Ok(GeojsonFormatter.ToGeojson(stations));
 
@@ -172,7 +178,7 @@ namespace GageStatsServices.Controllers
                             var skip = (Convert.ToInt32(page) - 1) * pageCount;
                             sm("Returning page " + page + " of " + (stations.Count() / pageCount + 1) + ".");
                             sm("Total Count: " + stations.Count());
-                            stations = stations.Skip(skip).Take(pageCount);
+                            stations = stations.Skip(skip).Take(pageCount).ToList();
                         }
 
                         return Ok(stations);

@@ -49,5 +49,7 @@ namespace GageStatsDB.Resources
         public Agency Agency { get; set; }
         public StationType StationType { get; set; }
         public Region Region { get; set; }
+        [NotMapped]
+        public virtual string? Direction { get; set; }
     }
 }

@@ -58,17 +58,18 @@ namespace GageStatsAgent.ServiceAgents
                     var reply = await conn.GetAsync(urlString);
                     result_up = reply.Content.ReadAsStringAsync().Result;                   
                 }
-
+                var features = new List<object>();
                 if (result_dn != "" && result_up != "")
                 {
-                    JObject dn_obj = JsonConvert.DeserializeObject<dynamic>(result_dn);
+                    JObject dn_obj = JsonConvert.DeserializeObject<JObject>(result_dn);
                     JObject up_obj = JsonConvert.DeserializeObject<JObject>(result_up);
-                    var features = new List<object>();
                     // need to combine features instead of creating an array of objects
                     if (up_obj["features"] != null)
                     {
                         foreach (var feat in up_obj["features"])
                         {
+                            // add stream direction
+                            feat["properties"]["direction"] = "up";
                             features.Add(JsonConvert.DeserializeObject(JsonConvert.SerializeObject(feat)));
                         }
                     }
@@ -76,6 +77,8 @@ namespace GageStatsAgent.ServiceAgents
                     {
                         foreach (var feat in dn_obj["features"])
                         {
+                            // add stream direction
+                            feat["properties"]["direction"] = "down";
                             features.Add(JsonConvert.DeserializeObject(JsonConvert.SerializeObject(feat)));
                         }
                     }
@@ -84,11 +87,27 @@ namespace GageStatsAgent.ServiceAgents
                 }
                 else if (result_dn == "" && result_up != "")
                 {
-                    stations_obj = JsonConvert.DeserializeObject<dynamic>(result_up);
+                    JObject up_obj = JsonConvert.DeserializeObject<JObject>(result_up);
+                    foreach (var feat in up_obj["features"])
+                    {
+                        // add stream direction
+                        feat["properties"]["direction"] = "up";
+                        features.Add(JsonConvert.DeserializeObject(JsonConvert.SerializeObject(feat)));
+                    }
+                    up_obj["features"] = JsonConvert.DeserializeObject<dynamic>(JsonConvert.SerializeObject(features));
+                    stations_obj = up_obj;
                 }
                 else if (result_dn != "" && result_up == "")
                 {
-                    stations_obj = JsonConvert.DeserializeObject<dynamic>(result_dn);
+                    JObject dn_obj = JsonConvert.DeserializeObject<JObject>(result_dn);
+                    foreach (var feat in dn_obj["features"])
+                    {
+                        // add stream direction
+                        feat["properties"]["direction"] = "down";
+                        features.Add(JsonConvert.DeserializeObject(JsonConvert.SerializeObject(feat)));
+                    }
+                    dn_obj["features"] = JsonConvert.DeserializeObject<dynamic>(JsonConvert.SerializeObject(features));
+                    stations_obj = dn_obj;
                 }
 
                 if (stations_obj != null)

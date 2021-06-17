@@ -73,7 +73,7 @@ namespace GageStatsServices.Controllers
         }
 
         [HttpPost(Name = "Add Statistic")]
-        [Authorize(Policy = Policy.AdminOnly)]
+        [Authorize(Policy = Policy.Managed)]
         [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Statistics/Add.md")]
         public async Task<IActionResult> Post([FromBody]Statistic entity)
         {
@@ -89,7 +89,7 @@ namespace GageStatsServices.Controllers
         }
 
         [HttpPost("[action]", Name = "Statistic Batch Upload")]
-        [Authorize(Policy = "AdminOnly")]
+        [Authorize(Policy = "Managed")]
         [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Statistics/Batch.md")]
         public async Task<IActionResult> Batch([FromBody]List<Statistic> entities)
         {
@@ -107,7 +107,7 @@ namespace GageStatsServices.Controllers
         }
 
         [HttpPut("{id}", Name = "Edit Statistic")]
-        [Authorize(Policy = Policy.AdminOnly)]
+        [Authorize(Policy = Policy.Managed)]
         [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Statistics/Edit.md")]
         public async Task<IActionResult> Put(int id, [FromBody]Statistic entity)
         {
@@ -124,7 +124,7 @@ namespace GageStatsServices.Controllers
         }
 
         [HttpDelete("{id}", Name = "Delete Statistic")]
-        [Authorize(Policy = Policy.AdminOnly)]
+        [Authorize(Policy = Policy.Managed)]
         [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Statistics/Delete.md")]
         public async Task<IActionResult> Delete(int id)
         {
