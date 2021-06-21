@@ -36,6 +36,7 @@ using Microsoft.Extensions.Options;
 using GageStatsAgent.ServiceAgents;
 using GageStatsServices.Filters;
 using Newtonsoft.Json.Linq;
+using System.Reflection;
 
 namespace GageStatsServices.Controllers
 {
@@ -263,6 +264,29 @@ namespace GageStatsServices.Controllers
             try
             {
                 if (id < 0 || !isValid(entity)) return new BadRequestResult(); // This returns HTTP 404
+                // remove virtual properties - otherwise we get issues if duplicate virtual objects are attached (e.g. multiple statistics having the m^3/s unit type attached)
+                // TODO: check for statistic error error types as well
+                // TODO: look at ways to deserialize json from request bodies (see Startup.cs) - I'm thinking we can just remove virtual properties form all requests??
+                if (entity.Statistics != null)
+                {
+                    foreach (var stat in entity.Statistics)
+                    {
+                        foreach (var prop in stat.GetType().GetProperties())
+                        {
+                            if (prop != null && prop.GetAccessors()[0].IsVirtual) prop.SetValue(stat, null);
+                        }
+                    }
+                }
+                if (entity.Characteristics != null)
+                {
+                    foreach (var bchar in entity.Characteristics)
+                    {
+                        foreach (var prop in entity.GetType().GetProperties())
+                        {
+                            if (prop != null && prop.GetAccessors()[0].IsVirtual) prop.SetValue(entity, null);
+                        }
+                    }
+                }
                 return Ok(await agent.Update(id, entity));
 
             }
@@ -291,7 +315,6 @@ namespace GageStatsServices.Controllers
         }
         #endregion
         #region HELPER METHODS
-
         #endregion
     }
 }

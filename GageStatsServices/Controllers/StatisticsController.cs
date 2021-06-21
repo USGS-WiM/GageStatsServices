@@ -48,7 +48,7 @@ namespace GageStatsServices.Controllers
         {
             try
             {
-                if (stationIDOrCode == null) throw new BadRequestException("A station ID or code is required.");
+                if (stationIDOrCode == null) throw new BadRequestException("A statistic ID or code is required.");
                 return Ok(agent.GetStatistics(stationIDOrCode));
             }
             catch (Exception ex)
