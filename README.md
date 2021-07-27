@@ -18,6 +18,8 @@ optional paramters
 
 ### Prerequisites
 
+[Visual Studio 2019](https://www.visualstudio.com/)
+
 [.NET Core](https://www.microsoft.com/net/core#windowscmd)
 
 ## Getting Started
@@ -28,18 +30,40 @@ These instructions will get you a copy of the project up and running on your loc
 
 https://help.github.com/articles/cloning-a-repository/
 
-Open the solution file (.sln) using preferred IDE.
+Open the solution file (.sln) using preferred IDE. Visual Studio Community is recommended.
+
+In order to conduct database functions, you'll need to configure the User Secrets using the database credentials. To do so:
+1. Open the .sln in Visual Studio Community
+2. In the Solution Explorer, find the "GageStatsServices" item, right click on it and select "Manage User Secrets".
+3. In the secrets.json, copy the following code and fill in the corresponding information for the StreamStats RDS Test instance (found in the WIM Keepass or ask a WIM team member for the information):
+```
+{
+  "dbuser": "",
+  "dbpassword": "",
+  "dbHost": ""
+}
+```
 
 ## Building and testing
 
-No testing files are currently available for this repository
+To build a `dist` folder before deployment to a server:
+1. Open the .sln file in Visual Studio Community
+2. In the Solution Explorer, find the "GageStatsServices" item, right click on it and select "Publish".
+3. In the Publish screen, keep the default information and hit the Publish button.
 
 ## Deployment on IIS
 
-see [link](https://docs.microsoft.com/en-us/aspnet/core/publishing/iis?tabs=aspnetcore2x)  for detailed instructions for deploying to windows server.
+see [link](https://docs.microsoft.com/en-us/aspnet/core/host-and-deploy/iis/?view=aspnetcore-5.0)  for detailed instructions for deploying to windows server.
 
 * Download and install [windows server hosting bundle](https://www.microsoft.com/net/download/core#/runtime) on the server.
 * Create new application pool specifying the .netCLR version property to "No Managed Code".
+
+To update an application already hosted on the server:
+* Copy the new dist folder created from the "Building and testing" section, place it at D:\applications\GageStatsServices, or wherever the old dist folder is on the server (you may need to copy to your desktop on the server first)
+* In the new `dist` folder on the server:
+    * Edit the appsettings.json to include the database credentials and update the JWTBearer Settings secret key (you can look at past dist folders on the server for the key we usually use)
+    * In the web.config, update the "ASPNETCORE_ENVIRONMENT" environment variable value to "Staging"
+* In IIS, point the existing application to the new dist folder (usually you right click on the application in IIS, select Manage Application > Advanced Settings and point to the new path).
 
 ## Deployment on Linux
 
@@ -47,7 +71,7 @@ see [link](https://docs.microsoft.com/en-us/aspnet/core/publishing/apache-proxy)
 
 ## Built With
 
-* [Dotnetcore 2.1](https://github.com/dotnet/core) - ASP.Net core Framework
+* [Dotnetcore 3.1](https://github.com/dotnet/core) - ASP.Net core Framework
 
 ## Contributing
 
@@ -67,7 +91,8 @@ To push tags to remote origin: `git push origin --tags`
 
 ## Authors
 
-* **[Jeremy Newson](https://www.usgs.gov/staff-profiles/jeremy-k-newson)**  - *Lead Developer* - [USGS Web Informatics & Mapping](https://wim.usgs.gov/)
+* **[Katrin Jacobsen](https://www.usgs.gov/staff-profiles/katrin-jacobsen)**  - *Developer* - [USGS Web Informatics & Mapping](https://wim.usgs.gov/)
+* **[Jeremy Newson](https://www.usgs.gov/staff-profiles/jeremy-k-newson)**  - *Developer* - [USGS Web Informatics & Mapping](https://wim.usgs.gov/)
 
 See also the list of [contributors](../../graphs/contributors) who participated in this project.
 
