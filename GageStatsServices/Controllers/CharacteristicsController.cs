@@ -20,6 +20,7 @@
 
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Linq;
 using GageStatsAgent;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -45,13 +46,21 @@ namespace GageStatsServices.Controllers
         #region METHODS
         [HttpGet(Name = "Characteristics")]
         [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Characteristics/Get.md")]
-        public async Task<IActionResult> Get([FromQuery] string stationIDOrCode)
+        public async Task<IActionResult> Get([FromQuery] string stationIDOrCode, [FromQuery] int page = 1, [FromQuery] int pageCount = 50)
         {
             try
             {
                 if (stationIDOrCode == null) throw new BadRequestException("A station ID or code is required.");
-                
-                return Ok(agent.GetCharacteristics(stationIDOrCode));
+
+                IQueryable<Characteristic> entities = agent.GetCharacteristics(stationIDOrCode);
+
+                // get number of items to skip for pagination
+                var skip = (page - 1) * pageCount;
+                sm("Returning page " + page + " of " + (entities.Count() / pageCount + 1) + ".");
+                sm("Total Count: " + entities.Count());
+                entities = entities.Skip(skip).Take(pageCount);
+
+                return Ok(entities);
             }
             catch (Exception ex)
             {
