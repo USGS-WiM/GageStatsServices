@@ -1,20 +1,4 @@
-![WiM](wimlogo.png)
-
-# GageStats Services
-This project was created using the WIM services gagestats. The WIM Services gagestats usage is outlined below:
-## Installation of gagestats
-[WIM.Services.GageStats NuGet package](https://www.nuget.org/packages/WIM.Services.GageStats/):`dotnet new -i WIM.Services.GageStats`
-
-### GageStats Usage
-`mkdir newfolder`
-
-`cd newfolder\`
-
-`dotnet new wimservices`
-
-optional paramters
- `-E true` - enables service database options
-  
+![WiM](wimlogo.png)  
 
 ### Prerequisites
 
