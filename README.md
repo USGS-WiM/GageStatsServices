@@ -1,4 +1,6 @@
 ![WiM](wimlogo.png)  
+# GageStats Services
+REST web services used in communication with the StreamStats Gage Statistics DB.
 
 ### Prerequisites
 
