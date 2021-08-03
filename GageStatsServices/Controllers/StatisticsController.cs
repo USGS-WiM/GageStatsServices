@@ -45,13 +45,16 @@ namespace GageStatsServices.Controllers
         #region METHODS
         [HttpGet(Name = "Statistics")]
         [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Statistics/Get.md")]
-        public async Task<IActionResult> Get([FromQuery] string stationIDOrCode, [FromQuery] int page = 1, [FromQuery] int pageCount = 50)
+        public async Task<IActionResult> Get([FromQuery] string stationIDOrCode, [FromQuery] string citations = "", [FromQuery] string statisticGroups = "", [FromQuery] int page = 1, [FromQuery] int pageCount = 50)
         {
             try
             {
                 if (stationIDOrCode == null) throw new BadRequestException("A station ID or code is required.");
 
-                IQueryable<Statistic> entities = agent.GetStatistics(stationIDOrCode);
+                List<string> citationList = parse(citations);
+                List<string> statisticGroupList = parse(statisticGroups);
+
+                IQueryable<Statistic> entities = agent.GetStatistics(stationIDOrCode, citationList, statisticGroupList);
 
                 // get number of items to skip for pagination
                 var skip = (page - 1) * pageCount;
