@@ -45,7 +45,7 @@ namespace GageStatsAgent
         Task DeleteAgency(Int32 id);
 
         //Characteristic
-        IQueryable<Characteristic> GetCharacteristics(string stationIDorcode = null);
+        IQueryable<Characteristic> GetCharacteristics(string stationIDorcode = null, List<string> citationList = null, List<string> statisticGroupList = null);
         Task<Characteristic> GetCharacteristic(Int32 ID);
         Task<Characteristic> Add(Characteristic item);
         Task<IEnumerable<Characteristic>> Add(List<Characteristic> items);
@@ -159,13 +159,15 @@ namespace GageStatsAgent
         }
         #endregion
         #region Characteristic
-        public IQueryable<Characteristic> GetCharacteristics(string stationIDOrCode = null)
+        public IQueryable<Characteristic> GetCharacteristics(string stationIDOrCode = null, List<string> citationList = null, List<string> statisticGroupList = null)
         {
             IQueryable<Characteristic> query = Select<Characteristic>().Include(c => c.VariableType).Include(c => c.UnitType).Include(c => c.Citation);
             if (stationIDOrCode != null)
-            {
                 query = query.Where(c => c.Station.Code == stationIDOrCode || c.Station.ID.ToString() == stationIDOrCode);
-            }
+            if (citationList != null && citationList.Any())
+                query = query.Where(c => citationList.Contains(c.CitationID.ToString()));
+            if (statisticGroupList != null && statisticGroupList.Any())
+                query = query.Where(c => statisticGroupList.Contains(c.VariableType.StatisticGroupTypeID.ToString().Trim()) || statisticGroupList.Contains(c.VariableType.StatisticGroupType.Code.ToLower()));
             return query;
         }
         public Task<Characteristic> GetCharacteristic(int ID)
