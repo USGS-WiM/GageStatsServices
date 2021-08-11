@@ -49,8 +49,6 @@ namespace GageStatsServices.Controllers
         {
             try
             {
-                if (stationIDOrCode == null) throw new BadRequestException("A station ID or code is required.");
-
                 List<string> citationList = parse(citations);
                 List<string> statisticGroupList = parse(statisticGroups);
 
