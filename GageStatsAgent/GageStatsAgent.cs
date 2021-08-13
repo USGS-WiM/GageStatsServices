@@ -45,7 +45,7 @@ namespace GageStatsAgent
         Task DeleteAgency(Int32 id);
 
         //Characteristic
-        IQueryable<Characteristic> GetCharacteristics(string stationIDorcode = null);
+        IQueryable<Characteristic> GetCharacteristics(string stationIDorcode = null, List<string> citationList = null, List<string> statisticGroupList = null);
         Task<Characteristic> GetCharacteristic(Int32 ID);
         Task<Characteristic> Add(Characteristic item);
         Task<IEnumerable<Characteristic>> Add(List<Characteristic> items);
@@ -64,13 +64,14 @@ namespace GageStatsAgent
         IQueryable<string> GetRoles();
 
         //Station
-        IQueryable<Station> GetStations(List<string> regionList = null, List<string> stationTypeList = null, List<string> agencyList = null, List<string> regressionTypeList = null, List<string> variableTypeList = null, List<string> statisticGroupList = null, bool includeStats = false, string filterText = null);
+        IQueryable<Station> GetStations(List<string> regionList = null, List<string> stationTypeList = null, List<string> agencyList = null, List<string> regressionTypeList = null, List<string> variableTypeList = null, List<string> statisticGroupList = null, bool includeStats = false, string filterText = null, List<string> stationCodeList = null);
         Task<Station> GetStation(string identifier);
-        IQueryable<Station> GetNearest(double lat, double lon, double radius);
+        IQueryable<Station> GetNearest(double lat, double lon, double radius, bool includeStats);
         Task<Station> Add(Station item);
         Task<IEnumerable<Station>> Add(List<Station> items);
         Task<Station> Update(Int32 pkId, Station item);
         Task DeleteStation(Int32 id);
+        IQueryable<Station> GetStationsWithinBounds(double xmin, double ymin, double xmax, double ymax, bool includeStats);
 
         //StationType
         IQueryable<StationType> GetStationTypes(List<string> regionList = null, List<string> agencyList = null, List<string> regressionTypeList = null, List<string> variableTypeList = null, List<string> statisticGroupList = null, string filterText = null);
@@ -81,7 +82,7 @@ namespace GageStatsAgent
         Task DeleteStationType(Int32 id);
 
         //Statistic
-        IQueryable<Statistic> GetStatistics(string stationIDOrCode = null);
+        IQueryable<Statistic> GetStatistics(string stationIDOrCode = null, List<string> citationList = null, List<string> statisticGroupList = null);
         Task<Statistic> GetStatistic(Int32 ID);
         Task<Statistic> Add(Statistic item);
         Task<IEnumerable<Statistic>> Add(List<Statistic> items);
@@ -159,13 +160,15 @@ namespace GageStatsAgent
         }
         #endregion
         #region Characteristic
-        public IQueryable<Characteristic> GetCharacteristics(string stationIDOrCode = null)
+        public IQueryable<Characteristic> GetCharacteristics(string stationIDOrCode = null, List<string> citationList = null, List<string> statisticGroupList = null)
         {
             IQueryable<Characteristic> query = Select<Characteristic>().Include(c => c.VariableType).Include(c => c.UnitType).Include(c => c.Citation);
             if (stationIDOrCode != null)
-            {
                 query = query.Where(c => c.Station.Code == stationIDOrCode || c.Station.ID.ToString() == stationIDOrCode);
-            }
+            if (citationList != null && citationList.Any())
+                query = query.Where(c => citationList.Contains(c.CitationID.ToString()));
+            if (statisticGroupList != null && statisticGroupList.Any())
+                query = query.Where(c => statisticGroupList.Contains(c.VariableType.StatisticGroupTypeID.ToString().Trim()) || statisticGroupList.Contains(c.VariableType.StatisticGroupType.Code.ToLower()));
             return query;
         }
         public Task<Characteristic> GetCharacteristic(int ID)
@@ -223,10 +226,10 @@ namespace GageStatsAgent
 
         #endregion 
         #region Station
-        public IQueryable<Station> GetStations(List<string> regionList = null, List<string> stationTypeList = null, List<string> agencyList = null, List<string> regressionTypeList = null, List<string> variableTypeList = null, List<string> statisticGroupList = null, bool includeStats = false, string filterText = null)
+        public IQueryable<Station> GetStations(List<string> regionList = null, List<string> stationTypeList = null, List<string> agencyList = null, List<string> regressionTypeList = null, List<string> variableTypeList = null, List<string> statisticGroupList = null, bool includeStats = false, string filterText = null, List<string> stationCodeList = null)
         {
             IQueryable<Station> query = this.Select<Station>();
-            if (includeStats) query = query.Include(s => s.Statistics).Include(s => s.Characteristics);
+            if (includeStats) query = query.Include(s => s.Statistics).Include("Statistics.StatisticGroupType").Include(s => s.Characteristics).Include("Characteristics.VariableType");
             // if filters, apply them before returning query
             if (regionList != null && regionList.Any())
                 query = query.Where(st => regionList.Contains(st.RegionID.ToString()) || regionList.Contains(st.Region.Code.ToLower()));
@@ -251,7 +254,11 @@ namespace GageStatsAgent
             {
                 query = query.Where(st => st.Name.ToUpper().Contains(filterText.ToUpper()) || st.Code.ToUpper().Contains(filterText.ToUpper()));
             }
-            return query.OrderBy(s => s.ID);
+            if (stationCodeList != null && stationCodeList.Any())
+            {
+                query = query.Where(st => stationCodeList.Contains(st.Code.ToUpper()));
+            }
+            return query.Include(s => s.StationType).OrderBy(s => s.ID);
         }
         public Task<Station> GetStation(string identifier)
         {
@@ -259,11 +266,18 @@ namespace GageStatsAgent
                 .Include("Statistics.PredictionInterval").Include("Statistics.StatisticErrors").Include("Statistics.StatisticErrors.ErrorType").Include("Statistics.RegressionType").Include("Statistics.UnitType")
                 .Include("Statistics.Citation").Include("Statistics.StatisticGroupType").Include("Region").FirstOrDefaultAsync(s => s.Code == identifier || s.ID.ToString() == identifier);
         }
-        public IQueryable<Station> GetNearest(double lat, double lon, double radius)
+        public IQueryable<Station> GetNearest(double lat, double lon, double radius, bool includeStats)
         {
             var radius_m = radius * 1000; //GageStatsDB searches in meters by default, user has specified km
             var query = String.Format(getSQLStatement(sqltypeenum.stationsbyradius), lat, lon, radius_m);
-            return FromSQL<Station>(query);
+            if (includeStats) return FromSQL<Station>(query).Include(s => s.StationType).Include(s => s.Statistics).Include("Statistics.StatisticGroupType").Include(s => s.Characteristics).Include("Characteristics.VariableType");
+            return FromSQL<Station>(query).Include(s => s.StationType);
+        }
+        public IQueryable<Station> GetStationsWithinBounds(double xmin, double ymin, double xmax, double ymax, bool includeStats)
+        {
+            var query = String.Format(getSQLStatement(sqltypeenum.stationsbyboundingbox), xmin, ymin, xmax, ymax);
+            if (includeStats) return FromSQL<Station>(query).Include(s => s.StationType).Include(s => s.Statistics).Include("Statistics.StatisticGroupType").Include(s => s.Characteristics).Include("Characteristics.VariableType");
+            return FromSQL<Station>(query).Include(s => s.StationType);
         }
         public Task<Station> Add(Station item)
         {
@@ -313,14 +327,16 @@ namespace GageStatsAgent
         }
         #endregion
         #region Statistic
-        public IQueryable<Statistic> GetStatistics(string stationIDOrCode = null)
+        public IQueryable<Statistic> GetStatistics(string stationIDOrCode = null, List<string> citationList = null, List<string> statisticGroupList = null)
         {
             IQueryable<Statistic> query = Select<Statistic>().Include(s => s.PredictionInterval).Include("StatisticErrors.ErrorType")
                     .Include(s => s.RegressionType).Include(s => s.StatisticGroupType);
             if (stationIDOrCode != null)
-            {
                 query = query.Where(s => s.Station.Code == stationIDOrCode || s.Station.ID.ToString() == stationIDOrCode);
-            }
+            if (citationList != null && citationList.Any())
+                query = query.Where(s => citationList.Contains(s.CitationID.ToString()));
+            if (statisticGroupList != null && statisticGroupList.Any())
+                query = query.Where(s => statisticGroupList.Contains(s.StatisticGroupTypeID.ToString().Trim()) || statisticGroupList.Contains(s.StatisticGroupType.Code.ToLower()));
             return query;
         }
         public Task<Statistic> GetStatistic(int ID)
@@ -560,6 +576,8 @@ namespace GageStatsAgent
                 case sqltypeenum.stationsbyradius:
                     return @"SELECT * FROM gagestats.""Stations"" as st 
                                       where ST_Contains(st_transform(ST_Buffer(st_geomfromtext('Point({1} {0})',4326)::geography, {2})::geometry, 4326), st.""Location"")";
+                case sqltypeenum.stationsbyboundingbox:
+                    return @"select * from gagestats.""Stations"" where ""Location"" @ ST_MakeEnvelope({0}, {1}, {2}, {3}, 4326)";
                 default:
                     throw new Exception("No sql for table " + type);
             }
@@ -587,7 +605,8 @@ namespace GageStatsAgent
         #endregion
         private enum sqltypeenum
         {
-            stationsbyradius
+            stationsbyradius,
+            stationsbyboundingbox
         }
     }
 }
