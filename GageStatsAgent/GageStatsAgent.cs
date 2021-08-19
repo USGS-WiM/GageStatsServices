@@ -103,7 +103,7 @@ namespace GageStatsAgent
         IQueryable<ErrorType> GetErrors();
         Task<ErrorType> GetError(Int32 ID);
         IQueryable<StatisticGroupType> GetStatisticGroups(List<string> defTypeList = null, List<string> regionList = null, List<string> stationTypeList = null, List<string> agencyList = null, List<string> regressionTypeList = null, List<string> variableTypeList = null, string filterText = null);
-        Task<RegressionType> GetRegression(Int32 ID);
+        RegressionType GetRegression(Int32 ID);
         IQueryable<RegressionType> GetRegressions(List<string> regionList = null, List<string> stationTypeList = null, List<string> agencyList = null, List<string> variableTypeList = null, List<string> statisticGroupList = null, string filterText = null);
         Task<StatisticGroupType> GetStatisticGroup(Int32 ID);
         IQueryable<UnitType> GetUnits();
@@ -469,11 +469,11 @@ namespace GageStatsAgent
             if (!regionList.Any() && !stationTypeList.Any() && !agencyList.Any() && !variableTypeList.Any() && !statisticGroupList.Any() && filterText == null) return this.Select<RegressionType>().OrderBy(rt => rt.ID);
             // filter by other elements to get all available agencies for that selection
             var stations = this.GetStations(regionList, stationTypeList, agencyList, null, variableTypeList, statisticGroupList, false, filterText);
-            return stations.SelectMany(s => s.Statistics).Select(st => st.RegressionType).Distinct().OrderBy(rt => rt.ID);
+            return stations.SelectMany(s => s.Statistics).Select(st => st.RegressionType).Distinct().OrderBy(rt => rt.ID).Include(rt => rt.MetricUnitType).Include(rt => rt.EnglishUnitType).Include(rt => rt.StatisticGroupType); ;
         }
-        public Task<RegressionType> GetRegression(Int32 ID)
+        public RegressionType GetRegression(Int32 ID)
         {
-            return this.Find<RegressionType>(ID);
+            return this.GetRegressions().FirstOrDefault(rt => rt.ID == ID);
         }
         public StatisticGroupType GetStatisticGroupByCode(string code)
         {
