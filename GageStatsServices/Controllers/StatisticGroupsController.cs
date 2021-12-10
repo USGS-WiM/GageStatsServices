@@ -50,7 +50,7 @@ namespace GageStatsServices.Controllers
         [HttpGet(Name ="Statistic Groups")]
         [APIDescription(type = DescriptionType.e_link, Description = "/Docs/StatisticGroups/Get.md")]
         public async Task<IActionResult> Get([FromQuery] string defTypes = "", [FromQuery] string regions = "", [FromQuery] string stationTypes = "", [FromQuery] string agencies = "", [FromQuery] string regressionTypes = "",
-            [FromQuery] string variableTypes = "", [FromQuery] string filterText = null)
+            [FromQuery] string variableTypes = "", [FromQuery] string filterText = null, [FromQuery] bool? isRegulated = null)
         {
             IQueryable<StatisticGroupType> entities = null;
             try
@@ -62,7 +62,7 @@ namespace GageStatsServices.Controllers
                 List<string> regressionTypeList = parse(regressionTypes);
                 List<string> variableTypeList = parse(variableTypes);
 
-                entities = agent.GetStatisticGroups(defTypeList, regionList, stationTypeList, agencyList, regressionTypeList, variableTypeList, filterText);
+                entities = agent.GetStatisticGroups(defTypeList, regionList, stationTypeList, agencyList, regressionTypeList, variableTypeList, filterText, isRegulated);
 
                 sm($"statistic group count {entities.Count()}");
                 return Ok(entities);
