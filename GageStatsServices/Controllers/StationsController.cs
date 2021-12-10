@@ -161,7 +161,7 @@ namespace GageStatsServices.Controllers
 
                     if (count > 0)
                     {
-                        var stations = agent.GetStations(null, null, null, null, null, null, includeStats, null, stationCodes);
+                        var stations = agent.GetStations(null, null, null, null, null, null, includeStats, null, null, stationCodes);
                         // need to pull in geojson changes and use that
                         if (geojson) return Ok(GeojsonFormatter.ToGeojson(stations));
 
