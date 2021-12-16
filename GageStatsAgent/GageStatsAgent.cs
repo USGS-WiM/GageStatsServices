@@ -37,7 +37,7 @@ namespace GageStatsAgent
     public interface IGageStatsAgent : IAuthenticationAgent
     {
         //Agency
-        IQueryable<Agency> GetAgencies(List<string> regionList = null, List<string> stationTypeList = null, List<string> regressionTypeList = null, List<string> variableTypeList = null, List<string> statisticGroupList = null, string filterText = null);
+        IQueryable<Agency> GetAgencies(List<string> regionList = null, List<string> stationTypeList = null, List<string> regressionTypeList = null, List<string> variableTypeList = null, List<string> statisticGroupList = null, string filterText = null, bool? isRegulated = null);
         Task<Agency> GetAgency(Int32 ID);
         Task<Agency> Add(Agency item);
         Task<IEnumerable<Agency>> Add(List<Agency> items);
@@ -64,7 +64,7 @@ namespace GageStatsAgent
         IQueryable<string> GetRoles();
 
         //Station
-        IQueryable<Station> GetStations(List<string> regionList = null, List<string> stationTypeList = null, List<string> agencyList = null, List<string> regressionTypeList = null, List<string> variableTypeList = null, List<string> statisticGroupList = null, bool includeStats = false, string filterText = null, List<string> stationCodeList = null);
+        IQueryable<Station> GetStations(List<string> regionList = null, List<string> stationTypeList = null, List<string> agencyList = null, List<string> regressionTypeList = null, List<string> variableTypeList = null, List<string> statisticGroupList = null, bool includeStats = false, string filterText = null, bool? isRegulated = null, List<string> stationCodeList = null);
         Task<Station> GetStation(string identifier);
         IQueryable<Station> GetNearest(double lat, double lon, double radius, bool includeStats);
         Task<Station> Add(Station item);
@@ -74,7 +74,7 @@ namespace GageStatsAgent
         IQueryable<Station> GetStationsWithinBounds(double xmin, double ymin, double xmax, double ymax, bool includeStats);
 
         //StationType
-        IQueryable<StationType> GetStationTypes(List<string> regionList = null, List<string> agencyList = null, List<string> regressionTypeList = null, List<string> variableTypeList = null, List<string> statisticGroupList = null, string filterText = null);
+        IQueryable<StationType> GetStationTypes(List<string> regionList = null, List<string> agencyList = null, List<string> regressionTypeList = null, List<string> variableTypeList = null, List<string> statisticGroupList = null, string filterText = null, bool? isRegulated = null);
         Task<StationType> GetStationType(Int32 ID);
         Task<StationType> Add(StationType item);
         Task<IEnumerable<StationType>> Add(List<StationType> items);
@@ -94,7 +94,7 @@ namespace GageStatsAgent
         Manager GetUser(Int32 ID);
 
         //Regions
-        IQueryable<Region> GetRegions(List<string> stationTypeList = null, List<string> agencyList = null, List<string> regressionTypeList = null, List<string> variableTypeList = null, List<string> statisticGroupList = null, string filterText = null);
+        IQueryable<Region> GetRegions(List<string> stationTypeList = null, List<string> agencyList = null, List<string> regressionTypeList = null, List<string> variableTypeList = null, List<string> statisticGroupList = null, string filterText = null, bool? isRegulated = null);
         Task<Region> GetRegion(Int32 ID);
         Region GetRegionByIDOrCode(string identifier);
         IQueryable<Region> GetManagerRegions(int managerID);
@@ -102,15 +102,15 @@ namespace GageStatsAgent
         //Readonly (Shared Views) methods
         IQueryable<ErrorType> GetErrors();
         Task<ErrorType> GetError(Int32 ID);
-        IQueryable<StatisticGroupType> GetStatisticGroups(List<string> defTypeList = null, List<string> regionList = null, List<string> stationTypeList = null, List<string> agencyList = null, List<string> regressionTypeList = null, List<string> variableTypeList = null, string filterText = null);
+        IQueryable<StatisticGroupType> GetStatisticGroups(List<string> defTypeList = null, List<string> regionList = null, List<string> stationTypeList = null, List<string> agencyList = null, List<string> regressionTypeList = null, List<string> variableTypeList = null, string filterText = null, bool? isRegulated = null);
         RegressionType GetRegression(Int32 ID);
-        IQueryable<RegressionType> GetRegressions(List<string> regionList = null, List<string> stationTypeList = null, List<string> agencyList = null, List<string> variableTypeList = null, List<string> statisticGroupList = null, string filterText = null);
+        IQueryable<RegressionType> GetRegressions(List<string> regionList = null, List<string> stationTypeList = null, List<string> agencyList = null, List<string> variableTypeList = null, List<string> statisticGroupList = null, string filterText = null, bool? isRegulated = null);
         Task<StatisticGroupType> GetStatisticGroup(Int32 ID);
         IQueryable<UnitType> GetUnits();
         Task<UnitType> GetUnit(Int32 ID);
         IQueryable<UnitSystemType> GetUnitSystems();
         Task<UnitSystemType> GetUnitSystem(Int32 ID);
-        IQueryable<VariableType> GetVariables(List<string> regionList = null, List<string> stationTypeList = null, List<string> agencyList = null, List<string> regressionTypeList = null, List<string> statisticGroupList = null, string filterText = null);
+        IQueryable<VariableType> GetVariables(List<string> regionList = null, List<string> stationTypeList = null, List<string> agencyList = null, List<string> regressionTypeList = null, List<string> statisticGroupList = null, string filterText = null, bool? isRegulated = null);
         Task<VariableType> GetVariable(Int32 ID);
     }
 
@@ -128,13 +128,13 @@ namespace GageStatsAgent
         #endregion
         #region Methods    
         #region Agency
-        public IQueryable<Agency> GetAgencies(List<string> regionList = null, List<string> stationTypeList = null, List<string> regressionTypeList = null, List<string> variableTypeList = null, List<string> statisticGroupList = null, string filterText = null)
+        public IQueryable<Agency> GetAgencies(List<string> regionList = null, List<string> stationTypeList = null, List<string> regressionTypeList = null, List<string> variableTypeList = null, List<string> statisticGroupList = null, string filterText = null, bool? isRegulated = null)
         {
             // if no filters
-            if (!regionList.Any() && !stationTypeList.Any() && !regressionTypeList.Any() && !variableTypeList.Any() && !statisticGroupList.Any() && filterText == null) return this.Select<Agency>().OrderBy(a => a.ID);
+            if (!regionList.Any() && !stationTypeList.Any() && !regressionTypeList.Any() && !variableTypeList.Any() && !statisticGroupList.Any() && filterText == null && isRegulated == null) return this.Select<Agency>().OrderBy(a => a.ID);
 
             // filter by other elements to get all available agencies for that selection
-            var stations = this.GetStations(regionList, stationTypeList, null, regressionTypeList, variableTypeList, statisticGroupList, false, filterText);
+            var stations = this.GetStations(regionList, stationTypeList, null, regressionTypeList, variableTypeList, statisticGroupList, false, filterText, isRegulated);
             return stations.Select(s => s.Agency).Distinct();
         }
         public Task<Agency> GetAgency(int ID)
@@ -225,7 +225,7 @@ namespace GageStatsAgent
 
         #endregion 
         #region Station
-        public IQueryable<Station> GetStations(List<string> regionList = null, List<string> stationTypeList = null, List<string> agencyList = null, List<string> regressionTypeList = null, List<string> variableTypeList = null, List<string> statisticGroupList = null, bool includeStats = false, string filterText = null, List<string> stationCodeList = null)
+        public IQueryable<Station> GetStations(List<string> regionList = null, List<string> stationTypeList = null, List<string> agencyList = null, List<string> regressionTypeList = null, List<string> variableTypeList = null, List<string> statisticGroupList = null, bool includeStats = false, string filterText = null, bool? isRegulated = null, List<string> stationCodeList = null)
         {
             IQueryable<Station> query = this.Select<Station>();
             if (includeStats) query = query.Include(s => s.Statistics).Include("Statistics.StatisticGroupType").Include(s => s.Characteristics).Include("Characteristics.VariableType");
@@ -257,13 +257,17 @@ namespace GageStatsAgent
             {
                 query = query.Where(st => stationCodeList.Contains(st.Code.ToUpper()));
             }
+            if (isRegulated != null)
+            {
+                query = query.Where(st => st.IsRegulated == isRegulated);
+            }
             return query.Include(s => s.StationType).OrderBy(s => s.ID);
         }
         public Task<Station> GetStation(string identifier)
         {
             return GetStations().Include("Agency").Include("StationType").Include("Characteristics.Citation").Include("Characteristics.VariableType").Include("Characteristics.UnitType")
                 .Include("Statistics.PredictionInterval").Include("Statistics.StatisticErrors").Include("Statistics.StatisticErrors.ErrorType").Include("Statistics.RegressionType").Include("Statistics.UnitType")
-                .Include("Statistics.Citation").Include("Statistics.StatisticGroupType").Include("Region").FirstOrDefaultAsync(s => s.Code == identifier || s.ID.ToString() == identifier);
+                .Include("Statistics.Citation").Include("Statistics.StatisticGroupType").Include("Region").Include("IsRegulated").FirstOrDefaultAsync(s => s.Code == identifier || s.ID.ToString() == identifier);
         }
         public IQueryable<Station> GetNearest(double lat, double lon, double radius, bool includeStats)
         {
@@ -296,12 +300,12 @@ namespace GageStatsAgent
         }
         #endregion
         #region StationType
-        public IQueryable<StationType> GetStationTypes(List<string> regionList = null, List<string> agencyList = null, List<string> regressionTypeList = null, List<string> variableTypeList = null, List<string> statisticGroupList = null, string filterText = null)
+        public IQueryable<StationType> GetStationTypes(List<string> regionList = null, List<string> agencyList = null, List<string> regressionTypeList = null, List<string> variableTypeList = null, List<string> statisticGroupList = null, string filterText = null, bool? isRegulated = null)
         {
             // if no filters
-            if (!regionList.Any() && !agencyList.Any() && !regressionTypeList.Any() && !variableTypeList.Any() && !statisticGroupList.Any() && filterText == null) return Select<StationType>().OrderBy(st => st.ID);
+            if (!regionList.Any() && !agencyList.Any() && !regressionTypeList.Any() && !variableTypeList.Any() && !statisticGroupList.Any() && filterText == null && isRegulated == null) return Select<StationType>().OrderBy(st => st.ID);
             // filter by other elements to get all available agencies for that selection
-            var stations = this.GetStations(regionList, null, agencyList, regressionTypeList, variableTypeList, statisticGroupList, false, filterText);
+            var stations = this.GetStations(regionList, null, agencyList, regressionTypeList, variableTypeList, statisticGroupList, false, filterText, isRegulated);
             return stations.Select(s => s.StationType).Distinct().OrderBy(st => st.ID);
         }
         public Task<StationType> GetStationType(int ID)
@@ -431,13 +435,13 @@ namespace GageStatsAgent
 
 
         }
-        public IQueryable<Region> GetRegions(List<string> stationTypeList = null, List<string> agencyList = null, List<string> regressionTypeList = null, List<string> variableTypeList = null, List<string> statisticGroupList = null, string filterText = null)
+        public IQueryable<Region> GetRegions(List<string> stationTypeList = null, List<string> agencyList = null, List<string> regressionTypeList = null, List<string> variableTypeList = null, List<string> statisticGroupList = null, string filterText = null, bool? isRegulated = null)
         {
             // if no filters
-            if (!stationTypeList.Any() && !agencyList.Any() && !regressionTypeList.Any() && !variableTypeList.Any() && !statisticGroupList.Any() && filterText == null) return this.Select<Region>().OrderBy(r => r.ID);
+            if (!stationTypeList.Any() && !agencyList.Any() && !regressionTypeList.Any() && !variableTypeList.Any() && !statisticGroupList.Any() && filterText == null && isRegulated == null) return this.Select<Region>().OrderBy(r => r.ID);
 
             // filter by other elements to get all available regions for that selection
-            var stations = this.GetStations(null, stationTypeList, agencyList, regressionTypeList, variableTypeList, statisticGroupList, false, filterText);
+            var stations = this.GetStations(null, stationTypeList, agencyList, regressionTypeList, variableTypeList, statisticGroupList, false, filterText, isRegulated);
             return stations.Select(s => s.Region).Distinct().OrderBy(r => r.ID);
         }
         public Task<Region> GetRegion(int ID)
@@ -467,15 +471,15 @@ namespace GageStatsAgent
         {
             return this.Select<RegressionType>().FirstOrDefault(r => string.Equals(r.Code.ToLower(), code.ToLower()));
         }
-        public IQueryable<RegressionType> GetRegressions(List<string> regionList = null, List<string> stationTypeList = null, List<string> agencyList = null, List<string> variableTypeList = null, List<string> statisticGroupList = null, string filterText = null)
+        public IQueryable<RegressionType> GetRegressions(List<string> regionList = null, List<string> stationTypeList = null, List<string> agencyList = null, List<string> variableTypeList = null, List<string> statisticGroupList = null, string filterText = null, bool? isRegulated = null)
         {
             // if no filters
-            if (regionList?.Any() != true && stationTypeList?.Any() != true && agencyList?.Any() != true && variableTypeList?.Any() != true && statisticGroupList?.Any() != true && filterText == null)
+            if (regionList?.Any() != true && stationTypeList?.Any() != true && agencyList?.Any() != true && variableTypeList?.Any() != true && statisticGroupList?.Any() != true && filterText == null && isRegulated == null)
             {
                 return this.Select<RegressionType>().Include(rt => rt.MetricUnitType).Include(rt => rt.EnglishUnitType).Include(rt => rt.StatisticGroupType);
             }
             // filter by other elements to get all available agencies for that selection
-            var stations = this.GetStations(regionList, stationTypeList, agencyList, null, variableTypeList, statisticGroupList, false, filterText);
+            var stations = this.GetStations(regionList, stationTypeList, agencyList, null, variableTypeList, statisticGroupList, false, filterText, isRegulated);
             return stations.SelectMany(s => s.Statistics).Select(st => st.RegressionType).Distinct().OrderBy(rt => rt.ID).Include(rt => rt.MetricUnitType).Include(rt => rt.EnglishUnitType).Include(rt => rt.StatisticGroupType);
         }
         public RegressionType GetRegression(Int32 ID)
@@ -486,13 +490,13 @@ namespace GageStatsAgent
         {
             return this.Select<StatisticGroupType>().FirstOrDefault(r => string.Equals(r.Code.ToLower(), code.ToLower()));
         }
-        public IQueryable<StatisticGroupType> GetStatisticGroups(List<string> defTypeList = null, List<string> regionList = null, List<string> stationTypeList = null, List<string> agencyList = null, List<string> regressionTypeList = null, List<string> variableTypeList = null, string filterText = null)
+        public IQueryable<StatisticGroupType> GetStatisticGroups(List<string> defTypeList = null, List<string> regionList = null, List<string> stationTypeList = null, List<string> agencyList = null, List<string> regressionTypeList = null, List<string> variableTypeList = null, string filterText = null, bool? isRegulated = null)
         {
             // if any filters
-            if (regionList.Any() || stationTypeList.Any() || agencyList.Any() || regressionTypeList.Any() || variableTypeList.Any() || filterText != null)
+            if (regionList.Any() || stationTypeList.Any() || agencyList.Any() || regressionTypeList.Any() || variableTypeList.Any() || filterText != null || isRegulated != null)
             {
                 // filter by other elements to get all available agencies for that selection
-                var stations = this.GetStations(regionList, stationTypeList, agencyList, regressionTypeList, variableTypeList, null, true, filterText);
+                var stations = this.GetStations(regionList, stationTypeList, agencyList, regressionTypeList, variableTypeList, null, true, filterText, isRegulated);
                 return stations.SelectMany(s => s.Statistics).Select(s => s.StatisticGroupType)
                     .Union(stations.SelectMany(s => s.Characteristics).Select(c => c.VariableType.StatisticGroupType)).Distinct()
                     .OrderBy(sg => sg.ID);
@@ -529,17 +533,17 @@ namespace GageStatsAgent
         {
             return this.Find<UnitSystemType>(ID);
         }
-        public IQueryable<VariableType> GetVariables(List<string> regionList = null, List<string> stationTypeList = null, List<string> agencyList = null, List<string> regressionTypeList = null, List<string> statisticGroupList = null, string filterText = null)
+        public IQueryable<VariableType> GetVariables(List<string> regionList = null, List<string> stationTypeList = null, List<string> agencyList = null, List<string> regressionTypeList = null, List<string> statisticGroupList = null, string filterText = null, bool? isRegulated = null)
         {
             // TODO: reconsider this, the problem is, if a user is making this request from the gagestats page, we want them filtered by what variables are used in the gages filtered
             // BUT, if we're using it in other places, like when adding a new characteristic to a gage, we might want to filter the available variables by the statistic group instead
             // we might want to create a parameter called "gagestatisticgroups", "statisticgroupsbygage" or something like that?
             IQueryable<VariableType> query = this.Select<VariableType>().Include(vt => vt.MetricUnitType).Include(vt => vt.EnglishUnitType).Include(vt => vt.StatisticGroupType);
             // if any filters other than statisticgroups, filter by variables used in the filtered list of stations
-            if (regionList.Any() || stationTypeList.Any() || agencyList.Any() || regressionTypeList.Any() || filterText != null)
+            if (regionList.Any() || stationTypeList.Any() || agencyList.Any() || regressionTypeList.Any() || filterText != null || isRegulated != null)
             {
                 // filter by other elements to get all available agencies for that selection
-                var stations = this.GetStations(regionList, stationTypeList, agencyList, regressionTypeList, null, statisticGroupList, false, filterText);
+                var stations = this.GetStations(regionList, stationTypeList, agencyList, regressionTypeList, null, statisticGroupList, false, filterText, isRegulated);
                 query = stations.SelectMany(s => s.Characteristics).Select(c => c.VariableType).Distinct().Include(vt => vt.MetricUnitType).Include(vt => vt.EnglishUnitType).Include(vt => vt.StatisticGroupType);
             } else if (statisticGroupList.Any())
             {
