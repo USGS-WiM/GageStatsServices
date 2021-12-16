@@ -303,7 +303,7 @@ namespace GageStatsAgent
         public IQueryable<StationType> GetStationTypes(List<string> regionList = null, List<string> agencyList = null, List<string> regressionTypeList = null, List<string> variableTypeList = null, List<string> statisticGroupList = null, string filterText = null, bool? isRegulated = null)
         {
             // if no filters
-            if (!regionList.Any() && !agencyList.Any() && !regressionTypeList.Any() && !variableTypeList.Any() && !statisticGroupList.Any() && filterText == null) return Select<StationType>().OrderBy(st => st.ID);
+            if (!regionList.Any() && !agencyList.Any() && !regressionTypeList.Any() && !variableTypeList.Any() && !statisticGroupList.Any() && filterText == null && isRegulated == null) return Select<StationType>().OrderBy(st => st.ID);
             // filter by other elements to get all available agencies for that selection
             var stations = this.GetStations(regionList, null, agencyList, regressionTypeList, variableTypeList, statisticGroupList, false, filterText, isRegulated);
             return stations.Select(s => s.StationType).Distinct().OrderBy(st => st.ID);
@@ -438,7 +438,7 @@ namespace GageStatsAgent
         public IQueryable<Region> GetRegions(List<string> stationTypeList = null, List<string> agencyList = null, List<string> regressionTypeList = null, List<string> variableTypeList = null, List<string> statisticGroupList = null, string filterText = null, bool? isRegulated = null)
         {
             // if no filters
-            if (!stationTypeList.Any() && !agencyList.Any() && !regressionTypeList.Any() && !variableTypeList.Any() && !statisticGroupList.Any() && filterText == null) return this.Select<Region>().OrderBy(r => r.ID);
+            if (!stationTypeList.Any() && !agencyList.Any() && !regressionTypeList.Any() && !variableTypeList.Any() && !statisticGroupList.Any() && filterText == null && isRegulated == null) return this.Select<Region>().OrderBy(r => r.ID);
 
             // filter by other elements to get all available regions for that selection
             var stations = this.GetStations(null, stationTypeList, agencyList, regressionTypeList, variableTypeList, statisticGroupList, false, filterText, isRegulated);
@@ -474,7 +474,7 @@ namespace GageStatsAgent
         public IQueryable<RegressionType> GetRegressions(List<string> regionList = null, List<string> stationTypeList = null, List<string> agencyList = null, List<string> variableTypeList = null, List<string> statisticGroupList = null, string filterText = null, bool? isRegulated = null)
         {
             // if no filters
-            if (regionList?.Any() != true && stationTypeList?.Any() != true && agencyList?.Any() != true && variableTypeList?.Any() != true && statisticGroupList?.Any() != true && filterText == null)
+            if (regionList?.Any() != true && stationTypeList?.Any() != true && agencyList?.Any() != true && variableTypeList?.Any() != true && statisticGroupList?.Any() != true && filterText == null && isRegulated == null)
             {
                 return this.Select<RegressionType>().Include(rt => rt.MetricUnitType).Include(rt => rt.EnglishUnitType).Include(rt => rt.StatisticGroupType);
             }
