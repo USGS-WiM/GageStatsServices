@@ -44,7 +44,7 @@ namespace GageStatsServices.Controllers
         [HttpGet(Name = "Agencies")]
         [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Agencies/Get.md")]
         public async Task<IActionResult> Get([FromQuery] string regions = "", [FromQuery] string stationTypes = "", [FromQuery] string regressionTypes = "", [FromQuery] string variableTypes = "",
-            [FromQuery] string statisticGroups = "", [FromQuery] string filterText = null)
+            [FromQuery] string statisticGroups = "", [FromQuery] string filterText = null, [FromQuery] bool? isRegulated = null)
         {
             try
             {
@@ -54,7 +54,7 @@ namespace GageStatsServices.Controllers
                 List<string> variableTypeList = parse(variableTypes);
                 List<string> statisticGroupList = parse(statisticGroups);
 
-                return Ok(agent.GetAgencies(regionList, stationTypeList, regressionTypeList, variableTypeList, statisticGroupList, filterText));
+                return Ok(agent.GetAgencies(regionList, stationTypeList, regressionTypeList, variableTypeList, statisticGroupList, filterText, isRegulated));
             }
             catch (Exception ex)
             {
