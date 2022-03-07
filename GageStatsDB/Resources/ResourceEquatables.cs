@@ -53,7 +53,8 @@ namespace GageStatsDB.Resources
         {
             return this.StationID == other.StationID &&
                 this.VariableTypeID == other.VariableTypeID &&
-                this.UnitTypeID == other.UnitTypeID;
+                this.UnitTypeID == other.UnitTypeID && 
+                this.CitationID == other.CitationID;
 
         }
         public override bool Equals(object obj)
