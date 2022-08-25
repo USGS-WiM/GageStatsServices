@@ -48,7 +48,7 @@ namespace GageStatsServices.Controllers
         #region METHODS
         [HttpGet(Name = "Regions")]
         [APIDescription(type = DescriptionType.e_link, Description = "/Docs/Regions/Get.md")]
-        public async Task<IActionResult> Get([FromQuery] string stationTypes = "", [FromQuery] string agencies = "", [FromQuery] string regressionTypes = "", [FromQuery] string variableTypes = "", [FromQuery] string statisticGroups = "", [FromQuery] string filterText = null)
+        public async Task<IActionResult> Get([FromQuery] string stationTypes = "", [FromQuery] string agencies = "", [FromQuery] string regressionTypes = "", [FromQuery] string variableTypes = "", [FromQuery] string statisticGroups = "", [FromQuery] string filterText = null, [FromQuery] bool? isRegulated = null)
         {
             IQueryable<Region> entities = null;
             try
@@ -59,7 +59,7 @@ namespace GageStatsServices.Controllers
                 List<string> variableTypeList = parse(variableTypes);
                 List<string> statisticGroupList = parse(statisticGroups);
 
-                entities = agent.GetRegions(stationTypeList, agencyList, regressionTypeList, variableTypeList, statisticGroupList, filterText);
+                entities = agent.GetRegions(stationTypeList, agencyList, regressionTypeList, variableTypeList, statisticGroupList, filterText, isRegulated);
                 return Ok(entities);
             }
             catch (Exception ex)

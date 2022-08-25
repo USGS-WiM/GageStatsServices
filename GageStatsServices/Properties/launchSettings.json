@@ -10,9 +10,12 @@
   "profiles": {
     "IIS Express": {
       "commandName": "Project",
+      "launchBrowser": true,
+      "launchUrl": "apiconfig",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
-      }
+      },
+      "applicationUrl": "http://localhost:53812"
     },
     "GageStatsServices": {
       "commandName": "Project",

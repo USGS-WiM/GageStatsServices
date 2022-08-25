@@ -15,12 +15,18 @@ content-length: 576
 [{
     "name": "example regression region 1",
     "code": "EXREGREG1",
-    "description": "example of a regression region 1"
+    "description": "example of a regression region 1",
+	"metricUnitTypeID": "1",
+    "englishUnitTypeID": "1",
+    "statisticGroupTypeID": "1"
 },
 {
     "name": "example regression region 2",
     "code": "EXREGREG2",
-    "description": "example of a regression region 2"
+    "description": "example of a regression region 2",
+	"metricUnitTypeID": "1",
+    "englishUnitTypeID": "1",
+    "statisticGroupTypeID": "1"
 }]
 ```
 
@@ -30,12 +36,20 @@ HTTP/1.1 200 OK
     "id": 1,
     "name": "example regression region 1",
     "code": "EXREGREG1",
-    "description": "example of a regression region 1"
+    "description": "example of a regression region 1",
+	"unitTypeID": "1",
+    "metricUnitTypeID": "1",
+    "englishUnitTypeID": "1",
+    "statisticGroupTypeID": "1"
 },
 {
     "id": 2,
     "name": "example regression region 2",
     "code": "EXREGREG2",
-    "description": "example of a regression region 2"
+    "description": "example of a regression region 2",
+	"unitTypeID": "1",
+    "metricUnitTypeID": "1",
+    "englishUnitTypeID": "1",
+    "statisticGroupTypeID": "1"
 }]
 ```
