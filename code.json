@@ -2,10 +2,9 @@
   {
     "name": "GageStatsServices",
     "organization": "U.S. Geological Survey",
-    "description": "example",
-    "version": "v1.0.0",
-    "statusOptionsURL":"https://github.com/GSA/code-gov-web/blob/master/src/assets/schemas/2.0.0.json#L144-L152",
-	"status": "preliminary",	
+    "description": "REST web services used in communication with the StreamStats Gage Statistics DataBase",
+    "version": "v1.1.0",
+	"status": "Production",	
 
     "permissions": {
       "usageType": "openSource",
@@ -17,30 +16,34 @@
       ]
     },
 
-    "homepageURL": "https://wim.usgs.gov",
-    "downloadURL": "https://github.com/USGS-WiM/gagestatsServices/archive/master.zip",
-    "disclaimerURL": "https://github.com/USGS-WiM/gagestatsServices/blob/master/LICENSE.md",
-    "repositoryUrl": "https://github.com/USGS-WiM/gagestatsServices",
+    "homepageURL": "https://streamstats.usgs.gov",
+    "downloadURL": "https://github.com/USGS-WiM/GageStatsServices/archive/master.zip",
+    "disclaimerURL": "https://github.com/USGS-WiM/GageStatsServices/blob/master/DISCLAIMER.md",
+    "repositoryUrl": "https://github.com/USGS-WiM/GageStatsServices",
     "vcs": "git",
 
     "laborHours": null,
 
     "tags": [
+      "streamstats",
+	  "GageStats",
       "Services",
-	  "REST"
+	  "REST",
+	    "api",
+	    "PostgreSQL"
     ],
 
     "languages": [
-      "c#"
+      "c#","sql"
     ],
 
     "contact": {
-      "name": "Jeremy Newson",
-      "email": "jknewson@usgs.gov"
+      "name": "Harper Wavra",
+      "email": "hwavra@usgs.gov"
     },
 
     "date": {
-      "metadataLastUpdated": "2018-01-25"
+      "metadataLastUpdated": "2022-08-25"
     }
   }
 ]
