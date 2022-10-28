@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 
+- code.json, LICENSE.md, DISCLAIMER.md contents
+
 ## [v1.1.0](https://github.com/USGS-WiM/GageStatsServices/releases/tag/v1.1.0) - 2022-08-25
 
 ### Added

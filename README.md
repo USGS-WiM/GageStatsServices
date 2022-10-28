@@ -94,6 +94,9 @@ To push tags to remote origin: `git push origin --tags`
 
 * **[Katrin Jacobsen](https://www.usgs.gov/staff-profiles/katrin-jacobsen)**  - *Developer* - [USGS Web Informatics & Mapping](https://wim.usgs.gov/)
 * **[Jeremy Newson](https://www.usgs.gov/staff-profiles/jeremy-k-newson)**  - *Developer* - [USGS Web Informatics & Mapping](https://wim.usgs.gov/)
+* **[Marty Smith](https://www.usgs.gov/staff-profiles/martyn-smith)**  - *Developer* - [USGS Web Informatics & Mapping](https://wim.usgs.gov/)
+* **[Harper Wavra](https://www.usgs.gov/staff-profiles/harper-wavra)**  - *Co-Lead Developer* - [USGS Web Informatics & Mapping](https://wim.usgs.gov/)
+* **[Andrea Medenblik](https://www.usgs.gov/staff-profiles/andrea-s-medenblik)**  - *Co-Lead Developer* - [USGS Web Informatics & Mapping](https://wim.usgs.gov/)
 
 See also the list of [contributors](../../graphs/contributors) who participated in this project.
 
@@ -107,11 +110,8 @@ In the spirit of open source, please cite any re-use of the source code stored i
 
 `This project contains code produced by the Web Informatics and Mapping (WIM) team at the United States Geological Survey (USGS). As a work of the United States Government, this project is in the public domain within the United States. https://wim.usgs.gov`
 
-## Acknowledgments
-
 
 ## About WIM
-
 * This project authored by the [USGS WIM team](https://wim.usgs.gov)
 * WIM is a team of developers and technologists who build and manage tools, software, web services, and databases to support USGS science and other federal government cooperators.
-* WiM is a part of the [Upper Midwest Water Science Center](https://www.usgs.gov/centers/wisconsin-water-science-center).
+* WIM is a part of the [Upper Midwest Water Science Center](https://www.usgs.gov/centers/upper-midwest-water-science-center).
