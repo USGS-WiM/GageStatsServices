@@ -3,8 +3,8 @@
     "name": "GageStatsServices",
     "organization": "U.S. Geological Survey",
     "description": "REST web services used in communication with the StreamStats Gage Statistics DataBase",
-    "version": "v1.1.0",
-	"status": "Production",	
+    "version": "1.1.0",
+    "status": "Production",	
 
     "permissions": {
       "usageType": "openSource",
@@ -19,22 +19,23 @@
     "homepageURL": "https://streamstats.usgs.gov",
     "downloadURL": "https://github.com/USGS-WiM/GageStatsServices/archive/master.zip",
     "disclaimerURL": "https://github.com/USGS-WiM/GageStatsServices/blob/master/DISCLAIMER.md",
-    "repositoryUrl": "https://github.com/USGS-WiM/GageStatsServices",
+    "repositoryURL": "https://github.com/USGS-WiM/GageStatsServices",
     "vcs": "git",
 
-    "laborHours": null,
+    "laborHours": 0,
 
     "tags": [
-      "streamstats",
-	  "GageStats",
+      "StreamStats",
+      "GageStats",
       "Services",
-	  "REST",
-	    "api",
-	    "PostgreSQL"
+      "REST",
+      "api",
+      "PostgreSQL"
     ],
 
     "languages": [
-      "c#","sql"
+      "c#",
+      "sql"
     ],
 
     "contact": {
@@ -43,7 +44,7 @@
     },
 
     "date": {
-      "metadataLastUpdated": "2022-08-25"
+      "metadataLastUpdated": "2022-10-28"
     }
   }
 ]
