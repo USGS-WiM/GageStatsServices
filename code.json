@@ -4,7 +4,7 @@
     "organization": "U.S. Geological Survey",
     "description": "REST web services used in communication with the StreamStats Gage Statistics DataBase",
     "version": "1.1.0",
-    "status": "Production",	
+    "status": "Archival",	
 
     "permissions": {
       "usageType": "openSource",
